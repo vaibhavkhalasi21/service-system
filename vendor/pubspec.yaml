@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.1
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -24,7 +24,6 @@ flutter:
   assets:
     - assets/images/splash1.png
 
-# Top-level flutter_native_splash configuration
 flutter_native_splash:
   color: "#6A11CB"
   image: assets/images/splash1.png
