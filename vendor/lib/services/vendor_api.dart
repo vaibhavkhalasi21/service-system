@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class VendorApi {
-  static const String baseUrl = "http://10.141.25.71:5244/api/vendor";
+  static const String baseUrl = "http://10.141.25.37:5244/api/vendor";
 
   // REGISTER
   static Future<Map<String, dynamic>> registerVendor({

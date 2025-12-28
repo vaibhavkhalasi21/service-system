@@ -82,19 +82,19 @@ class VendorHomeTab extends StatelessWidget {
             title: "Electrician",
             price: 299,
             rating: 4.6,
-            icon: Icons.electrical_services,
+            imagePath: "assets/images/electrician.png",
           ),
           _ServiceCard(
             title: "Plumber",
             price: 249,
             rating: 4.5,
-            icon: Icons.plumbing,
+            imagePath: "assets/images/plumbing.png",
           ),
           _ServiceCard(
             title: "House Cleaning",
             price: 499,
             rating: 4.7,
-            icon: Icons.cleaning_services,
+            imagePath: "assets/images/cleaning.png",
           ),
         ],
       ),
@@ -124,18 +124,18 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-/// 🧾 Service Card
+/// 🧾 Service Card (FULL HEIGHT IMAGE)
 class _ServiceCard extends StatelessWidget {
   final String title;
   final int price;
   final double rating;
-  final IconData icon;
+  final String imagePath;
 
   const _ServiceCard({
     required this.title,
     required this.price,
     required this.rating,
-    required this.icon,
+    required this.imagePath,
   });
 
   @override
@@ -144,26 +144,43 @@ class _ServiceCard extends StatelessWidget {
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+      child: SizedBox(
+        height: 90, // Card height
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: const Color(0xFFEDE7F6),
-              child: Icon(icon, color: Colors.deepPurple),
+
+            /// 🖼️ FULL HEIGHT IMAGE
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                bottomLeft: Radius.circular(14),
+              ),
+              child: Image.asset(
+                imagePath,
+                width: 90,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
+
             const SizedBox(width: 12),
+
+            /// 📄 Title + Rating
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       const Icon(Icons.star,
@@ -175,20 +192,27 @@ class _ServiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: [
-                Text(
-                  "₹$price",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("Manage"),
-                ),
-              ],
-            )
+
+            /// 💰 Price + Manage Button
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "₹$price",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text("Manage"),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
