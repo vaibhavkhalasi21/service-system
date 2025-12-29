@@ -29,66 +29,52 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
     super.dispose();
   }
 
-  bool _isValidEmail(String email) {
-    return RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .hasMatch(email);
-  }
+  bool _isValidEmail(String email) =>
+      RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+          .hasMatch(email);
 
-  bool _isValidPassword(String password) {
-    return RegExp(r"^(?=.*[A-Za-z])(?=.*\d).{6,}$").hasMatch(password);
-  }
+  bool _isValidPassword(String password) =>
+      RegExp(r"^(?=.*[A-Za-z])(?=.*\d).{6,}$").hasMatch(password);
 
   Future<void> register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    FocusScope.of(context).unfocus();
     setState(() => isLoading = true);
 
-    try {
-      final response = await VendorApi.registerVendor(
-        name: nameCtrl.text.trim(),
-        email: emailCtrl.text.trim(),
-        password: passwordCtrl.text.trim(),
-        phone: phoneCtrl.text.trim(),
-        serviceType: "Vendor",
-        address: "NA",
+    final response = await VendorApi.registerVendor(
+      name: nameCtrl.text.trim(),
+      email: emailCtrl.text.trim(),
+      password: passwordCtrl.text.trim(),
+      phone: phoneCtrl.text.trim(),
+      serviceType: "Vendor",
+      address: "NA",
+    );
+
+    setState(() => isLoading = false);
+
+    if (response["status"] == 200) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString("vendor_name", nameCtrl.text.trim());
+      await prefs.setString("vendor_email", emailCtrl.text.trim());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Vendor Registered Successfully"),
+          backgroundColor: Colors.green,
+        ),
       );
 
-      if (response["status"] == 200) {
-        // Save vendor info locally
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString("vendor_name", nameCtrl.text.trim());
-        await prefs.setString("vendor_email", emailCtrl.text.trim());
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Vendor Registered Successfully"),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const VendorLoginScreen()),
-        );
-      } else {
-        final message = response["body"]["message"] ??
-            "Registration failed. Check your details.";
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const VendorLoginScreen()),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Something went wrong: $e"),
+          content: Text(response["body"].toString()),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -109,8 +95,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
             child: Card(
               elevation: 10,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+                  borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Form(
@@ -125,8 +110,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Name
                       TextFormField(
                         controller: nameCtrl,
                         decoration: const InputDecoration(
@@ -145,8 +128,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Email
                       TextFormField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -166,8 +147,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Phone
                       TextFormField(
                         controller: phoneCtrl,
                         keyboardType: TextInputType.phone,
@@ -186,8 +165,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Password
                       TextFormField(
                         controller: passwordCtrl,
                         obscureText: isPasswordHidden,
@@ -217,8 +194,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-
-                      // Register Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -229,8 +204,6 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                               : const Text("Register"),
                         ),
                       ),
-
-                      // Go to Login
                       TextButton(
                         onPressed: () {
                           Navigator.pushReplacement(
@@ -239,7 +212,8 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                                 builder: (_) => const VendorLoginScreen()),
                           );
                         },
-                        child: const Text("Already have an account? Login"),
+                        child:
+                        const Text("Already have an account? Login"),
                       ),
                     ],
                   ),

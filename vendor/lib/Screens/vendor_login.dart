@@ -26,16 +26,16 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     super.dispose();
   }
 
-  //  Email validation
+  // Email validation
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) return "Enter email";
-    final emailRegex = RegExp(
-        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    final emailRegex =
+    RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
     if (!emailRegex.hasMatch(value)) return "Enter valid email";
     return null;
   }
 
-  //  Password validation
+  // Password validation
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return "Enter password";
     if (value.length < 6) return "Password must be at least 6 characters";
@@ -57,11 +57,23 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       final status = response["status"];
       final body = response["body"];
 
-      if (status == 200 && body != null && body["vendorId"] != null) {
+      if (status == 200 && body != null) {
+        // Extract values from backend
+        final vendorId = body["id"] ?? body["Id"];
+        final name = body["name"] ?? body["Name"];
+        final email = body["email"] ?? body["Email"];
+        final token = body["token"];
+
+        if (vendorId == null || token == null) {
+          throw Exception("Invalid response from server");
+        }
+
+        // Save data locally
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setInt("vendor_id", body["vendorId"]);
-        await prefs.setString("vendor_email", body["email"] ?? "");
-        await prefs.setString("vendor_name", body["name"] ?? "Vendor Name");
+        await prefs.setInt("vendor_id", vendorId);
+        await prefs.setString("vendor_name", name ?? "Vendor Name");
+        await prefs.setString("vendor_email", email ?? "");
+        await prefs.setString("vendor_token", token);
 
         if (!mounted) return;
 
@@ -77,12 +89,16 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
           MaterialPageRoute(builder: (_) => const VendorHomeScreen()),
         );
       } else {
-        final message = body?["message"] ?? "Login failed";
+        String message = "Login failed";
+        try {
+          // Try parsing error message from backend
+          final bodyJson = body is String ? body : body.toString();
+          message = bodyJson.contains("Invalid")
+              ? "Invalid email or password"
+              : message;
+        } catch (_) {}
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -131,7 +147,6 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       // Email field
                       TextFormField(
                         controller: emailCtrl,
@@ -144,7 +159,6 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         validator: validateEmail,
                       ),
                       const SizedBox(height: 16),
-
                       // Password field
                       TextFormField(
                         controller: passwordCtrl,
@@ -167,7 +181,6 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         validator: validatePassword,
                       ),
                       const SizedBox(height: 20),
-
                       // Login button
                       SizedBox(
                         width: double.infinity,
@@ -190,15 +203,14 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-
                       // Register button
                       TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) =>
-                                const VendorRegisterScreen()),
+                              builder: (_) => const VendorRegisterScreen(),
+                            ),
                           );
                         },
                         child: const Text(

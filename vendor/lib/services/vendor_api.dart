@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class VendorApi {
-  // 🔹 Replace with your PC's local IP
-  static const String baseUrl = "http://192.168.1.100:5244/api/vendor";
+  static const String baseUrl = "http://10.141.25.71:5244/api/vendor";
 
   // REGISTER
   static Future<Map<String, dynamic>> registerVendor({
@@ -15,8 +14,7 @@ class VendorApi {
     required String address,
   }) async {
     try {
-      final response = await http
-          .post(
+      final response = await http.post(
         Uri.parse("$baseUrl/register"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
@@ -27,18 +25,16 @@ class VendorApi {
           "serviceType": serviceType,
           "address": address,
         }),
-      )
-          .timeout(const Duration(seconds: 10));
+      );
 
       return {
         "status": response.statusCode,
-        "body": jsonDecode(response.body),
+        "body": response.body, // just a string from backend
       };
     } catch (e) {
-      print("API Error: $e");
       return {
         "status": 500,
-        "body": {"message": "Failed to connect to server. Check network."},
+        "body": "Network error: $e",
       };
     }
   }
@@ -49,26 +45,31 @@ class VendorApi {
     required String password,
   }) async {
     try {
-      final response = await http
-          .post(
+      final response = await http.post(
         Uri.parse("$baseUrl/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
           "password": password,
         }),
-      )
-          .timeout(const Duration(seconds: 10));
+      );
 
-      return {
-        "status": response.statusCode,
-        "body": jsonDecode(response.body),
-      };
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          "status": 200,
+          "body": data,
+        };
+      } else {
+        return {
+          "status": response.statusCode,
+          "body": response.body, // string error
+        };
+      }
     } catch (e) {
-      print("API Error: $e");
       return {
         "status": 500,
-        "body": {"message": "Failed to connect to server. Check network."},
+        "body": "Network error: $e",
       };
     }
   }
