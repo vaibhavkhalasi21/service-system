@@ -1,0 +1,8 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_background"/>
+    <item>
+        <bitmap
+            android:gravity="fill"
+            android:src="@drawable/worker_new.png"/>
+    </item>
+</layer-list>
