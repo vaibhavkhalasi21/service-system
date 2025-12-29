@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/booking_request.dart';
 import 'vendor_login.dart';
+import 'booking_request_page.dart';
 
 class VendorProfileTab extends StatefulWidget {
   const VendorProfileTab({super.key});
@@ -10,21 +12,24 @@ class VendorProfileTab extends StatefulWidget {
 }
 
 class _VendorProfileTabState extends State<VendorProfileTab> {
-  String vendorName = "";
-  String vendorEmail = "";
+  String vendorName = "Vendor Name";
+  String vendorEmail = "vendor@email.com";
 
-  /// TEMP booking requests (later connect Firebase)
-  List<Map<String, dynamic>> bookingRequests = [
-    {
-      "service": "Electrician",
-      "customer": "Rahul Sharma",
-      "price": 299,
-    },
-    {
-      "service": "Plumber",
-      "customer": "Amit Verma",
-      "price": 249,
-    },
+  List<BookingRequest> bookingRequests = [
+    BookingRequest(
+      workerName: "Rahul Sharma",
+      serviceName: "Electrician Service",
+      price: 350,
+      date: "29 Dec 2025",
+      time: "10:30 AM",
+    ),
+    BookingRequest(
+      workerName: "Amit Patel",
+      serviceName: "Plumbing Service",
+      price: 450,
+      date: "30 Dec 2025",
+      time: "02:00 PM",
+    ),
   ];
 
   @override
@@ -41,6 +46,17 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     });
   }
 
+  Future<void> saveVendorData(String name, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("vendor_name", name);
+    await prefs.setString("vendor_email", email);
+
+    setState(() {
+      vendorName = name;
+      vendorEmail = email;
+    });
+  }
+
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -52,22 +68,74 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     );
   }
 
-  void acceptBooking(int index) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking Accepted")),
-    );
-    setState(() {
-      bookingRequests.removeAt(index);
-    });
-  }
+  void openEditProfile() {
+    final nameController = TextEditingController(text: vendorName);
+    final emailController = TextEditingController(text: vendorEmail);
 
-  void rejectBooking(int index) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking Rejected")),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Edit Profile",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: "Vendor Name",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    saveVendorData(
+                      nameController.text.trim(),
+                      emailController.text.trim(),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Save Changes"),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    setState(() {
-      bookingRequests.removeAt(index);
-    });
   }
 
   @override
@@ -75,15 +143,22 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          /// 👤 Profile Card
+          // PROFILE CARD
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -103,70 +178,55 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
                   vendorEmail,
                   style: const TextStyle(color: Colors.grey),
                 ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.edit),
+                  label: const Text("Edit Profile"),
+                  onPressed: openEditProfile,
+                ),
               ],
             ),
           ),
 
           const SizedBox(height: 24),
 
-          /// 📦 Booking Requests
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
-                "New Booking Requests",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          // BOOKING REQUESTS
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.list_alt),
+              label: const Text("View Applications"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          bookingRequests.isEmpty
-              ? const Text(
-            "No new booking requests",
-            style: TextStyle(color: Colors.grey),
-          )
-              : Column(
-            children: List.generate(
-              bookingRequests.length,
-                  (index) {
-                final booking = bookingRequests[index];
-                return _BookingRequestCard(
-                  service: booking["service"],
-                  customer: booking["customer"],
-                  price: booking["price"],
-                  onAccept: () => acceptBooking(index),
-                  onReject: () => rejectBooking(index),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingRequestsPage(
+                      bookingRequests: bookingRequests,
+                    ),
+                  ),
                 );
               },
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
 
-          /// ⚙️ Options
-          _buildOption(
-            icon: Icons.edit,
-            title: "Edit Profile",
-            onTap: () {},
-          ),
-          _buildOption(
-            icon: Icons.settings,
-            title: "Settings",
-            onTap: () {},
-          ),
-
-          const SizedBox(height: 40),
-
-          /// 🚪 Logout
+          // LOGOUT
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.logout),
               label: const Text("Logout"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: Colors.deepPurple,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -177,96 +237,6 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOption({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.deepPurple),
-        title: Text(title),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-/// 📄 Booking Request Card
-class _BookingRequestCard extends StatelessWidget {
-  final String service;
-  final String customer;
-  final int price;
-  final VoidCallback onAccept;
-  final VoidCallback onReject;
-
-  const _BookingRequestCard({
-    required this.service,
-    required this.customer,
-    required this.price,
-    required this.onAccept,
-    required this.onReject,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              service,
-              style:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Customer: $customer",
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "₹$price",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: onReject,
-                      child: const Text(
-                        "Reject",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: onAccept,
-                      child: const Text("Accept"),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

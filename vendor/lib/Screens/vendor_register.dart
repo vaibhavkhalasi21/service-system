@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/vendor_api.dart';
@@ -31,9 +30,8 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(
-      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-    ).hasMatch(email);
+    return RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        .hasMatch(email);
   }
 
   bool _isValidPassword(String password) {
@@ -57,7 +55,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
       );
 
       if (response["status"] == 200) {
-        // Save vendor info in SharedPreferences
+        // Save vendor info locally
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString("vendor_name", nameCtrl.text.trim());
         await prefs.setString("vendor_email", emailCtrl.text.trim());
@@ -76,18 +74,16 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
           MaterialPageRoute(builder: (_) => const VendorLoginScreen()),
         );
       } else {
+        final message = response["body"]["message"] ??
+            "Registration failed. Check your details.";
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-            Text(response["body"]["message"] ?? "Registration failed"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Something went wrong"),
+        SnackBar(
+          content: Text("Something went wrong: $e"),
           backgroundColor: Colors.red,
         ),
       );
@@ -129,6 +125,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
                       // Name
                       TextFormField(
                         controller: nameCtrl,
@@ -148,6 +145,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
+
                       // Email
                       TextFormField(
                         controller: emailCtrl,
@@ -168,6 +166,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
+
                       // Phone
                       TextFormField(
                         controller: phoneCtrl,
@@ -187,6 +186,7 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
+
                       // Password
                       TextFormField(
                         controller: passwordCtrl,
@@ -217,6 +217,8 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
+
+                      // Register Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -227,6 +229,8 @@ class _VendorRegisterScreenState extends State<VendorRegisterScreen> {
                               : const Text("Register"),
                         ),
                       ),
+
+                      // Go to Login
                       TextButton(
                         onPressed: () {
                           Navigator.pushReplacement(

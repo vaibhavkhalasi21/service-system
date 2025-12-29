@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vendor/Screens/vendor_home.dart';
+import 'package:vendor/Screens/vendor_register.dart';
 import 'Screens/vendor_login.dart';
 
 void main() {

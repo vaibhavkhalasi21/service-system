@@ -25,29 +25,27 @@ class _VendorJobsTabState extends State<VendorJobsTab>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-
-        /// 🔖 Tabs
-        Container(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: Colors.deepPurple,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.deepPurple,
-            tabs: const [
-              Tab(text: "Pending"),
-              Tab(text: "Completed"),
-              Tab(text: "Cancelled"),
-            ],
+    return Scaffold(
+      body: Column(
+        children: [
+          /// 🔖 Tabs
+          Material(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.deepPurple,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.deepPurple,
+              tabs: const [
+                Tab(text: "Pending"),
+                Tab(text: "Completed"),
+                Tab(text: "Cancelled"),
+              ],
+            ),
           ),
-        ),
 
-        /// 📋 Tab Views
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+          /// 📋 Tab Views
+          Expanded(
             child: TabBarView(
               controller: _tabController,
               children: const [
@@ -57,13 +55,13 @@ class _VendorJobsTabState extends State<VendorJobsTab>
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/// 📄 Jobs List Widget
+/// 📄 Jobs List
 class _JobsList extends StatelessWidget {
   final String status;
 
@@ -81,10 +79,9 @@ class _JobsList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+      padding: const EdgeInsets.all(16),
       itemCount: 3,
       itemBuilder: (context, index) {
-        // You can change images dynamically per index/service
         return _JobCard(
           serviceName: "Electrician Service",
           customerName: "Customer ${index + 1}",
@@ -97,7 +94,7 @@ class _JobsList extends StatelessWidget {
   }
 }
 
-/// 🧾 Single Job Card WITH IMAGE & Flexible Layout
+/// 🧾 Job Card
 class _JobCard extends StatelessWidget {
   final String serviceName;
   final String customerName;
@@ -126,107 +123,92 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isCompleted = status == "Completed";
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: SizedBox(
-        height: 110,
-        child: Row(
-          children: [
-
-            /// 🖼️ Service Image
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                bottomLeft: Radius.circular(14),
-              ),
-              child: Image.asset(
-                imagePath,
-                width: 110,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// 🖼️ Image
+          SizedBox(
+            height: 150,
+            width: double.infinity,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.cover,
             ),
+          ),
 
-            const SizedBox(width: 12),
-
-            /// 📄 Job Details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// Title + Status
+                Row(
                   children: [
-
-                    /// Title + Status
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            serviceName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          ),
+                    Expanded(
+                      child: Text(
+                        serviceName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        Container(
-                          padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: getStatusColor().withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              color: getStatusColor(),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-
-                    const SizedBox(height: 6),
-
-                    Text(
-                      "Customer: $customerName",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-
-                    const Spacer(),
-
-                    /// Price + Action Button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            "₹$price",
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: getStatusColor().withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: getStatusColor(),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
-                        if (status == "Pending")
-                          Flexible(
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              child: const Text("Mark Completed"),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
 
-            const SizedBox(width: 12),
-          ],
-        ),
+                const SizedBox(height: 6),
+
+                Text(
+                  "Customer: $customerName",
+                  style: const TextStyle(color: Colors.grey),
+                ),
+
+                const SizedBox(height: 12),
+
+                /// 💰 Price + Button
+                Row(
+                  children: [
+                    Text(
+                      "₹$price",
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    if (!isCompleted)
+                      ElevatedButton(
+                        onPressed: () {},
+                        child: const Text("Mark Completed"),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

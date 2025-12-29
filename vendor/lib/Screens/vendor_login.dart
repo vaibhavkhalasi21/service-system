@@ -26,6 +26,22 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     super.dispose();
   }
 
+  //  Email validation
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) return "Enter email";
+    final emailRegex = RegExp(
+        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+    if (!emailRegex.hasMatch(value)) return "Enter valid email";
+    return null;
+  }
+
+  //  Password validation
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) return "Enter password";
+    if (value.length < 6) return "Password must be at least 6 characters";
+    return null;
+  }
+
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -115,6 +131,8 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      // Email field
                       TextFormField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -123,14 +141,11 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                           prefixIcon: Icon(Icons.email),
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter email";
-                          }
-                          return null;
-                        },
+                        validator: validateEmail,
                       ),
                       const SizedBox(height: 16),
+
+                      // Password field
                       TextFormField(
                         controller: passwordCtrl,
                         obscureText: isPasswordHidden,
@@ -149,21 +164,17 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                           ),
                           border: const OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter password";
-                          }
-                          return null;
-                        },
+                        validator: validatePassword,
                       ),
                       const SizedBox(height: 20),
+
+                      // Login button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: isLoading ? null : login,
                           style: ElevatedButton.styleFrom(
-                            padding:
-                            const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -179,6 +190,8 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
+
+                      // Register button
                       TextButton(
                         onPressed: () {
                           Navigator.push(

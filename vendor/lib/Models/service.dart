@@ -1,9 +1,9 @@
 class Service {
-  final String title;
-  final String category;
-  final int price;
-  final double rating;
-  final String imagePath;
+  String title;
+  String category;
+  int price;
+  double rating;
+  String imagePath;
 
   Service({
     required this.title,

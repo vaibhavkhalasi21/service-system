@@ -1,25 +1,87 @@
 import 'package:flutter/material.dart';
+import '../models/service.dart';
+import '../widgets/service_card.dart';
+import '../widgets/category_chip.dart';
 
-class VendorHomeTab extends StatelessWidget {
+class VendorHomeTab extends StatefulWidget {
   const VendorHomeTab({super.key});
 
   @override
+  State<VendorHomeTab> createState() => _VendorHomeTabState();
+}
+
+class _VendorHomeTabState extends State<VendorHomeTab> {
+  String selectedCategory = "All";
+  String searchQuery = "";
+
+  final List<Service> services = [
+    Service(
+        title: "Electrician",
+        category: "Electrician",
+        price: 299,
+        rating: 4.6,
+        imagePath: "assets/images/electrician.png"),
+    Service(
+        title: "Plumber",
+        category: "Plumber",
+        price: 249,
+        rating: 4.5,
+        imagePath: "assets/images/plumbing.png"),
+    Service(
+        title: "House Cleaning",
+        category: "Cleaning",
+        price: 499,
+        rating: 4.7,
+        imagePath: "assets/images/cleaning.png"),
+    Service(
+        title: "Painter",
+        category: "Painter",
+        price: 249,
+        rating: 4.5,
+        imagePath: "assets/images/acrepair.png"),
+    Service(
+        title: "AC Repair",
+        category: "AC Repair",
+        price: 499,
+        rating: 4.7,
+        imagePath: "assets/images/painter.png"),
+  ];
+
+  final List<String> categories = [
+    "All",
+    "Electrician",
+    "Plumber",
+    "Cleaning",
+    "AC Repair",
+    "Painter"
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    // Apply category filter first
+    List<Service> filteredServices = selectedCategory == "All"
+        ? services
+        : services.where((s) => s.category == selectedCategory).toList();
+
+    // Apply search filter
+    if (searchQuery.isNotEmpty) {
+      filteredServices = filteredServices
+          .where((s) =>
+      s.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          s.category.toLowerCase().contains(searchQuery.toLowerCase()))
+          .toList();
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          /// 👋 Greeting
           const Text(
             "Hello, Vendor 👋",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 16),
-
-          /// 🎁 Offer Banner
           Container(
             height: 90,
             decoration: BoxDecoration(
@@ -40,11 +102,14 @@ class VendorHomeTab extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          /// 🔍 Search
+          // SEARCH BAR
           TextField(
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
               hintText: "Search services...",
               prefixIcon: const Icon(Icons.search),
@@ -56,165 +121,33 @@ class VendorHomeTab extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          /// 🏷️ Categories
+          // CATEGORY FILTER CHIPS
           SizedBox(
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: const [
-                _CategoryChip(title: "All", selected: true),
-                _CategoryChip(title: "Electrician"),
-                _CategoryChip(title: "Plumber"),
-                _CategoryChip(title: "Cleaning"),
-                _CategoryChip(title: "AC Repair"),
-                _CategoryChip(title: "Painter"),
-              ],
+              children: categories
+                  .map(
+                    (cat) => GestureDetector(
+                  onTap: () => setState(() => selectedCategory = cat),
+                  child: CategoryChip(
+                    title: cat,
+                    selected: selectedCategory == cat,
+                  ),
+                ),
+              )
+                  .toList(),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          /// 🧾 Services List
-          _ServiceCard(
-            title: "Electrician",
-            price: 299,
-            rating: 4.6,
-            imagePath: "assets/images/electrician.png",
-          ),
-          _ServiceCard(
-            title: "Plumber",
-            price: 249,
-            rating: 4.5,
-            imagePath: "assets/images/plumbing.png",
-          ),
-          _ServiceCard(
-            title: "House Cleaning",
-            price: 499,
-            rating: 4.7,
-            imagePath: "assets/images/cleaning.png",
+          // FILTERED SERVICES LIST
+          Column(
+            children: filteredServices
+                .map((s) => ServiceCard(service: s))
+                .toList(),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 🏷️ Category Chip
-class _CategoryChip extends StatelessWidget {
-  final String title;
-  final bool selected;
-
-  const _CategoryChip({required this.title, this.selected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Chip(
-        label: Text(title),
-        backgroundColor: selected ? Colors.blue : Colors.white,
-        labelStyle: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-        ),
-      ),
-    );
-  }
-}
-
-/// 🧾 Service Card (FULL HEIGHT IMAGE)
-class _ServiceCard extends StatelessWidget {
-  final String title;
-  final int price;
-  final double rating;
-  final String imagePath;
-
-  const _ServiceCard({
-    required this.title,
-    required this.price,
-    required this.rating,
-    required this.imagePath,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: SizedBox(
-        height: 90, // Card height
-        child: Row(
-          children: [
-
-            /// 🖼️ FULL HEIGHT IMAGE
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                bottomLeft: Radius.circular(14),
-              ),
-              child: Image.asset(
-                imagePath,
-                width: 90,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-
-            const SizedBox(width: 12),
-
-            /// 📄 Title + Rating
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.star,
-                          color: Colors.orange, size: 16),
-                      const SizedBox(width: 4),
-                      Text(rating.toString()),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            /// 💰 Price + Manage Button
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "₹$price",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text("Manage"),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class VendorApi {
-  static const String baseUrl = "http://10.141.25.37:5244/api/vendor";
+  // 🔹 Replace with your PC's local IP
+  static const String baseUrl = "http://192.168.1.100:5244/api/vendor";
 
   // REGISTER
   static Future<Map<String, dynamic>> registerVendor({
@@ -13,23 +14,33 @@ class VendorApi {
     required String serviceType,
     required String address,
   }) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/register"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "phone": phone,
-        "password": password,
-        "serviceType": serviceType,
-        "address": address,
-      }),
-    );
+    try {
+      final response = await http
+          .post(
+        Uri.parse("$baseUrl/register"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "phone": phone,
+          "password": password,
+          "serviceType": serviceType,
+          "address": address,
+        }),
+      )
+          .timeout(const Duration(seconds: 10));
 
-    return {
-      "status": response.statusCode,
-      "body": jsonDecode(response.body),
-    };
+      return {
+        "status": response.statusCode,
+        "body": jsonDecode(response.body),
+      };
+    } catch (e) {
+      print("API Error: $e");
+      return {
+        "status": 500,
+        "body": {"message": "Failed to connect to server. Check network."},
+      };
+    }
   }
 
   // LOGIN
@@ -37,18 +48,28 @@ class VendorApi {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/login"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email,
-        "password": password,
-      }),
-    );
+    try {
+      final response = await http
+          .post(
+        Uri.parse("$baseUrl/login"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+        }),
+      )
+          .timeout(const Duration(seconds: 10));
 
-    return {
-      "status": response.statusCode,
-      "body": jsonDecode(response.body),
-    };
+      return {
+        "status": response.statusCode,
+        "body": jsonDecode(response.body),
+      };
+    } catch (e) {
+      print("API Error: $e");
+      return {
+        "status": 500,
+        "body": {"message": "Failed to connect to server. Check network."},
+      };
+    }
   }
 }
