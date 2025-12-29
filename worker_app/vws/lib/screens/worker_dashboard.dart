@@ -172,7 +172,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
                 /// 🏷 CATEGORY LIST
                 SizedBox(
-                  height: 40,
+                  height: 45,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: categories.length,
@@ -190,18 +190,15 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                           margin: const EdgeInsets.only(right: 10),
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color:
-                            isSelected ? Colors.white : Colors.transparent,
+                            color: isSelected ? Colors.blue : Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white),
+                            border: Border.all(color: Colors.blue),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             category,
                             style: TextStyle(
-                              color: isSelected
-                                  ? const Color(0xff1E40AF)
-                                  : Colors.white,
+                              color: isSelected ? Colors.white : Colors.blue,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -210,6 +207,8 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                     },
                   ),
                 ),
+
+                const SizedBox(height: 16),
               ],
             ),
           ),
