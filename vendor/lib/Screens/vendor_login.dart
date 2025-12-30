@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/vendor_api.dart';
 import 'vendor_home.dart';
-import 'vendor_register.dart';
 
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({super.key});
@@ -204,19 +203,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                       ),
                       const SizedBox(height: 10),
                       // Register button
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const VendorRegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Don't have an account? Register",
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
