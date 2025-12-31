@@ -25,7 +25,9 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     super.dispose();
   }
 
-  // Email validation
+  // =============================
+  // VALIDATIONS
+  // =============================
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) return "Enter email";
     final emailRegex =
@@ -34,13 +36,15 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     return null;
   }
 
-  // Password validation
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return "Enter password";
     if (value.length < 6) return "Password must be at least 6 characters";
     return null;
   }
 
+  // =============================
+  // LOGIN FUNCTION (FIXED)
+  // =============================
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -56,23 +60,27 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       final status = response["status"];
       final body = response["body"];
 
-      if (status == 200 && body != null) {
-        // Extract values from backend
-        final vendorId = body["id"] ?? body["Id"];
-        final name = body["name"] ?? body["Name"];
-        final email = body["email"] ?? body["Email"];
-        final token = body["token"];
+      print("LOGIN STATUS: $status");
+      print("LOGIN BODY: $body");
+
+      if (status == 200 && body is Map<String, dynamic>) {
+        // ✅ MATCH BACKEND RESPONSE KEYS
+        final int? vendorId = body["vendorId"];
+        final String? vendorName = body["vendorName"];
+        final String? token = body["token"];
+        final String? role = body["role"];
 
         if (vendorId == null || token == null) {
-          throw Exception("Invalid response from server");
+          throw Exception("Invalid login response from server");
         }
 
-        // Save data locally
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+        // SAVE LOCALLY
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setInt("vendor_id", vendorId);
-        await prefs.setString("vendor_name", name ?? "Vendor Name");
-        await prefs.setString("vendor_email", email ?? "");
+        await prefs.setString("vendor_name", vendorName ?? "");
+        await prefs.setString("vendor_email", emailCtrl.text.trim());
         await prefs.setString("vendor_token", token);
+        await prefs.setString("role", role ?? "Vendor");
 
         if (!mounted) return;
 
@@ -89,13 +97,11 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
         );
       } else {
         String message = "Login failed";
-        try {
-          // Try parsing error message from backend
-          final bodyJson = body is String ? body : body.toString();
-          message = bodyJson.contains("Invalid")
-              ? "Invalid email or password"
-              : message;
-        } catch (_) {}
+
+        if (body is String && body.contains("Invalid")) {
+          message = "Invalid email or password";
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
@@ -103,7 +109,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Network or server error: $e"),
+          content: Text("Error: $e"),
           backgroundColor: Colors.red,
         ),
       );
@@ -112,6 +118,9 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     }
   }
 
+  // =============================
+  // UI
+  // =============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,7 +155,8 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Email field
+
+                      // EMAIL
                       TextFormField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -158,7 +168,8 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         validator: validateEmail,
                       ),
                       const SizedBox(height: 16),
-                      // Password field
+
+                      // PASSWORD
                       TextFormField(
                         controller: passwordCtrl,
                         obscureText: isPasswordHidden,
@@ -180,13 +191,15 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         validator: validatePassword,
                       ),
                       const SizedBox(height: 20),
-                      // Login button
+
+                      // LOGIN BUTTON
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: isLoading ? null : login,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -201,9 +214,6 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      // Register button
-
                     ],
                   ),
                 ),

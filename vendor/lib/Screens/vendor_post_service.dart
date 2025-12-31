@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../Models/service_request.dart';
 import '../services/service_api.dart';
 
@@ -17,6 +19,10 @@ class _PostServicePageState extends State<PostServicePage> {
   String selectedCategory = "";
   bool isLoading = false;
 
+  // ✅ REQUIRED
+  File? selectedImage;
+  final ImagePicker picker = ImagePicker();
+
   final List<String> categories = [
     "Cleaning",
     "Plumbing",
@@ -24,6 +30,16 @@ class _PostServicePageState extends State<PostServicePage> {
     "Painting",
     "Carpentry",
   ];
+
+  // ✅ IMAGE PICKER
+  Future<void> pickImage() async {
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        selectedImage = File(picked.path);
+      });
+    }
+  }
 
   Future<void> publishService() async {
     if (_titleController.text.isEmpty ||
@@ -38,11 +54,19 @@ class _PostServicePageState extends State<PostServicePage> {
     setState(() => isLoading = true);
 
     final service = ServiceRequest(
-      serviceName: _titleController.text,
+      serviceName: _titleController.text.trim(),
+      category: selectedCategory,
       price: double.parse(_priceController.text),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
     );
 
-    final success = await ServiceApi.addService(service);
+    // ✅ THIS IS THE FIX (2 ARGUMENTS)
+    final success = await ServiceApi.addService(
+      service,
+      selectedImage,
+    );
 
     setState(() => isLoading = false);
 
@@ -50,7 +74,7 @@ class _PostServicePageState extends State<PostServicePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Service Published Successfully")),
       );
-      Navigator.pop(context, true); // return success
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to publish service")),
@@ -73,11 +97,9 @@ class _PostServicePageState extends State<PostServicePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// SERVICE TITLE
-            const Text(
-              "Service Title",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+
+            const Text("Service Title",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _titleController,
@@ -89,37 +111,26 @@ class _PostServicePageState extends State<PostServicePage> {
 
             const SizedBox(height: 20),
 
-            /// CATEGORY
-            const Text(
-              "Category",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Category",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: selectedCategory.isEmpty ? null : selectedCategory,
               items: categories
-                  .map(
-                    (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e),
-                ),
-              )
+                  .map((e) =>
+                  DropdownMenuItem(value: e, child: Text(e)))
                   .toList(),
               onChanged: (value) {
                 setState(() => selectedCategory = value!);
               },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              decoration:
+              const InputDecoration(border: OutlineInputBorder()),
             ),
 
             const SizedBox(height: 20),
 
-            /// DESCRIPTION (UI only)
-            const Text(
-              "Description",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Description",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _descriptionController,
@@ -132,11 +143,8 @@ class _PostServicePageState extends State<PostServicePage> {
 
             const SizedBox(height: 20),
 
-            /// PRICE
-            const Text(
-              "Price",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text("Price",
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _priceController,
@@ -147,9 +155,27 @@ class _PostServicePageState extends State<PostServicePage> {
               ),
             ),
 
+            const SizedBox(height: 20),
+
+            // ✅ IMAGE PICKER UI
+            ElevatedButton.icon(
+              onPressed: pickImage,
+              icon: const Icon(Icons.image),
+              label: const Text("Select Image"),
+            ),
+
+            if (selectedImage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Image.file(
+                  selectedImage!,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
+              ),
+
             const SizedBox(height: 30),
 
-            /// PUBLISH BUTTON
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

@@ -47,14 +47,18 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     }
   }
 
-  /// Convert API model → UI model
+  // =========================
+  // API → UI mapper
+  // =========================
   Service _mapApiToUi(ServiceRequest apiService) {
     return Service(
       title: apiService.serviceName,
-      category: "General", // backend not sending category yet
+      category: apiService.category,
       price: apiService.price.toInt(),
-      rating: 4.5, // default rating for now
-      imagePath: "assets/images/cleaning.png", // default image
+      rating: 4.5,
+      imagePath: apiService.imageUrl != null
+          ? "http://10.141.25.37:5244${apiService.imageUrl}"
+          : "assets/images/cleaning.png",
     );
   }
 
@@ -78,7 +82,6 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           const Text(
             "Hello, Vendor 👋",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -126,9 +129,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filteredServices.isEmpty
-                ? const Center(
-              child: Text("No services found"),
-            )
+                ? const Center(child: Text("No services found"))
                 : ListView(
               children: filteredServices
                   .map((s) => ServiceCard(service: s))
