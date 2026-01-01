@@ -2,17 +2,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class VendorApi {
-  // 🔴 IMPORTANT:
-  // Use the SAME IP + PORT where Swagger opens on your PHONE browser
-  // Example: http://192.168.1.5:5000
-  static const String _base =
-      "http://10.141.25.37:5244"; // 🔁 CHANGE PORT IF NEEDED
+  // 🔴 IMPORTANT
+  // This MUST be the same IP + PORT where Swagger opens
+  // on your PHONE browser
+  static const String _baseUrl = "http://10.141.25.233:5244";
 
-  static const String baseUrl = "$_base/api/vendor";
+  static const String vendorBase = "$_baseUrl/api/vendor";
 
-  // ============================
+  // ===========================
   // ✅ REGISTER VENDOR
-  // ============================
+  // ===========================
   static Future<Map<String, dynamic>> registerVendor({
     required String name,
     required String email,
@@ -22,11 +21,9 @@ class VendorApi {
     required String address,
   }) async {
     try {
-      final url = Uri.parse("$baseUrl/register");
-
       final response = await http.post(
-        url,
-        headers: {
+        Uri.parse("$vendorBase/register"),
+        headers: const {
           "Content-Type": "application/json",
         },
         body: jsonEncode({
@@ -55,19 +52,17 @@ class VendorApi {
     }
   }
 
-  // ============================
+  // ===========================
   // 🔐 LOGIN VENDOR
-  // ============================
+  // ===========================
   static Future<Map<String, dynamic>> loginVendor({
     required String email,
     required String password,
   }) async {
     try {
-      final url = Uri.parse("$baseUrl/login");
-
       final response = await http.post(
-        url,
-        headers: {
+        Uri.parse("$vendorBase/login"),
+        headers: const {
           "Content-Type": "application/json",
         },
         body: jsonEncode({
@@ -80,19 +75,55 @@ class VendorApi {
       print("LOGIN BODY: ${response.body}");
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
         return {
           "status": 200,
-          "body": data, // JSON map
+          "body": data, // ✅ JSON MAP
         };
       } else {
         return {
           "status": response.statusCode,
-          "body": response.body, // error string
+          "body": response.body, // ❌ string error
         };
       }
     } catch (e) {
       print("LOGIN ERROR: $e");
+      return {
+        "status": 500,
+        "body": "Network error: $e",
+      };
+    }
+  }
+
+  // ===========================
+  // 🔒 GET VENDOR PROFILE
+  // ===========================
+  static Future<Map<String, dynamic>> getProfile(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$vendorBase/profile"),
+        headers: {
+          "Authorization": "Bearer $token", // ✅ SINGLE SPACE
+          "Accept": "application/json",
+        },
+      );
+
+      print("PROFILE STATUS: ${response.statusCode}");
+      print("PROFILE BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return {
+          "status": 200,
+          "body": jsonDecode(response.body),
+        };
+      } else {
+        return {
+          "status": response.statusCode,
+          "body": response.body,
+        };
+      }
+    } catch (e) {
       return {
         "status": 500,
         "body": "Network error: $e",

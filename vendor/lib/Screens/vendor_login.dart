@@ -26,24 +26,24 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
   }
 
   // =============================
-  // VALIDATIONS
+  // VALIDATION
   // =============================
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) return "Enter email";
-    final emailRegex =
+    final regex =
     RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegex.hasMatch(value)) return "Enter valid email";
+    if (!regex.hasMatch(value)) return "Enter valid email";
     return null;
   }
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return "Enter password";
-    if (value.length < 6) return "Password must be at least 6 characters";
+    if (value.length < 6) return "Minimum 6 characters";
     return null;
   }
 
   // =============================
-  // LOGIN FUNCTION (FIXED)
+  // LOGIN (FINAL FIX)
   // =============================
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -61,12 +61,13 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       final body = response["body"];
 
       print("LOGIN STATUS: $status");
+      print("LOGIN BODY TYPE: ${body.runtimeType}");
       print("LOGIN BODY: $body");
 
       if (status == 200 && body is Map<String, dynamic>) {
-        // ✅ MATCH BACKEND RESPONSE KEYS
         final int? vendorId = body["vendorId"];
         final String? vendorName = body["vendorName"];
+        final String? vendorEmail = body["vendorEmail"];
         final String? token = body["token"];
         final String? role = body["role"];
 
@@ -78,7 +79,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt("vendor_id", vendorId);
         await prefs.setString("vendor_name", vendorName ?? "");
-        await prefs.setString("vendor_email", emailCtrl.text.trim());
+        await prefs.setString("vendor_email", vendorEmail ?? "");
         await prefs.setString("vendor_token", token);
         await prefs.setString("role", role ?? "Vendor");
 
@@ -103,7 +104,10 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -167,6 +171,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                         validator: validateEmail,
                       ),
+
                       const SizedBox(height: 16),
 
                       // PASSWORD
@@ -190,6 +195,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                         validator: validatePassword,
                       ),
+
                       const SizedBox(height: 20),
 
                       // LOGIN BUTTON

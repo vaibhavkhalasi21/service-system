@@ -4,8 +4,6 @@ class ServiceRequest {
   final String category;
   final double price;
   final String? description;
-
-  // ✅ ADD THIS
   final String? imageUrl;
 
   ServiceRequest({
@@ -21,21 +19,10 @@ class ServiceRequest {
     return ServiceRequest(
       id: json['id'],
       serviceName: json['serviceName'],
-      category: json['category'] ?? "General",
+      category: json['category'],
       price: (json['price'] as num).toDouble(),
       description: json['description'],
-      imageUrl: json['imageUrl'], // ✅ NOW EXISTS
+      imageUrl: json['imageUrl'],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "serviceName": serviceName,
-      "category": category,
-      "price": price,
-      if (description != null) "description": description,
-      // ❌ imageUrl is NOT sent from Flutter
-      // Backend generates it after upload
-    };
   }
 }
