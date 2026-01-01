@@ -4386,23 +4386,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Dell\\.nuget\\packages\\": {},
+    "C:\\Users\\AYUSH VARIYA\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\ServiceBooking\\VendorWorkerAPI\\VendorWorkerAPI\\VendorWorkerAPI.csproj",
+      "projectUniqueName": "D:\\Backend\\VendorWorkerAPI\\VendorWorkerAPI\\VendorWorkerAPI.csproj",
       "projectName": "VendorWorkerAPI",
-      "projectPath": "D:\\ServiceBooking\\VendorWorkerAPI\\VendorWorkerAPI\\VendorWorkerAPI.csproj",
-      "packagesPath": "C:\\Users\\Dell\\.nuget\\packages\\",
-      "outputPath": "D:\\ServiceBooking\\VendorWorkerAPI\\VendorWorkerAPI\\obj\\",
+      "projectPath": "D:\\Backend\\VendorWorkerAPI\\VendorWorkerAPI\\VendorWorkerAPI.csproj",
+      "packagesPath": "C:\\Users\\AYUSH VARIYA\\.nuget\\packages\\",
+      "outputPath": "D:\\Backend\\VendorWorkerAPI\\VendorWorkerAPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\AYUSH VARIYA\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4411,7 +4411,6 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

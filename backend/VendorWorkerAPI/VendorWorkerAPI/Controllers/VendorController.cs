@@ -4,8 +4,6 @@ using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 using VendorWorkerAPI.Models.DTOs;
 using VendorWorkerAPI.Services;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace VendorWorkerAPI.Controllers
 {
@@ -25,16 +23,23 @@ namespace VendorWorkerAPI.Controllers
         // ================= REGISTER =================
         [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register(VendorRegisterDto dto)
+        public IActionResult Register([FromBody] VendorRegisterDto dto)
         {
-            if (_context.Vendors.Any(v => v.Email == dto.Email))
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            bool exists = _context.Vendors.Any(v => v.Email == dto.Email);
+            if (exists)
                 return BadRequest("Email already exists");
 
             var vendor = new Vendor
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                PasswordHash = HashPassword(dto.Password),
+
+                // ✅ BCrypt HASH (FIXED)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+
                 Phone = dto.Phone,
                 ServiceType = dto.ServiceType,
                 Address = dto.Address,
@@ -44,31 +49,47 @@ namespace VendorWorkerAPI.Controllers
             _context.Vendors.Add(vendor);
             _context.SaveChanges();
 
-            return Ok("Vendor registered successfully");
+            return Ok(new
+            {
+                message = "Vendor registered successfully"
+            });
         }
 
         // ================= LOGIN =================
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login(VendorLoginDto dto)
+        public IActionResult Login([FromBody] VendorLoginDto dto)
         {
-            var hash = HashPassword(dto.Password);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
+            // 1️⃣ Find vendor by email
             var vendor = _context.Vendors
-                .FirstOrDefault(v => v.Email == dto.Email && v.PasswordHash == hash);
+                .FirstOrDefault(v => v.Email == dto.Email);
 
-            if (vendor == null)
-                return Unauthorized("Invalid credentials");
-
-            var token = _jwt.GenerateToken(vendor.Id, vendor.Email, vendor.Role);
-
-            return Ok(new
+            // 2️⃣ Verify password using BCrypt
+            if (vendor == null ||
+                !BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
             {
-                token,
+                return Unauthorized("Invalid email or password");
+            }
+
+            // 3️⃣ Generate JWT
+            var token = _jwt.GenerateToken(
                 vendor.Id,
-                vendor.Name,
                 vendor.Email,
                 vendor.Role
+            );
+
+            // 4️⃣ Return response
+            return Ok(new
+            {
+                message = "Login successful",
+                token,
+                vendorId = vendor.Id,
+                vendorName = vendor.Name,
+                vendorEmail = vendor.Email,
+                role = vendor.Role
             });
         }
 
@@ -84,14 +105,6 @@ namespace VendorWorkerAPI.Controllers
                 email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
                 role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
             });
-        }
-
-        // ================= PASSWORD HASH =================
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToHexString(bytes).ToLower();
         }
     }
 }

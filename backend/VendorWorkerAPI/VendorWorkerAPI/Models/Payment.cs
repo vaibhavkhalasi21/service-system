@@ -8,17 +8,22 @@ namespace VendorWorkerAPI.Models
         [Key]
         public int PaymentId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "User name is required")]
+        [StringLength(100, ErrorMessage = "User name cannot exceed 100 characters")]
         public string UserName { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Amount is required")]
+        [Range(1, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
         public decimal Amount { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Payment method is required")]
+        [StringLength(50)]
         public string PaymentMethod { get; set; }   // UPI, Card, Cash
 
-        public string Status { get; set; }          // Success, Failed
+        [StringLength(20)]
+        public string Status { get; set; } = "Success";   // Success / Failed
 
+        [Required]
         public DateTime PaymentDate { get; set; } = DateTime.Now;
     }
 }

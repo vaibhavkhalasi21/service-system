@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/vendor_api.dart';
 import 'vendor_home.dart';
-import 'vendor_register.dart';
 
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({super.key});
@@ -26,22 +25,26 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     super.dispose();
   }
 
-  // Email validation
+  // =============================
+  // VALIDATION
+  // =============================
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) return "Enter email";
-    final emailRegex =
+    final regex =
     RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegex.hasMatch(value)) return "Enter valid email";
+    if (!regex.hasMatch(value)) return "Enter valid email";
     return null;
   }
 
-  // Password validation
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return "Enter password";
-    if (value.length < 6) return "Password must be at least 6 characters";
+    if (value.length < 6) return "Minimum 6 characters";
     return null;
   }
 
+  // =============================
+  // LOGIN (FINAL FIX)
+  // =============================
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -57,23 +60,28 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       final status = response["status"];
       final body = response["body"];
 
-      if (status == 200 && body != null) {
-        // Extract values from backend
-        final vendorId = body["id"] ?? body["Id"];
-        final name = body["name"] ?? body["Name"];
-        final email = body["email"] ?? body["Email"];
-        final token = body["token"];
+      print("LOGIN STATUS: $status");
+      print("LOGIN BODY TYPE: ${body.runtimeType}");
+      print("LOGIN BODY: $body");
+
+      if (status == 200 && body is Map<String, dynamic>) {
+        final int? vendorId = body["vendorId"];
+        final String? vendorName = body["vendorName"];
+        final String? vendorEmail = body["vendorEmail"];
+        final String? token = body["token"];
+        final String? role = body["role"];
 
         if (vendorId == null || token == null) {
-          throw Exception("Invalid response from server");
+          throw Exception("Invalid login response from server");
         }
 
-        // Save data locally
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+        // SAVE LOCALLY
+        final prefs = await SharedPreferences.getInstance();
         await prefs.setInt("vendor_id", vendorId);
-        await prefs.setString("vendor_name", name ?? "Vendor Name");
-        await prefs.setString("vendor_email", email ?? "");
+        await prefs.setString("vendor_name", vendorName ?? "");
+        await prefs.setString("vendor_email", vendorEmail ?? "");
         await prefs.setString("vendor_token", token);
+        await prefs.setString("role", role ?? "Vendor");
 
         if (!mounted) return;
 
@@ -90,21 +98,22 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
         );
       } else {
         String message = "Login failed";
-        try {
-          // Try parsing error message from backend
-          final bodyJson = body is String ? body : body.toString();
-          message = bodyJson.contains("Invalid")
-              ? "Invalid email or password"
-              : message;
-        } catch (_) {}
+
+        if (body is String && body.contains("Invalid")) {
+          message = "Invalid email or password";
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Network or server error: $e"),
+          content: Text("Error: $e"),
           backgroundColor: Colors.red,
         ),
       );
@@ -113,6 +122,9 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     }
   }
 
+  // =============================
+  // UI
+  // =============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +159,8 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Email field
+
+                      // EMAIL
                       TextFormField(
                         controller: emailCtrl,
                         keyboardType: TextInputType.emailAddress,
@@ -158,8 +171,10 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                         validator: validateEmail,
                       ),
+
                       const SizedBox(height: 16),
-                      // Password field
+
+                      // PASSWORD
                       TextFormField(
                         controller: passwordCtrl,
                         obscureText: isPasswordHidden,
@@ -180,14 +195,17 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                         ),
                         validator: validatePassword,
                       ),
+
                       const SizedBox(height: 20),
-                      // Login button
+
+                      // LOGIN BUTTON
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: isLoading ? null : login,
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -200,21 +218,6 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
                             "Login",
                             style: TextStyle(fontSize: 16),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      // Register button
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const VendorRegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          "Don't have an account? Register",
                         ),
                       ),
                     ],

@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 using VendorWorkerAPI.Services;
@@ -25,23 +26,38 @@ namespace VendorWorkerAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAdmins()
         {
-            var admins = await _context.Admins.ToListAsync();
+            var admins = await _context.Admins
+                .Select(a => new
+                {
+                    a.AdminId,
+                    a.Name,
+                    a.Email,
+                    a.Role
+                })
+                .ToListAsync();
+
             return Ok(admins);
         }
 
         // ===================== REGISTER ADMIN =====================
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] Admin admin)
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterAdminDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            bool exists = await _context.Admins.AnyAsync(a => a.Email == admin.Email);
+            bool exists = await _context.Admins.AnyAsync(a => a.Email == dto.Email);
             if (exists)
                 return BadRequest("Admin already exists");
 
-            admin.Role = "Admin"; // ✅ NOW VALID
+            var admin = new Admin
+            {
+                Name = dto.Name,
+                Email = dto.Email,
+                PasswordHash = PasswordHasher.HashPassword(dto.Password),
+                Role = "Admin"
+            };
 
             _context.Admins.Add(admin);
             await _context.SaveChangesAsync();
@@ -52,12 +68,16 @@ namespace VendorWorkerAPI.Controllers
         // ===================== LOGIN ADMIN =====================
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAdmin([FromBody] Admin login)
+        public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
         {
-            var admin = await _context.Admins
-                .FirstOrDefaultAsync(a => a.Email == login.Email && a.Password == login.Password);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (admin == null)
+            var admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Email == dto.Email);
+
+            if (admin == null ||
+                !PasswordHasher.VerifyPassword(dto.Password, admin.PasswordHash))
                 return Unauthorized("Invalid email or password");
 
             var token = _jwt.GenerateToken(
@@ -68,11 +88,12 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(new
             {
-                Message = "Admin login successful",
+                Message = "Login successful",
                 Token = token,
-                AdminId = admin.AdminId,
-                Name = admin.Name,
-                Email = admin.Email
+                admin.AdminId,
+                admin.Name,
+                admin.Email,
+                admin.Role
             });
         }
 

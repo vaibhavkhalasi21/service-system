@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/booking_request.dart';
 import 'vendor_login.dart';
 import 'booking_request_page.dart';
+import 'vendor_post_service.dart';
 
 class VendorProfileTab extends StatefulWidget {
   const VendorProfileTab({super.key});
@@ -145,7 +147,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PROFILE CARD
+          /// PROFILE CARD
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -190,7 +192,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 24),
 
-          // BOOKING REQUESTS
+          /// VIEW APPLICATIONS
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -217,9 +219,36 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
             ),
           ),
 
+          const SizedBox(height: 16),
+
+          /// POST NEW SERVICE
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text("Post New Service"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PostServicePage(),
+                  ),
+                );
+              },
+            ),
+          ),
+
           const SizedBox(height: 30),
 
-          // LOGOUT
+          /// LOGOUT
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(

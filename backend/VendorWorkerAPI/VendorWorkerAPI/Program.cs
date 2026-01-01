@@ -32,7 +32,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
             ),
 
-            // ?? IMPORTANT
             ClockSkew = TimeSpan.Zero
         };
     });
@@ -40,13 +39,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // ================= AUTHORIZATION =================
 builder.Services.AddAuthorization();
 
+// ================= SERVICES =================
 builder.Services.AddScoped<JwtTokenService>();
-
 
 // ================= CONTROLLERS =================
 builder.Services.AddControllers();
 
-// ================= SWAGGER + JWT =================
+// ================= SWAGGER =================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -56,7 +55,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
-    // ?? JWT Support in Swagger
+    // ?? JWT IN SWAGGER
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -64,7 +63,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter: Bearer {your JWT token}"
+        Description = "Enter: Bearer {JWT token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -85,18 +84,35 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ================= MIDDLEWARE =================
+// ================= ?? SWAGGER PROTECTION =================
 if (app.Environment.IsDevelopment())
 {
+    // ? Swagger UI opens but API execution requires JWT
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path.StartsWithSegments("/swagger") &&
+            !context.Request.Path.Value.Contains("swagger.json"))
+        {
+            // Allow Swagger UI page
+            await next();
+            return;
+        }
+
+        await next();
+    });
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// ================= MIDDLEWARE ORDER =================
 app.UseHttpsRedirection();
 
-// ?? ORDER IS CRITICAL
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseStaticFiles();
+
+app.UseAuthentication();   // ?? FIRST
+app.UseAuthorization();    // ?? SECOND
+
 
 app.MapControllers();
 

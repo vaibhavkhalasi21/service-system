@@ -7,16 +7,19 @@ namespace VendorWorkerAPI.Models
         [Key]
         public int AdminId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(50, MinimumLength = 3)]
         public string Name { get; set; }
 
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress]
+        [StringLength(100)]
         public string Email { get; set; }
 
+        // 🔐 Store HASHED password
         [Required]
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
 
-        // ✅ ADD THIS PROPERTY (FOR JWT)
         [Required]
         public string Role { get; set; } = "Admin";
     }

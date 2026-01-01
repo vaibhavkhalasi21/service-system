@@ -27,12 +27,13 @@ namespace VendorWorkerAPI.Controllers
         // =============================
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<IActionResult> Register(WorkerRegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] WorkerRegisterDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (await _context.Workers.AnyAsync(w => w.Email == dto.Email))
+            bool exists = await _context.Workers.AnyAsync(w => w.Email == dto.Email);
+            if (exists)
                 return BadRequest(new { message = "Email already registered" });
 
             var worker = new Worker
@@ -61,8 +62,11 @@ namespace VendorWorkerAPI.Controllers
         // =============================
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> Login(WorkerLoginDto dto)
+        public async Task<IActionResult> Login([FromBody] WorkerLoginDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var worker = await _context.Workers
                 .FirstOrDefaultAsync(w => w.Email == dto.Email);
 
@@ -75,7 +79,7 @@ namespace VendorWorkerAPI.Controllers
             var token = _jwt.GenerateToken(
                 worker.Id,
                 worker.Email,
-                worker.Role
+                "Worker"
             );
 
             return Ok(new
@@ -84,7 +88,7 @@ namespace VendorWorkerAPI.Controllers
                 token,
                 workerId = worker.Id,
                 workerName = worker.Name,
-                role = worker.Role
+                role = "Worker"
             });
         }
 
@@ -95,15 +99,11 @@ namespace VendorWorkerAPI.Controllers
         [HttpGet("profile")]
         public IActionResult Profile()
         {
-            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var role = User.FindFirstValue(ClaimTypes.Role);
-
             return Ok(new
             {
-                workerId = id,
-                email,
-                role
+                workerId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+                email = User.FindFirstValue(ClaimTypes.Email),
+                role = User.FindFirstValue(ClaimTypes.Role)
             });
         }
 
@@ -114,7 +114,18 @@ namespace VendorWorkerAPI.Controllers
         [HttpGet("all")]
         public async Task<IActionResult> GetAllWorkers()
         {
-            return Ok(await _context.Workers.ToListAsync());
+            var workers = await _context.Workers
+                .Select(w => new
+                {
+                    w.Id,
+                    w.Name,
+                    w.Email,
+                    w.Phone,
+                    w.Skill
+                })
+                .ToListAsync();
+
+            return Ok(workers);
         }
     }
 }
