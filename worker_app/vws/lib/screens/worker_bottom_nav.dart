@@ -19,19 +19,16 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
   void initState() {
     super.initState();
     _screens = [
-      const WorkerDashboard(),
+      WorkerDashboard(),
       ServicesScreen(vsync: this), // ✅ vsync pass
-      const WorkerProfile(),
+      WorkerProfile(),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: _buildScreen(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -46,4 +43,18 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
       ),
     );
   }
+
+  Widget _buildScreen() {
+    switch (_currentIndex) {
+      case 0:
+        return WorkerDashboard();
+      case 1:
+        return ServicesScreen(vsync: this);
+      case 2:
+        return WorkerProfile(); // 🔥 yahan rebuild hoga
+      default:
+        return WorkerDashboard();
+    }
+  }
+
 }

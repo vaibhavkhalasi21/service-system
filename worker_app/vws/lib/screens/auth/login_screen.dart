@@ -43,10 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
       password: passwordController.text.trim(),
     );
 
+    print("LOGIN RESPONSE: $workerData");
+
+    if (!mounted) return;
+
     setState(() => _loading = false);
 
     if (workerData != null) {
+      // ✅ SAVE SESSION
       WorkerSession.currentWorker = Worker.fromJson(workerData);
+
+      // ✅ GO TO DASHBOARD
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const WorkerBottomNav()),
@@ -54,10 +61,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid email or password")),
+        const SnackBar(
+          content: Text("Invalid email or password"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
