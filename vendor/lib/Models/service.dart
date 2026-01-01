@@ -1,4 +1,5 @@
 class Service {
+  int id;
   String title;
   String category;
   int price;
@@ -6,6 +7,7 @@ class Service {
   String imagePath;
 
   Service({
+    required this.id,
     required this.title,
     required this.category,
     required this.price,

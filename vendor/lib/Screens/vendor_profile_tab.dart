@@ -40,6 +40,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     loadVendorData();
   }
 
+  // =============================
+  // LOAD SESSION DATA
+  // =============================
   Future<void> loadVendorData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -48,6 +51,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     });
   }
 
+  // =============================
+  // SAVE PROFILE DATA
+  // =============================
   Future<void> saveVendorData(String name, String email) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString("vendor_name", name);
@@ -59,6 +65,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     });
   }
 
+  // =============================
+  // LOGOUT (CLEAR SESSION)
+  // =============================
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -70,6 +79,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     );
   }
 
+  // =============================
+  // EDIT PROFILE UI
+  // =============================
   void openEditProfile() {
     final nameController = TextEditingController(text: vendorName);
     final emailController = TextEditingController(text: vendorEmail);
@@ -96,6 +108,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
@@ -103,7 +116,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
                   border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 12),
+
               TextField(
                 controller: emailController,
                 decoration: const InputDecoration(
@@ -111,7 +126,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
                   border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -140,6 +157,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     );
   }
 
+  // =============================
+  // UI
+  // =============================
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -147,7 +167,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// PROFILE CARD
+          // PROFILE CARD
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -192,7 +212,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 24),
 
-          /// VIEW APPLICATIONS
+          // VIEW APPLICATIONS
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -221,7 +241,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 16),
 
-          /// POST NEW SERVICE
+          // POST SERVICE
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -248,7 +268,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 30),
 
-          /// LOGOUT
+          // LOGOUT
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(

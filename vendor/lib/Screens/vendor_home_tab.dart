@@ -28,6 +28,8 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     "Painter"
   ];
 
+  static const String baseUrl = "http://10.141.25.37:5244";
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +37,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   Future<void> fetchServices() async {
+    setState(() => isLoading = true);
     try {
       final apiServices = await ServiceApi.getServices();
 
@@ -42,7 +45,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
         services = apiServices.map(_mapApiToUi).toList();
         isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       setState(() => isLoading = false);
     }
   }
@@ -50,26 +53,25 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   // =========================
   // API → UI mapper
   // =========================
-  Service _mapApiToUi(ServiceRequest apiService) {
+  Service _mapApiToUi(ServiceRequest api) {
     return Service(
-      title: apiService.serviceName,
-      category: apiService.category,
-      price: apiService.price.toInt(),
+      id: api.id, // 🔥 REQUIRED
+      title: api.serviceName,
+      category: api.category,
+      price: api.price.toInt(),
       rating: 4.5,
-      imagePath: apiService.imageUrl != null
-          ? "http://10.141.25.37:5244${apiService.imageUrl}"
+      imagePath: api.imageUrl != null
+          ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // CATEGORY FILTER
     List<Service> filteredServices = selectedCategory == "All"
         ? services
         : services.where((s) => s.category == selectedCategory).toList();
 
-    // SEARCH FILTER
     if (searchQuery.isNotEmpty) {
       filteredServices = filteredServices
           .where((s) =>
@@ -90,9 +92,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           const SizedBox(height: 16),
 
           TextField(
-            onChanged: (value) {
-              setState(() => searchQuery = value);
-            },
+            onChanged: (v) => setState(() => searchQuery = v),
             decoration: InputDecoration(
               hintText: "Search services...",
               prefixIcon: const Icon(Icons.search),
@@ -132,7 +132,10 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
                 ? const Center(child: Text("No services found"))
                 : ListView(
               children: filteredServices
-                  .map((s) => ServiceCard(service: s))
+                  .map((s) => ServiceCard(
+                service: s,
+                onUpdated: fetchServices, // 🔥
+              ))
                   .toList(),
             ),
           ),

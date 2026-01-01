@@ -4,8 +4,13 @@ import '../screens/manage_service_page.dart';
 
 class ServiceCard extends StatelessWidget {
   final Service service;
+  final VoidCallback onUpdated;
 
-  const ServiceCard({super.key, required this.service});
+  const ServiceCard({
+    super.key,
+    required this.service,
+    required this.onUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +21,26 @@ class ServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔥 FULL IMAGE
+          // 🔥 IMAGE
           SizedBox(
             height: 160,
             width: double.infinity,
-            child: Image.asset(
+            child: service.imagePath.startsWith("http")
+                ? Image.network(
               service.imagePath,
-              fit: BoxFit.cover, // <-- IMPORTANT
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              },
+              errorBuilder: (_, __, ___) =>
+              const Icon(Icons.broken_image, size: 40),
+            )
+                : Image.asset(
+              service.imagePath,
+              fit: BoxFit.cover,
             ),
           ),
 
@@ -55,16 +73,21 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
+                  child: const Text("Manage"),
+                  onPressed: () async {
+                    final updated = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
                             ManageServicePage(service: service),
                       ),
                     );
+
+                    // 🔥 REFRESH HOME AFTER UPDATE
+                    if (updated == true) {
+                      onUpdated();
+                    }
                   },
-                  child: const Text("Manage"),
                 ),
               ],
             ),

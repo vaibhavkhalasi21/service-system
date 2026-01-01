@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:vendor/Screens/vendor_home.dart';
-import 'package:vendor/Screens/vendor_register.dart';
-import 'Screens/vendor_login.dart';
-import 'Screens/vendor_register.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const VendorApp());
+import 'Screens/vendor_home.dart';
+import 'Screens/vendor_login.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final bool isLoggedIn = prefs.containsKey("vendor_token");
+
+  runApp(VendorApp(isLoggedIn: isLoggedIn));
 }
 
 class VendorApp extends StatelessWidget {
-  const VendorApp({super.key});
+  final bool isLoggedIn;
+
+  const VendorApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +27,9 @@ class VendorApp extends StatelessWidget {
         primarySwatch: Colors.deepPurple,
         scaffoldBackgroundColor: const Color(0xFFF6F6F6),
       ),
-      home: const VendorRegisterScreen(),
+      home: isLoggedIn
+          ? const VendorHomeScreen()
+          : const VendorLoginScreen(),
     );
   }
 }

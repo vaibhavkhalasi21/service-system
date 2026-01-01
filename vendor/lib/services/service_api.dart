@@ -2,17 +2,18 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../Models/service_request.dart';
+import '../Models/create_service_request.dart';
 
 class ServiceApi {
-  static const String baseUrl =
-      "http://10.141.25.233:5244/api/service";
+  static const String apiUrl = "http://10.141.25.37:5244/api/service";
 
   // =========================
   // GET SERVICES (PUBLIC)
   // =========================
   static Future<List<ServiceRequest>> getServices() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -23,10 +24,10 @@ class ServiceApi {
   }
 
   // =========================
-  // ADD SERVICE (JWT + IMAGE)
+  // ADD SERVICE (POST + IMAGE)
   // =========================
   static Future<bool> addService(
-      ServiceRequest service,
+      CreateServiceRequest service,
       File? image,
       ) async {
     final prefs = await SharedPreferences.getInstance();
@@ -34,13 +35,13 @@ class ServiceApi {
 
     final request = http.MultipartRequest(
       "POST",
-      Uri.parse(baseUrl),
+      Uri.parse(apiUrl),
     );
 
     // 🔐 JWT HEADER
     request.headers["Authorization"] = "Bearer $token";
 
-    // FORM FIELDS
+    // FORM DATA
     request.fields["serviceName"] = service.serviceName;
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
@@ -57,11 +58,58 @@ class ServiceApi {
     }
 
     final response = await request.send();
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
 
-    print("STATUS: ${response.statusCode}");
-    print(await response.stream.bytesToString());
+  // =========================
+  // UPDATE SERVICE (PUT + IMAGE)
+  // =========================
+  static Future<bool> updateService(
+      int serviceId,
+      ServiceRequest service,
+      File? image,
+      ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("vendor_token");
 
-    return response.statusCode == 200 ||
-        response.statusCode == 201;
+    final request = http.MultipartRequest(
+      "PUT",
+      Uri.parse("$apiUrl/$serviceId"),
+    );
+
+    // 🔐 JWT HEADER
+    request.headers["Authorization"] = "Bearer $token";
+
+    // FORM DATA
+    request.fields["serviceName"] = service.serviceName;
+    request.fields["category"] = service.category;
+    request.fields["price"] = service.price.toString();
+
+    // IMAGE (OPTIONAL)
+    if (image != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath("image", image.path),
+      );
+    }
+
+    final response = await request.send();
+    return response.statusCode == 200;
+  }
+
+  // =========================
+  // DELETE SERVICE (OPTIONAL)
+  // =========================
+  static Future<bool> deleteService(int serviceId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("vendor_token");
+
+    final response = await http.delete(
+      Uri.parse("$apiUrl/$serviceId"),
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    return response.statusCode == 200;
   }
 }

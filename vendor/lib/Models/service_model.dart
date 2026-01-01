@@ -1,4 +1,7 @@
+import 'dart:ffi';
+
 class Service {
+  final Int id;
   final String title;
   final String category;
   final int price;
@@ -6,6 +9,7 @@ class Service {
   final String imagePath;
 
   Service({
+    required this.id,
     required this.title,
     required this.category,
     required this.price,
