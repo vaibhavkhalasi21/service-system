@@ -1,0 +1,37 @@
+# ===============================
+# Visual Studio
+# ===============================
+.vs/
+**/.vs/
+*.user
+*.suo
+*.vsidx
+
+# ===============================
+# Build output
+# ===============================
+bin/
+obj/
+
+# ===============================
+# ASP.NET Core
+# ===============================
+appsettings.Development.json
+
+# Uploaded runtime files
+backend/VendorWorkerAPI/VendorWorkerAPI/wwwroot/
+backend/VendorWorkerAPI/VendorWorkerAPI/wwwroot/service-images/
+
+# ===============================
+# Flutter
+# ===============================
+.build/
+.dart_tool/
+.packages
+pubspec.lock
+
+# ===============================
+# OS
+# ===============================
+Thumbs.db
+.DS_Store

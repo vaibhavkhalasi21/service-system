@@ -6,13 +6,17 @@ namespace VendorWorkerAPI.Models.DTOs
     public class ServiceCreateDto
     {
         [Required]
-        public string ServiceName { get; set; }
+        [StringLength(150)]
+        public string ServiceName { get; set; } = null!;
+
+        [Required]
+        [StringLength(100)]
+        public string Category { get; set; } = null!;
 
         [Required]
         [Range(1, 100000)]
         public decimal Price { get; set; }
 
-        // ✅ Image file
         public IFormFile? Image { get; set; }
     }
 }

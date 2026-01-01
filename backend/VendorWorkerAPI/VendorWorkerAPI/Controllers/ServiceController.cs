@@ -25,11 +25,12 @@ namespace VendorWorkerAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetServices()
         {
-            return Ok(await _context.Services.ToListAsync());
+            var services = await _context.Services.ToListAsync();
+            return Ok(services);
         }
 
         // ===============================
-        // POST: api/service (with image)
+        // POST: api/service
         // ===============================
         [HttpPost]
         [Consumes("multipart/form-data")]
@@ -38,11 +39,8 @@ namespace VendorWorkerAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // 🔐 STEP-3 SAFETY CHECK (FIX)
             if (string.IsNullOrEmpty(_env.WebRootPath))
-            {
-                return StatusCode(500, "WebRootPath is NULL. Please create wwwroot folder.");
-            }
+                return StatusCode(500, "wwwroot folder missing");
 
             string? imagePath = null;
 
@@ -54,10 +52,8 @@ namespace VendorWorkerAPI.Controllers
                 string fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
                 string filePath = Path.Combine(uploadsFolder, fileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await dto.Image.CopyToAsync(stream);
-                }
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.Image.CopyToAsync(stream);
 
                 imagePath = "/service-images/" + fileName;
             }
@@ -65,6 +61,7 @@ namespace VendorWorkerAPI.Controllers
             var service = new Service
             {
                 ServiceName = dto.ServiceName,
+                Category = dto.Category,
                 Price = dto.Price,
                 ImageUrl = imagePath
             };
@@ -76,7 +73,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // ===============================
-        // PUT: api/service/1 (update image)
+        // PUT: api/service/{id}
         // ===============================
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
@@ -86,13 +83,8 @@ namespace VendorWorkerAPI.Controllers
             if (service == null)
                 return NotFound("Service not found");
 
-            // 🔐 STEP-3 SAFETY CHECK (FIX)
-            if (string.IsNullOrEmpty(_env.WebRootPath))
-            {
-                return StatusCode(500, "WebRootPath is NULL. Please create wwwroot folder.");
-            }
-
             service.ServiceName = dto.ServiceName;
+            service.Category = dto.Category;
             service.Price = dto.Price;
 
             if (dto.Image != null)
@@ -103,10 +95,8 @@ namespace VendorWorkerAPI.Controllers
                 string fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
                 string filePath = Path.Combine(uploadsFolder, fileName);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await dto.Image.CopyToAsync(stream);
-                }
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.Image.CopyToAsync(stream);
 
                 service.ImageUrl = "/service-images/" + fileName;
             }
@@ -116,7 +106,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // ===============================
-        // DELETE: api/service/1
+        // DELETE: api/service/{id}
         // ===============================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteService(int id)
