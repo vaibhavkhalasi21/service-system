@@ -92,9 +92,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
                     _inputField(
                       controller: experienceController,
-                      label: "Experience (years)",
+                      label: "Experience",
                       icon: Icons.work,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.text,
                       validator: (v) =>
                       v!.isEmpty ? "Experience required" : null,
                     ),

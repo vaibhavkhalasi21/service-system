@@ -2,11 +2,50 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class WorkerApi {
-  static const String baseUrl =
-      "http://10.141.25.71:5244/api/worker";
+  static const String baseUrl = "http://10.141.25.233:5244/api/worker";
 
-  /// 🔐 LOGIN
-  static Future<bool> loginWorker({
+  // =====================
+  // ✅ WORKER REGISTER
+  // =====================
+  static Future<String?> signupWorker({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    required String skill,
+    String? address,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/register"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "password": password,
+          "phone": phone,
+          "skill": skill,
+          "address": address ?? "", // ✅ safe
+        }),
+      );
+
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return null; // ✅ SUCCESS
+      } else {
+        return response.body; // ❌ backend error
+      }
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  // =====================
+  // 🔐 WORKER LOGIN
+  // =====================
+  static Future<Map<String, dynamic>?> loginWorkerData({
     required String email,
     required String password,
   }) async {
@@ -20,47 +59,12 @@ class WorkerApi {
         }),
       );
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
     } catch (e) {
-      return false;
+      return null;
     }
-  }
-
-  /// 📝 REGISTER (FIXED)
-  static Future<bool> signupWorker({
-    required String name,
-    required String email,
-    required String password,
-    required String phone,
-    required String category,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse("$baseUrl/register"), // ✅ FIXED
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "name": name,
-          "email": email,
-          "password": password,
-          "phone": phone,
-          "category": category,
-        }),
-      );
-
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
-      return response.statusCode == 200;
-    } catch (e) {
-      print("ERROR: $e");
-      return false;
-    }
-  }
-
-  static Future<Map<String, dynamic>?> loginWorkerData(
-      {required String email, required String password}) async {
-    // Call your API and get JSON
-    // return json if success, null if fail
   }
 }
-

@@ -9,6 +9,7 @@ class PaymentStatusScreen extends StatefulWidget {
 
 class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
   String paymentMethod = "online";
+  final amountCtrl = TextEditingController(text: "0");
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +33,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     "Application Fee",
                     style: TextStyle(
                       fontSize: 16,
@@ -41,8 +42,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                     ),
                   ),
                   Text(
-                    "",
-                    style: TextStyle(
+                    "₹ ${amountCtrl.text}",
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.deepPurple,
@@ -50,6 +51,33 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // 💰 Enter Amount
+            const Text(
+              "Enter Amount",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            TextField(
+              controller: amountCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: "₹ ",
+                hintText: "Enter amount",
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (_) {
+                setState(() {}); // update summary amount
+              },
             ),
 
             const SizedBox(height: 25),
@@ -88,9 +116,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () {
-                  _showResultDialog();
-                },
+                onPressed: _handlePay,
                 child: Text(
                   paymentMethod == "online"
                       ? "Pay Now"
@@ -134,6 +160,18 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     );
   }
 
+  // ✅ Handle Pay Button
+  void _handlePay() {
+    if (amountCtrl.text.isEmpty || amountCtrl.text == "0") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter valid amount")),
+      );
+      return;
+    }
+
+    _showResultDialog();
+  }
+
   // ✅ Result Dialog
   void _showResultDialog() {
     showDialog(
@@ -158,8 +196,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
         ),
         content: Text(
           paymentMethod == "online"
-              ? "Your payment was completed successfully."
-              : "Please pay the amount directly to the vendor.",
+              ? "₹${amountCtrl.text} payment completed successfully."
+              : "Please pay ₹${amountCtrl.text} directly to the vendor.",
         ),
         actions: [
           TextButton(

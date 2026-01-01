@@ -15,6 +15,8 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
   final emailCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
+  final addressCtrl = TextEditingController();
+
 
   bool isPasswordHidden = true;
   bool isLoading = false;
@@ -34,8 +36,10 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
     emailCtrl.dispose();
     phoneCtrl.dispose();
     passwordCtrl.dispose();
+    addressCtrl.dispose();
     super.dispose();
   }
+
 
   bool _isValidEmail(String email) {
     return RegExp(
@@ -63,19 +67,21 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
     FocusScope.of(context).unfocus();
     setState(() => isLoading = true);
 
-    final success = await WorkerApi.signupWorker(
+    final error = await WorkerApi.signupWorker(
       name: nameCtrl.text.trim(),
       email: emailCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       phone: phoneCtrl.text.trim(),
-      category: selectedCategory!,
+      skill: selectedCategory!,
+      address: addressCtrl.text.trim(),
     );
 
     if (!mounted) return;
 
     setState(() => isLoading = false);
 
-    if (success) {
+    if (error == null) {
+      // ✅ SUCCESS
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Worker Registered Successfully"),
@@ -88,14 +94,16 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } else {
+      // ❌ REAL BACKEND ERROR
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Registration failed"),
+        SnackBar(
+          content: Text(error),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
+
 
   InputDecoration inputStyle(String label, IconData icon) {
     return InputDecoration(
@@ -186,9 +194,15 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
                           counterText: "",
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().length != 10) return "Phone must be 10 digits";
+                          if (v == null || v.isEmpty) {
+                            return "Enter phone number";
+                          }
+                          if (!RegExp(r'^[6-9]\d{9}$').hasMatch(v.trim())) {
+                            return "Enter valid Indian phone number";
+                          }
                           return null;
                         },
+
                       ),
                       const SizedBox(height: 16),
 
@@ -211,6 +225,18 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
                         validator: (v) {
                           if (v == null || v.isEmpty) return "Enter password";
                           if (!_isValidPassword(v)) return "Password must contain letters & numbers";
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // ADDRESS
+                      TextFormField(
+                        controller: addressCtrl,
+                        decoration: inputStyle("Address", Icons.location_on),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return "Enter address";
+                          }
                           return null;
                         },
                       ),
