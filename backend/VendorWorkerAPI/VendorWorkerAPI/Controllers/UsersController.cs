@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using VendorWorkerAPI.Data;
-using VendorWorkerAPI.Models;
-using VendorWorkerAPI.Services;
 using System.Security.Cryptography;
 using System.Text;
+using VendorWorkerAPI.Data;
+using VendorWorkerAPI.DTOs;
+using VendorWorkerAPI.Models;
+using VendorWorkerAPI.Models.DTOs;
+using VendorWorkerAPI.Services;
+
 
 namespace VendorWorkerAPI.Controllers
 {
@@ -23,13 +26,24 @@ namespace VendorWorkerAPI.Controllers
 
         // ================= REGISTER =================
         [HttpPost("register")]
-        public async Task<IActionResult> Register(User user)
+        public async Task<IActionResult> Register([FromBody] UserRegisterDto dto)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == user.Email))
-                return BadRequest("Email already exists");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            user.PasswordHash = HashPassword(user.PasswordHash);
-            user.Role = "Customer";
+            bool emailExists = await _context.Users
+                .AnyAsync(u => u.Email == dto.Email);
+
+            if (emailExists)
+                return BadRequest("Email already registered");
+
+            var user = new User
+            {
+                Name = dto.Name,
+                Email = dto.Email,
+                PasswordHash = HashPassword(dto.Password),
+                Role = "Customer"
+            };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -39,38 +53,40 @@ namespace VendorWorkerAPI.Controllers
 
         // ================= LOGIN =================
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest dto)
+        public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
         {
-            var hash = HashPassword(dto.Password);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            string hashedPassword = HashPassword(dto.Password);
 
             var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == dto.Email && u.PasswordHash == hash);
+                .FirstOrDefaultAsync(u =>
+                    u.Email == dto.Email &&
+                    u.PasswordHash == hashedPassword);
 
             if (user == null)
-                return Unauthorized("Invalid credentials");
+                return Unauthorized("Invalid email or password");
 
             var token = _jwt.GenerateToken(user.Id, user.Email, user.Role);
 
             return Ok(new
             {
+                message = "Login successful",
                 token,
                 user.Id,
+                user.Name,
                 user.Email,
                 user.Role
             });
         }
 
-        private string HashPassword(string password)
+        // ================= PASSWORD HASH =================
+        private static string HashPassword(string password)
         {
             using var sha = SHA256.Create();
             var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToHexString(bytes).ToLower();
         }
-    }
-
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
     }
 }

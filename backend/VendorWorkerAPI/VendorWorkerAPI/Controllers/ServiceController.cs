@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
-using Microsoft.EntityFrameworkCore;
+using VendorWorkerAPI.Models.DTOs;
 
 namespace VendorWorkerAPI.Controllers
 {
@@ -10,61 +11,123 @@ namespace VendorWorkerAPI.Controllers
     public class ServiceController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public ServiceController(AppDbContext context)
+        public ServiceController(AppDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
-        // GET all services
+        // ===============================
+        // GET: api/service
+        // ===============================
         [HttpGet]
         public async Task<IActionResult> GetServices()
         {
-            var services = await _context.Services.ToListAsync();
-            return Ok(services);
+            return Ok(await _context.Services.ToListAsync());
         }
 
-        // GET service by Id
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetService(int id)
-        {
-            var service = await _context.Services.FindAsync(id);
-            if (service == null) return NotFound();
-            return Ok(service);
-        }
-
-        // POST create service
+        // ===============================
+        // POST: api/service (with image)
+        // ===============================
         [HttpPost]
-        public async Task<IActionResult> CreateService(Service service)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateService([FromForm] ServiceCreateDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // 🔐 STEP-3 SAFETY CHECK (FIX)
+            if (string.IsNullOrEmpty(_env.WebRootPath))
+            {
+                return StatusCode(500, "WebRootPath is NULL. Please create wwwroot folder.");
+            }
+
+            string? imagePath = null;
+
+            if (dto.Image != null)
+            {
+                string uploadsFolder = Path.Combine(_env.WebRootPath, "service-images");
+                Directory.CreateDirectory(uploadsFolder);
+
+                string fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                string filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(stream);
+                }
+
+                imagePath = "/service-images/" + fileName;
+            }
+
+            var service = new Service
+            {
+                ServiceName = dto.ServiceName,
+                Price = dto.Price,
+                ImageUrl = imagePath
+            };
+
             _context.Services.Add(service);
             await _context.SaveChangesAsync();
+
             return Ok(service);
         }
 
-        // PUT update service
+        // ===============================
+        // PUT: api/service/1 (update image)
+        // ===============================
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateService(int id, Service updatedService)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateService(int id, [FromForm] ServiceCreateDto dto)
         {
             var service = await _context.Services.FindAsync(id);
-            if (service == null) return NotFound();
+            if (service == null)
+                return NotFound("Service not found");
 
-            service.ServiceName = updatedService.ServiceName;
-            service.Price = updatedService.Price;
+            // 🔐 STEP-3 SAFETY CHECK (FIX)
+            if (string.IsNullOrEmpty(_env.WebRootPath))
+            {
+                return StatusCode(500, "WebRootPath is NULL. Please create wwwroot folder.");
+            }
+
+            service.ServiceName = dto.ServiceName;
+            service.Price = dto.Price;
+
+            if (dto.Image != null)
+            {
+                string uploadsFolder = Path.Combine(_env.WebRootPath, "service-images");
+                Directory.CreateDirectory(uploadsFolder);
+
+                string fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                string filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(stream);
+                }
+
+                service.ImageUrl = "/service-images/" + fileName;
+            }
 
             await _context.SaveChangesAsync();
             return Ok(service);
         }
 
-        // DELETE service
+        // ===============================
+        // DELETE: api/service/1
+        // ===============================
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteService(int id)
         {
             var service = await _context.Services.FindAsync(id);
-            if (service == null) return NotFound();
+            if (service == null)
+                return NotFound("Service not found");
 
             _context.Services.Remove(service);
             await _context.SaveChangesAsync();
+
             return Ok("Deleted successfully");
         }
     }

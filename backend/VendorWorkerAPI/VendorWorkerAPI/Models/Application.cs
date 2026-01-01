@@ -9,18 +9,23 @@ namespace VendorWorkerAPI.Models
         [Key]
         public int ApplicationId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "BookingId is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Invalid BookingId")]
         public int BookingId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "WorkerId is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Invalid WorkerId")]
         public int WorkerId { get; set; }
 
+        [Required]
+        [StringLength(20)]
+        [RegularExpression("Pending|Approved|Rejected",
+            ErrorMessage = "Status must be Pending, Approved, or Rejected")]
         public string Status { get; set; } = "Pending";
-        // Pending, Approved, Rejected
 
         public DateTime AppliedDate { get; set; } = DateTime.Now;
 
-        // Navigation Properties (Optional but good)
+        // ================= Navigation Properties =================
         [ForeignKey("BookingId")]
         public Booking Booking { get; set; }
 

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VendorWorkerAPI.Data;
+using VendorWorkerAPI.Models;
 
 namespace VendorWorkerAPI.Controllers
 {
@@ -21,16 +23,21 @@ namespace VendorWorkerAPI.Controllers
         // ===============================
         [Authorize(Roles = "Admin")]
         [HttpGet("admin")]
-        public IActionResult AdminDashboard()
+        public async Task<IActionResult> AdminDashboard()
         {
-            return Ok(new
+            var dashboard = new Dashboard
             {
-                totalVendors = _context.Vendors.Count(),
-                totalWorkers = _context.Workers.Count(),
-                totalBookings = _context.Bookings.Count(),
-                totalServices = _context.Services.Count(),
-                totalPayments = _context.Payments.Sum(p => p.Amount)
-            });
+                TotalAdmins = await _context.Admins.CountAsync(),
+                TotalVendors = await _context.Vendors.CountAsync(),
+                TotalWorkers = await _context.Workers.CountAsync(),
+                TotalBookings = await _context.Bookings.CountAsync(),
+                TotalServices = await _context.Services.CountAsync(),
+                TotalRevenue = await _context.Payments.AnyAsync()
+                    ? await _context.Payments.SumAsync(p => p.Amount)
+                    : 0
+            };
+
+            return Ok(dashboard);
         }
 
         // ===============================
@@ -38,14 +45,18 @@ namespace VendorWorkerAPI.Controllers
         // ===============================
         [Authorize(Roles = "Vendor")]
         [HttpGet("vendor")]
-        public IActionResult VendorDashboard()
+        public async Task<IActionResult> VendorDashboard()
         {
-            return Ok(new
+            var dashboard = new
             {
-                totalServices = _context.Services.Count(),
-                totalBookings = _context.Bookings.Count(),
-                totalPayments = _context.Payments.Sum(p => p.Amount)
-            });
+                totalServices = await _context.Services.CountAsync(),
+                totalBookings = await _context.Bookings.CountAsync(),
+                totalRevenue = await _context.Payments.AnyAsync()
+                    ? await _context.Payments.SumAsync(p => p.Amount)
+                    : 0
+            };
+
+            return Ok(dashboard);
         }
 
         // ===============================
@@ -53,13 +64,17 @@ namespace VendorWorkerAPI.Controllers
         // ===============================
         [Authorize(Roles = "Worker")]
         [HttpGet("worker")]
-        public IActionResult WorkerDashboard()
+        public async Task<IActionResult> WorkerDashboard()
         {
-            return Ok(new
+            var dashboard = new
             {
-                totalBookings = _context.Bookings.Count(),
-                totalPayments = _context.Payments.Sum(p => p.Amount)
-            });
+                totalBookings = await _context.Bookings.CountAsync(),
+                totalRevenue = await _context.Payments.AnyAsync()
+                    ? await _context.Payments.SumAsync(p => p.Amount)
+                    : 0
+            };
+
+            return Ok(dashboard);
         }
     }
 }

@@ -3,66 +3,106 @@ using Microsoft.EntityFrameworkCore;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 
-[ApiController]
-[Route("api/[controller]")]
-public class PaymentController : ControllerBase
+namespace VendorWorkerAPI.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public PaymentController(AppDbContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PaymentController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
 
-    // GET: api/payment
-    [HttpGet]
-    public async Task<IActionResult> GetPayments()
-    {
-        return Ok(await _context.Payments.ToListAsync());
-    }
+        public PaymentController(AppDbContext context)
+        {
+            _context = context;
+        }
 
-    // GET: api/payment/1
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetPayment(int id)
-    {
-        var payment = await _context.Payments.FindAsync(id);
-        if (payment == null)
-            return NotFound("Payment not found");
+        // ===============================
+        // GET: api/payment
+        // ===============================
+        [HttpGet]
+        public async Task<IActionResult> GetPayments()
+        {
+            var payments = await _context.Payments.ToListAsync();
+            return Ok(payments);
+        }
 
-        return Ok(payment);
-    }
+        // ===============================
+        // GET: api/payment/1
+        // ===============================
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPayment(int id)
+        {
+            var payment = await _context.Payments.FindAsync(id);
 
-    // POST: api/payment
-    [HttpPost]
-    public async Task<IActionResult> AddPayment(Payment payment)
-    {
-        _context.Payments.Add(payment);
-        await _context.SaveChangesAsync();
-        return Ok("Payment added successfully");
-    }
+            if (payment == null)
+                return NotFound("Payment not found");
 
-    // PUT: api/payment/1
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePayment(int id, Payment payment)
-    {
-        if (id != payment.PaymentId)
-            return BadRequest("ID mismatch");
+            return Ok(payment);
+        }
 
-        _context.Entry(payment).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return Ok("Payment updated");
-    }
+        // ===============================
+        // POST: api/payment
+        // ===============================
+        [HttpPost]
+        public async Task<IActionResult> AddPayment([FromBody] Payment payment)
+        {
+            // 🔐 Model validation
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-    // DELETE: api/payment/1
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeletePayment(int id)
-    {
-        var payment = await _context.Payments.FindAsync(id);
-        if (payment == null)
-            return NotFound("Payment not found");
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
 
-        _context.Payments.Remove(payment);
-        await _context.SaveChangesAsync();
-        return Ok("Payment deleted");
+            return CreatedAtAction(
+                nameof(GetPayment),
+                new { id = payment.PaymentId },
+                payment
+            );
+        }
+
+        // ===============================
+        // PUT: api/payment/1
+        // ===============================
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePayment(int id, [FromBody] Payment payment)
+        {
+            if (id != payment.PaymentId)
+                return BadRequest("Payment ID mismatch");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingPayment = await _context.Payments.FindAsync(id);
+            if (existingPayment == null)
+                return NotFound("Payment not found");
+
+            // Update fields safely
+            existingPayment.UserName = payment.UserName;
+            existingPayment.Amount = payment.Amount;
+            existingPayment.PaymentMethod = payment.PaymentMethod;
+            existingPayment.Status = payment.Status;
+            existingPayment.PaymentDate = payment.PaymentDate;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Payment updated successfully");
+        }
+
+        // ===============================
+        // DELETE: api/payment/1
+        // ===============================
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePayment(int id)
+        {
+            var payment = await _context.Payments.FindAsync(id);
+
+            if (payment == null)
+                return NotFound("Payment not found");
+
+            _context.Payments.Remove(payment);
+            await _context.SaveChangesAsync();
+
+            return Ok("Payment deleted successfully");
+        }
     }
 }

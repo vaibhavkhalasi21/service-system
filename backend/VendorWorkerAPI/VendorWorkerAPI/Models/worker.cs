@@ -9,28 +9,35 @@ namespace VendorWorkerAPI.Models
         [Column("WorkerId")]
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
         public string Name { get; set; }
 
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(150)]
         public string Email { get; set; }
 
-        // maps to SQL column: Password
-        [Required]
+        // Stored as hashed password
+        [Required(ErrorMessage = "Password is required")]
         [Column("Password")]
         public string PasswordHash { get; set; }
 
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(@"^[6-9]\d{9}$", ErrorMessage = "Invalid phone number")]
         public string Phone { get; set; }
 
-        // maps to SQL column: Category
+        [Required(ErrorMessage = "Skill is required")]
+        [StringLength(100)]
         [Column("Category")]
         public string Skill { get; set; }
 
-        // optional (not in DB yet)
+        // Optional (UI only)
         [NotMapped]
+        [StringLength(250)]
         public string Address { get; set; }
 
-        // optional (not in DB yet)
+        // JWT Role (not stored in DB)
         [NotMapped]
         public string Role { get; set; } = "Worker";
     }

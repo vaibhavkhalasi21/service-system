@@ -34,8 +34,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "login",
-        "Type": "VendorWorkerAPI.Models.Admin",
+        "Name": "dto",
+        "Type": "VendorWorkerAPI.Models.LoginAdminDto",
         "IsRequired": true
       }
     ],
@@ -50,8 +50,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "admin",
-        "Type": "VendorWorkerAPI.Models.Admin",
+        "Name": "dto",
+        "Type": "VendorWorkerAPI.Models.RegisterAdminDto",
         "IsRequired": true
       }
     ],
@@ -101,8 +101,24 @@
   },
   {
     "ContainingType": "VendorWorkerAPI.Controllers.ApplicationController",
-    "Method": "UpdateStatus",
+    "Method": "DeleteApplication",
     "RelativePath": "api/Application/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VendorWorkerAPI.Controllers.ApplicationController",
+    "Method": "UpdateStatus",
+    "RelativePath": "api/Application/{id}/status",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
@@ -115,22 +131,6 @@
       {
         "Name": "status",
         "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "VendorWorkerAPI.Controllers.ApplicationController",
-    "Method": "DeleteApplication",
-    "RelativePath": "api/Application/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
@@ -219,7 +219,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "PaymentController",
+    "ContainingType": "VendorWorkerAPI.Controllers.PaymentController",
     "Method": "GetPayments",
     "RelativePath": "api/Payment",
     "HttpMethod": "GET",
@@ -229,7 +229,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "PaymentController",
+    "ContainingType": "VendorWorkerAPI.Controllers.PaymentController",
     "Method": "AddPayment",
     "RelativePath": "api/Payment",
     "HttpMethod": "POST",
@@ -245,7 +245,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "PaymentController",
+    "ContainingType": "VendorWorkerAPI.Controllers.PaymentController",
     "Method": "GetPayment",
     "RelativePath": "api/Payment/{id}",
     "HttpMethod": "GET",
@@ -261,7 +261,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "PaymentController",
+    "ContainingType": "VendorWorkerAPI.Controllers.PaymentController",
     "Method": "UpdatePayment",
     "RelativePath": "api/Payment/{id}",
     "HttpMethod": "PUT",
@@ -282,7 +282,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "PaymentController",
+    "ContainingType": "VendorWorkerAPI.Controllers.PaymentController",
     "Method": "DeletePayment",
     "RelativePath": "api/Payment/{id}",
     "HttpMethod": "DELETE",
@@ -298,7 +298,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RatingController",
+    "ContainingType": "VendorWorkerAPI.Controllers.RatingController",
     "Method": "GetRatings",
     "RelativePath": "api/Rating",
     "HttpMethod": "GET",
@@ -308,7 +308,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RatingController",
+    "ContainingType": "VendorWorkerAPI.Controllers.RatingController",
     "Method": "AddRating",
     "RelativePath": "api/Rating",
     "HttpMethod": "POST",
@@ -324,7 +324,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RatingController",
+    "ContainingType": "VendorWorkerAPI.Controllers.RatingController",
     "Method": "GetRating",
     "RelativePath": "api/Rating/{id}",
     "HttpMethod": "GET",
@@ -340,7 +340,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RatingController",
+    "ContainingType": "VendorWorkerAPI.Controllers.RatingController",
     "Method": "UpdateRating",
     "RelativePath": "api/Rating/{id}",
     "HttpMethod": "PUT",
@@ -361,7 +361,7 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "RatingController",
+    "ContainingType": "VendorWorkerAPI.Controllers.RatingController",
     "Method": "DeleteRating",
     "RelativePath": "api/Rating/{id}",
     "HttpMethod": "DELETE",
@@ -395,25 +395,19 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "service",
-        "Type": "VendorWorkerAPI.Models.Service",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "VendorWorkerAPI.Controllers.ServiceController",
-    "Method": "GetService",
-    "RelativePath": "api/Service/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
+        "Name": "ServiceName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
       {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
+        "Name": "Price",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "Image",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -432,9 +426,19 @@
         "IsRequired": true
       },
       {
-        "Name": "updatedService",
-        "Type": "VendorWorkerAPI.Models.Service",
-        "IsRequired": true
+        "Name": "ServiceName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Price",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "Image",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -465,7 +469,7 @@
     "Parameters": [
       {
         "Name": "dto",
-        "Type": "VendorWorkerAPI.Controllers.LoginRequest",
+        "Type": "VendorWorkerAPI.Models.DTOs.UserLoginDto",
         "IsRequired": true
       }
     ],
@@ -480,8 +484,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "user",
-        "Type": "VendorWorkerAPI.Models.User",
+        "Name": "dto",
+        "Type": "VendorWorkerAPI.DTOs.UserRegisterDto",
         "IsRequired": true
       }
     ],
