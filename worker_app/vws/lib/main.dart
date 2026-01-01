@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       ),
 
       // First screen
-      home: const WorkerBottomNav(),
+      home: const LoginScreen(),
 
       // Named routes (for future use)
       routes: {
