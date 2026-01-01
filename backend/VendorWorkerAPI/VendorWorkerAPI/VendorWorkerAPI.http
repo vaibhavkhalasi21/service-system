@@ -1,6 +1,0 @@
-@VendorWorkerAPI_HostAddress = http://localhost:5244
-
-GET {{VendorWorkerAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
