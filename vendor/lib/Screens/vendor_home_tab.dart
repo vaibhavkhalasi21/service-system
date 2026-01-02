@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/service.dart';
-import '../Models/service_request.dart';
+import '../models/service_request.dart';
 import '../services/service_api.dart';
 import '../widgets/service_card.dart';
 import '../widgets/category_chip.dart';
@@ -25,7 +25,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     "Plumber",
     "Cleaning",
     "AC Repair",
-    "Painter"
+    "Painter",
   ];
 
   static const String baseUrl = "http://10.141.25.37:5244";
@@ -36,26 +36,39 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     fetchServices();
   }
 
+  // ===============================
+  // FETCH SERVICES FROM API
+  // ===============================
   Future<void> fetchServices() async {
     setState(() => isLoading = true);
+
     try {
-      final apiServices = await ServiceApi.getServices();
+      final List<ServiceRequest> apiServices =
+      await ServiceApi.getVendorServices();
+
+      final List<Service> mappedServices =
+      apiServices.map(_mapApiToUi).toList();
+
+      // 🔥 Latest service first (LOCAL time already)
+      mappedServices.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+      );
 
       setState(() {
-        services = apiServices.map(_mapApiToUi).toList();
+        services = mappedServices;
         isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       setState(() => isLoading = false);
     }
   }
 
-  // =========================
-  // API → UI mapper
-  // =========================
+  // ===============================
+  // API → UI MAPPER (NO TIME CONVERSION)
+  // ===============================
   Service _mapApiToUi(ServiceRequest api) {
     return Service(
-      id: api.id, // 🔥 REQUIRED
+      id: api.id,
       title: api.serviceName,
       category: api.category,
       price: api.price.toInt(),
@@ -63,6 +76,9 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       imagePath: api.imageUrl != null
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
+
+      // ✅ already LOCAL from ServiceRequest.fromJson()
+      createdAt: api.createdAt,
     );
   }
 
@@ -74,8 +90,10 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
     if (searchQuery.isNotEmpty) {
       filteredServices = filteredServices
-          .where((s) =>
-          s.title.toLowerCase().contains(searchQuery.toLowerCase()))
+          .where(
+            (s) =>
+            s.title.toLowerCase().contains(searchQuery.toLowerCase()),
+      )
           .toList();
     }
 
@@ -88,9 +106,9 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
             "Hello, Vendor 👋",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-
           const SizedBox(height: 16),
 
+          // 🔍 SEARCH
           TextField(
             onChanged: (v) => setState(() => searchQuery = v),
             decoration: InputDecoration(
@@ -106,37 +124,39 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 16),
 
+          // 🏷 CATEGORY FILTER
           SizedBox(
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: categories
-                  .map((cat) => GestureDetector(
-                onTap: () =>
-                    setState(() => selectedCategory = cat),
-                child: CategoryChip(
-                  title: cat,
-                  selected: selectedCategory == cat,
-                ),
-              ))
-                  .toList(),
+              children: categories.map((cat) {
+                return GestureDetector(
+                  onTap: () => setState(() => selectedCategory = cat),
+                  child: CategoryChip(
+                    title: cat,
+                    selected: selectedCategory == cat,
+                  ),
+                );
+              }).toList(),
             ),
           ),
 
           const SizedBox(height: 16),
 
+          // 📃 SERVICES LIST
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filteredServices.isEmpty
                 ? const Center(child: Text("No services found"))
-                : ListView(
-              children: filteredServices
-                  .map((s) => ServiceCard(
-                service: s,
-                onUpdated: fetchServices, // 🔥
-              ))
-                  .toList(),
+                : ListView.builder(
+              itemCount: filteredServices.length,
+              itemBuilder: (context, index) {
+                return ServiceCard(
+                  service: filteredServices[index],
+                  onUpdated: fetchServices,
+                );
+              },
             ),
           ),
         ],

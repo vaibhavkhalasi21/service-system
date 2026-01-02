@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/service.dart';
 import '../screens/manage_service_page.dart';
 
@@ -14,14 +15,24 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ SAFE: already local time, no conversion here
+    final String formattedDate =
+    DateFormat('dd MMM yyyy').format(service.createdAt);
+
+    final String formattedTime =
+    DateFormat('hh:mm a').format(service.createdAt);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       clipBehavior: Clip.antiAlias,
+      elevation: 3,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔥 IMAGE
+          // 🖼 IMAGE
           SizedBox(
             height: 160,
             width: double.infinity,
@@ -29,14 +40,9 @@ class ServiceCard extends StatelessWidget {
                 ? Image.network(
               service.imagePath,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              },
-              errorBuilder: (_, __, ___) =>
-              const Icon(Icons.broken_image, size: 40),
+              errorBuilder: (_, __, ___) => const Center(
+                child: Icon(Icons.broken_image, size: 40),
+              ),
             )
                 : Image.asset(
               service.imagePath,
@@ -47,11 +53,13 @@ class ServiceCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // 🏷 TITLE
                       Text(
                         service.title,
                         style: const TextStyle(
@@ -59,21 +67,40 @@ class ServiceCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+
                       const SizedBox(height: 4),
+
+                      // 📂 CATEGORY
                       Text(
                         service.category,
                         style: const TextStyle(color: Colors.grey),
                       ),
+
                       const SizedBox(height: 4),
+
+                      // 💰 PRICE + RATING
                       Text(
                         "₹${service.price} • ⭐ ${service.rating}",
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+
+                      // 🕒 DATE & TIME
+                      const SizedBox(height: 6),
+                      Text(
+                        "$formattedDate • $formattedTime",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.blueGrey,
+                        ),
                       ),
                     ],
                   ),
                 ),
+
+                // ⚙ MANAGE BUTTON
                 ElevatedButton(
-                  child: const Text("Manage"),
                   onPressed: () async {
                     final updated = await Navigator.push(
                       context,
@@ -83,11 +110,11 @@ class ServiceCard extends StatelessWidget {
                       ),
                     );
 
-                    // 🔥 REFRESH HOME AFTER UPDATE
                     if (updated == true) {
                       onUpdated();
                     }
                   },
+                  child: const Text("Manage"),
                 ),
               ],
             ),

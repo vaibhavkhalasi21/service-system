@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../Models/create_service_request.dart';
+
+import '../models/create_service_request.dart';
 import '../services/service_api.dart';
 
 class PostServicePage extends StatefulWidget {
@@ -28,10 +29,13 @@ class _PostServicePageState extends State<PostServicePage> {
     "Cleaning",
     "Plumbing",
     "Electrician",
-    "Painting",
-    "Carpentry",
+    "AC Repair",
+    "Painter",
   ];
 
+  // =====================
+  // IMAGE PICKER
+  // =====================
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -39,8 +43,12 @@ class _PostServicePageState extends State<PostServicePage> {
     }
   }
 
+  // =====================
+  // SUBMIT SERVICE
+  // =====================
   Future<void> publishService() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a category")),
@@ -63,17 +71,24 @@ class _PostServicePageState extends State<PostServicePage> {
 
     setState(() => isLoading = false);
 
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success
-            ? "Service published successfully"
-            : "Failed to publish service"),
+        content: Text(
+          success
+              ? "Service published successfully"
+              : "Failed to publish service",
+        ),
       ),
     );
 
     if (success) Navigator.pop(context, true);
   }
 
+  // =====================
+  // UI
+  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,6 +109,7 @@ class _PostServicePageState extends State<PostServicePage> {
               ),
               const SizedBox(height: 16),
 
+              // SERVICE NAME
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -106,6 +122,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
               const SizedBox(height: 16),
 
+              // CATEGORY
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: const InputDecoration(
@@ -113,16 +130,20 @@ class _PostServicePageState extends State<PostServicePage> {
                   border: OutlineInputBorder(),
                 ),
                 items: categories
-                    .map((c) => DropdownMenuItem(
-                  value: c,
-                  child: Text(c),
-                ))
+                    .map(
+                      (c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c),
+                  ),
+                )
                     .toList(),
                 onChanged: (v) => setState(() => selectedCategory = v),
+                validator: (v) => v == null ? "Required" : null,
               ),
 
               const SizedBox(height: 16),
 
+              // PRICE
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
@@ -136,6 +157,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
               const SizedBox(height: 16),
 
+              // DESCRIPTION
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
@@ -147,6 +169,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
               const SizedBox(height: 20),
 
+              // IMAGE PICKER
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -178,6 +201,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
               const SizedBox(height: 24),
 
+              // SUBMIT BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 48,

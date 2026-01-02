@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/service.dart';
-import '../Models/service_request.dart';
+import '../models/create_service_request.dart';
 import '../services/service_api.dart';
 
 class ManageServicePage extends StatefulWidget {
@@ -20,33 +20,43 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
   late TextEditingController titleController;
   late TextEditingController priceController;
-  late TextEditingController categoryController;
 
   bool isLoading = false;
+  bool isDeleting = false;
 
   File? selectedImage;
   final ImagePicker picker = ImagePicker();
 
+  final List<String> categories = [
+    "Cleaning",
+    "Plumber",
+    "Electrician",
+    "AC Repair",
+    "Painter",
+  ];
+
+  String? selectedCategory;
+
   @override
   void initState() {
     super.initState();
+
     titleController = TextEditingController(text: widget.service.title);
     priceController =
         TextEditingController(text: widget.service.price.toString());
-    categoryController =
-        TextEditingController(text: widget.service.category);
+
+    selectedCategory = widget.service.category;
   }
 
   @override
   void dispose() {
     titleController.dispose();
     priceController.dispose();
-    categoryController.dispose();
     super.dispose();
   }
 
   // =============================
-  // PICK IMAGE
+  // IMAGE PICKER
   // =============================
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -56,26 +66,31 @@ class _ManageServicePageState extends State<ManageServicePage> {
   }
 
   // =============================
-  // UPDATE SERVICE (API + IMAGE)
+  // UPDATE SERVICE
   // =============================
   Future<void> updateService() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a category")),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final updatedService = ServiceRequest(
-      id: widget.service.id,
+    final updatedService = CreateServiceRequest(
       serviceName: titleController.text.trim(),
-      category: categoryController.text.trim(),
+      category: selectedCategory!,
       price: double.parse(priceController.text),
       description: null,
-      imageUrl: null,
     );
 
     final success = await ServiceApi.updateService(
       widget.service.id,
       updatedService,
-      selectedImage, // 🔥 image optional
+      selectedImage,
     );
 
     setState(() => isLoading = false);
@@ -89,12 +104,65 @@ class _ManageServicePageState extends State<ManageServicePage> {
           backgroundColor: Colors.green,
         ),
       );
-
-      Navigator.pop(context, true); // 🔥 refresh Home tab
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Failed to update service"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // =============================
+  // DELETE SERVICE
+  // =============================
+  Future<void> deleteService() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Service"),
+        content: const Text(
+          "Are you sure you want to delete this service?\nThis action cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => isDeleting = true);
+
+    final success =
+    await ServiceApi.deleteService(widget.service.id);
+
+    setState(() => isDeleting = false);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Service deleted successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true); // refresh previous page
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Failed to delete service"),
           backgroundColor: Colors.red,
         ),
       );
@@ -124,24 +192,18 @@ class _ManageServicePageState extends State<ManageServicePage> {
                   width: double.infinity,
                   fit: BoxFit.cover,
                 )
-                    : widget.service.imagePath.startsWith("http")
-                    ? Image.network(
+                    : Image.network(
                   widget.service.imagePath,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                )
-                    : Image.asset(
-                  widget.service.imagePath,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                  const Icon(Icons.broken_image, size: 40),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // CHANGE IMAGE BUTTON
               OutlinedButton.icon(
                 onPressed: pickImage,
                 icon: const Icon(Icons.image),
@@ -164,14 +226,23 @@ class _ManageServicePageState extends State<ManageServicePage> {
               const SizedBox(height: 12),
 
               // CATEGORY
-              TextFormField(
-                controller: categoryController,
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
                 decoration: const InputDecoration(
                   labelText: "Category",
                   border: OutlineInputBorder(),
                 ),
+                items: categories
+                    .map(
+                      (c) => DropdownMenuItem(
+                    value: c,
+                    child: Text(c),
+                  ),
+                )
+                    .toList(),
+                onChanged: (v) => setState(() => selectedCategory = v),
                 validator: (v) =>
-                v == null || v.isEmpty ? "Required" : null,
+                v == null ? "Select category" : null,
               ),
 
               const SizedBox(height: 12),
@@ -190,14 +261,35 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
               const SizedBox(height: 24),
 
+              // SAVE BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : updateService,
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const CircularProgressIndicator(
+                    color: Colors.white,
+                  )
                       : const Text("Save Changes"),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // DELETE BUTTON
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                  ),
+                  onPressed: isDeleting ? null : deleteService,
+                  child: isDeleting
+                      ? const CircularProgressIndicator()
+                      : const Text("Delete Service"),
                 ),
               ),
             ],

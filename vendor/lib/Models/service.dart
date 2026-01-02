@@ -1,10 +1,13 @@
 class Service {
-  int id;
-  String title;
-  String category;
-  int price;
-  double rating;
-  String imagePath;
+  final int id;
+  final String title;
+  final String category;
+  final int price;
+  final double rating;
+  final String imagePath;
+
+  /// ✅ Already LOCAL time
+  final DateTime createdAt;
 
   Service({
     required this.id,
@@ -13,5 +16,6 @@ class Service {
     required this.price,
     required this.rating,
     required this.imagePath,
+    required this.createdAt,
   });
 }
