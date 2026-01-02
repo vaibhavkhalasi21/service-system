@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using VendorWorkerAPI.Models;
 
 namespace VendorWorkerAPI.Models.DTOs
 {
@@ -9,9 +10,9 @@ namespace VendorWorkerAPI.Models.DTOs
         [StringLength(150)]
         public string ServiceName { get; set; } = null!;
 
+        // ✅ ENUM → Swagger dropdown
         [Required]
-        [StringLength(100)]
-        public string Category { get; set; } = null!;
+        public ServiceCategory Category { get; set; }
 
         [Required]
         [Range(1, 100000)]
