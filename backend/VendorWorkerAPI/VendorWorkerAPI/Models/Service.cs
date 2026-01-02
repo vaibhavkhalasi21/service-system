@@ -7,11 +7,12 @@ namespace VendorWorkerAPI.Models
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Service name is required")]
+        [Required]
         [StringLength(150)]
         public string ServiceName { get; set; } = null!;
 
-        [Required(ErrorMessage = "Category is required")]
+        // ✅ STRING (not enum)
+        [Required]
         [StringLength(100)]
         public string Category { get; set; } = null!;
 
@@ -19,7 +20,15 @@ namespace VendorWorkerAPI.Models
         [Range(1, 100000)]
         public decimal Price { get; set; }
 
-        // Image path stored in DB
         public string? ImageUrl { get; set; }
+
+        [Required]
+        public string VendorId { get; set; } = null!;
+
+        public bool IsActive { get; set; } = true;
+
+        // ✅ UTC timestamps
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
     }
 }

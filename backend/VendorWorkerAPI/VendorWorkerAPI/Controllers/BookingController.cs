@@ -8,7 +8,7 @@ using VendorWorkerAPI.Models;
 namespace VendorWorkerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/booking")]
     public class BookingController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,106 +18,90 @@ namespace VendorWorkerAPI.Controllers
             _context = context;
         }
 
-        // ================================
-        // CUSTOMER: CREATE BOOKING
-        // ================================
-        [HttpPost]
-        [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> CreateBooking([FromBody] Booking booking)
+        // ===============================
+        // WORKER: APPLY FOR SERVICE
+        // ===============================
+        [HttpPost("apply/{serviceId}")]
+        [Authorize(Roles = "Worker")]
+        public async Task<IActionResult> ApplyForService(int serviceId)
         {
-            if (booking == null)
-                return BadRequest("Booking data is required");
+            var workerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerId == null) return Unauthorized();
 
-            // 🔴 Model validation
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var service = await _context.Services.FindAsync(serviceId);
+            if (service == null) return NotFound("Service not found");
 
-            // 🔐 Get CustomerId from JWT
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("Invalid token");
+            bool alreadyApplied = await _context.Bookings.AnyAsync(b =>
+                b.ServiceId == serviceId && b.WorkerId == workerId);
 
-            // 🔴 Validate Service exists
-            bool serviceExists = await _context.Services
-                .AnyAsync(s => s.Id == booking.ServiceId);
+            if (alreadyApplied)
+                return BadRequest("Already applied");
 
-            if (!serviceExists)
-                return BadRequest("Invalid ServiceId");
-
-            // 🔒 Force values (security)
-            booking.CustomerId = userId;
-            booking.Status = "Pending";
-            booking.CreatedAt = DateTime.UtcNow;
+            var booking = new Booking
+            {
+                ServiceId = serviceId,
+                VendorId = service.VendorId,
+                WorkerId = workerId
+            };
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                Message = "Booking created successfully",
-                booking.Id,
-                booking.ServiceId,
-                booking.Status,
-                booking.CreatedAt
-            });
+            return Ok("Applied successfully");
         }
 
-        // ================================
-        // CUSTOMER: VIEW MY BOOKINGS
-        // ================================
-        [HttpGet("my")]
-        [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> MyBookings()
+        // ===============================
+        // VENDOR: VIEW BOOKING REQUESTS
+        // ===============================
+        [HttpGet("vendor")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> VendorBookings()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("Invalid token");
+            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var bookings = await _context.Bookings
-                .Where(b => b.CustomerId == userId)
+                .Where(b => b.VendorId == vendorId && b.Status == "Pending")
                 .ToListAsync();
 
             return Ok(bookings);
         }
 
-        // ================================
-        // VENDOR: VIEW ALL BOOKINGS
-        // ================================
-        [HttpGet]
-        [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> GetAllBookings()
-        {
-            var bookings = await _context.Bookings.ToListAsync();
-            return Ok(bookings);
-        }
-
-        // ================================
+        // ===============================
         // VENDOR: ACCEPT BOOKING
-        // ================================
+        // ===============================
         [HttpPut("accept/{id}")]
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> AcceptBooking(int id)
         {
-            if (id <= 0)
-                return BadRequest("Invalid booking id");
-
+            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var booking = await _context.Bookings.FindAsync(id);
 
-            if (booking == null)
-                return NotFound("Booking not found");
-
-            if (booking.Status != "Pending")
-                return BadRequest("Only pending bookings can be accepted");
+            if (booking == null) return NotFound();
+            if (booking.VendorId != vendorId) return Forbid();
 
             booking.Status = "Accepted";
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                Message = "Booking accepted successfully",
-                booking.Id,
-                booking.Status
-            });
+            return Ok("Booking accepted");
+        }
+
+        // ===============================
+        // VENDOR: REJECT BOOKING
+        // ===============================
+        [HttpPut("reject/{id}")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> RejectBooking(int id)
+        {
+            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var booking = await _context.Bookings.FindAsync(id);
+
+            if (booking == null) return NotFound();
+            if (booking.VendorId != vendorId) return Forbid();
+
+            booking.Status = "Rejected";
+            await _context.SaveChangesAsync();
+
+            return Ok("Booking rejected");
         }
     }
 }

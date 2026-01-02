@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Services;
 
@@ -42,8 +43,15 @@ builder.Services.AddAuthorization();
 // ================= SERVICES =================
 builder.Services.AddScoped<JwtTokenService>();
 
-// ================= CONTROLLERS =================
-builder.Services.AddControllers();
+// ================= CONTROLLERS (?? FIX HERE ??) =================
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // ? THIS LINE FIXES SWAGGER ENUM DROPDOWN
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()
+        );
+    });
 
 // ================= SWAGGER =================
 builder.Services.AddEndpointsApiExplorer();
@@ -84,36 +92,19 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ================= ?? SWAGGER PROTECTION =================
+// ================= SWAGGER =================
 if (app.Environment.IsDevelopment())
 {
-    // ? Swagger UI opens but API execution requires JWT
-    app.Use(async (context, next) =>
-    {
-        if (context.Request.Path.StartsWithSegments("/swagger") &&
-            !context.Request.Path.Value.Contains("swagger.json"))
-        {
-            // Allow Swagger UI page
-            await next();
-            return;
-        }
-
-        await next();
-    });
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// ================= MIDDLEWARE ORDER =================
+// ================= MIDDLEWARE =================
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 
-app.UseAuthentication();   // ?? FIRST
-app.UseAuthorization();    // ?? SECOND
-
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();
