@@ -5,7 +5,9 @@ class JobCard extends StatelessWidget {
   final String category;
   final String description;
   final String imageUrl;
-  final VoidCallback onApply; // 👈 CONNECT POINT
+  final double price;
+  final double rating;
+  final VoidCallback onApply;
 
   const JobCard({
     super.key,
@@ -13,6 +15,8 @@ class JobCard extends StatelessWidget {
     required this.category,
     required this.description,
     required this.imageUrl,
+    required this.price,
+    required this.rating,
     required this.onApply,
   });
 
@@ -27,13 +31,14 @@ class JobCard extends StatelessWidget {
         children: [
           /// IMAGE
           ClipRRect(
-            borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Image.network(
               imageUrl,
-              height: 200,
+              height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+              const SizedBox(height: 180, child: Icon(Icons.image)),
             ),
           ),
 
@@ -43,24 +48,60 @@ class JobCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// TITLE
                 Text(
                   title,
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 6),
-                Text(category,
-                    style: const TextStyle(color: Colors.blue)),
+
+                const SizedBox(height: 4),
+
+                /// CATEGORY
+                Text(
+                  category,
+                  style: const TextStyle(color: Colors.blue),
+                ),
+
                 const SizedBox(height: 10),
-                Text(description,
-                    style: TextStyle(color: Colors.grey.shade700)),
+
+                /// DESCRIPTION
+                Text(
+                  description,
+                  style: TextStyle(color: Colors.grey.shade700),
+                ),
+
+                const SizedBox(height: 12),
+
+                /// PRICE & RATING ROW
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "₹ $price",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.star,
+                            color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(rating.toStringAsFixed(1)),
+                      ],
+                    )
+                  ],
+                ),
+
                 const SizedBox(height: 16),
 
                 /// APPLY BUTTON
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: onApply, // 👈 EXISTING CODE CALL
+                    onPressed: onApply,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xff2563EB),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -74,7 +115,7 @@ class JobCard extends StatelessWidget {
                       TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
-                )
+                ),
               ],
             ),
           )

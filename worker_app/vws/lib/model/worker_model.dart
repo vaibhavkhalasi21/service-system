@@ -1,42 +1,35 @@
-// model/worker_model.dart
 class Worker {
-  final String name;
-  final String email;
-  final String phone;
-  final String profession;
-  final String experience;
-  final String location;
+  int id;
+  String name;
+  String email;
+  String phone;
+  String skill;
+  String address;
 
   Worker({
+    required this.id,
     required this.name,
     required this.email,
-    required this.phone,
-    required this.profession,
-    required this.experience,
-    required this.location,
+    this.phone = "",
+    this.skill = "",
+    this.address = "",
   });
 
-  /// JSON → Model
-  factory Worker.fromJson(Map<String, dynamic> json) {
-    return Worker(
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      profession: json['profession'] ?? '',
-      experience: json['experience'] ?? '',
-      location: json['location'] ?? '',
-    );
-  }
+  factory Worker.fromJson(Map<String, dynamic> json) => Worker(
+    id: json['id'] ?? json['workerId'] ?? 0,
+    name: json['name'] ?? json['workerName'] ?? "",
+    email: json['email'] ?? "",
+    phone: json['phone'] ?? "",
+    skill: json['skill'] ?? "",
+    address: json['address'] ?? "",
+  );
 
-  /// Model → JSON (Signup ke time kaam aayega)
-  Map<String, dynamic> toJson() {
-    return {
-      "name": name,
-      "email": email,
-      "phone": phone,
-      "profession": profession,
-      "experience": experience,
-      "location": location,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'skill': skill,
+    'address': address,
+  };
 }
