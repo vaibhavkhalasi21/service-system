@@ -3,6 +3,7 @@ import 'package:vws/screens/edit_worker_profile.dart';
 import 'package:vws/screens/auth/login_screen.dart';
 import 'package:vws/sessions/worker_session.dart';
 import 'package:vws/screens/my_booking_screen.dart';
+import 'package:vws/model/worker_model.dart';
 
 class WorkerProfile extends StatefulWidget {
   const WorkerProfile({super.key});
@@ -12,17 +13,37 @@ class WorkerProfile extends StatefulWidget {
 }
 
 class _WorkerProfileState extends State<WorkerProfile> {
-  var worker;
+  Worker? worker;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Load logged-in worker session
-    worker = WorkerSession.currentWorker;
+    _loadWorkerSession();
+  }
+
+  void _loadWorkerSession() async {
+    await WorkerSession.loadWorker();
+    setState(() {
+      worker = WorkerSession.currentWorker;
+      _loading = false;
+    });
+  }
+
+  void _refreshWorker() {
+    setState(() {
+      worker = WorkerSession.currentWorker;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     if (worker == null) {
       return const Scaffold(
         body: Center(
@@ -39,7 +60,6 @@ class _WorkerProfileState extends State<WorkerProfile> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ---------- TOP SECTION ----------
             Container(
               width: double.infinity,
               height: 240,
@@ -66,20 +86,16 @@ class _WorkerProfileState extends State<WorkerProfile> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // ✅ Display Name
                   Text(
-                    worker.name,
+                    worker!.name,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
-                  // ✅ Display Email
                   Text(
-                    worker.email,
+                    worker!.email,
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
@@ -91,26 +107,25 @@ class _WorkerProfileState extends State<WorkerProfile> {
 
             const SizedBox(height: 20),
 
-            // ---------- PROFILE ACTIONS ----------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   _ProfileButton(
                     icon: Icons.edit,
-                    text: "Edit Profile",
+                    text: "Edit Name",
                     color: Colors.blue,
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => EditWorkerProfile(worker: worker),
+                          builder: (_) => const EditWorkerProfile(),
                         ),
                       );
+                      _refreshWorker(); // refresh name after edit
                     },
                   ),
                   const SizedBox(height: 16),
-
                   _ProfileButton(
                     icon: Icons.book_online,
                     text: "My Bookings",
@@ -125,14 +140,12 @@ class _WorkerProfileState extends State<WorkerProfile> {
                     },
                   ),
                   const SizedBox(height: 16),
-
                   _ProfileButton(
                     icon: Icons.logout,
                     text: "Logout",
                     color: Colors.red,
-                    onTap: () {
-                      WorkerSession.currentWorker = null;
-
+                    onTap: () async {
+                      await WorkerSession.logout();
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -150,7 +163,6 @@ class _WorkerProfileState extends State<WorkerProfile> {
   }
 }
 
-// ---------- PROFILE BUTTON WIDGET ----------
 class _ProfileButton extends StatelessWidget {
   final IconData icon;
   final String text;

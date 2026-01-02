@@ -2,11 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class WorkerApi {
-  static const String baseUrl = "http://10.141.25.233:5244/api/worker";
+  static const String baseUrl = "http://10.141.25.37:5244/api/worker";
 
-  // =====================
-  // ✅ WORKER REGISTER
-  // =====================
+  // ======== REGISTER ========
   static Future<String?> signupWorker({
     required String name,
     required String email,
@@ -25,26 +23,18 @@ class WorkerApi {
           "password": password,
           "phone": phone,
           "skill": skill,
-          "address": address ?? "", // ✅ safe
+          "address": address ?? "",
         }),
       );
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
-      if (response.statusCode == 200) {
-        return null; // ✅ SUCCESS
-      } else {
-        return response.body; // ❌ backend error
-      }
+      if (response.statusCode == 200) return null;
+      return jsonDecode(response.body)['message'] ?? response.body;
     } catch (e) {
       return e.toString();
     }
   }
 
-  // =====================
-  // 🔐 WORKER LOGIN
-  // =====================
+  // ======== LOGIN ========
   static Future<Map<String, dynamic>?> loginWorkerData({
     required String email,
     required String password,
@@ -60,9 +50,23 @@ class WorkerApi {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final jsonResponse = jsonDecode(response.body);
+
+        // Map backend JSON to Worker model keys
+        final worker = {
+          "id": jsonResponse["workerId"],
+          "name": jsonResponse["workerName"],
+          "email": email,
+          "phone": "",
+          "skill": "",
+          "address": "",
+          "token": jsonResponse["token"],
+        };
+
+        return worker;
+      } else {
+        return null;
       }
-      return null;
     } catch (e) {
       return null;
     }

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:vws/screens/payment_status.dart';
+import '../services/worker_service_api.dart';
+import '../sessions/worker_session.dart';
 
 class ApplyJobScreen extends StatefulWidget {
-  const ApplyJobScreen({super.key});
+  final int serviceId;
+
+  const ApplyJobScreen({super.key, required this.serviceId});
 
   @override
   State<ApplyJobScreen> createState() => _ApplyJobScreenState();
@@ -11,228 +14,177 @@ class ApplyJobScreen extends StatefulWidget {
 class _ApplyJobScreenState extends State<ApplyJobScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final experienceController = TextEditingController();
-  final expectedSalaryController = TextEditingController();
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController phoneCtrl = TextEditingController();
+  final TextEditingController experienceCtrl = TextEditingController();
 
-  String selectedAvailability = "Full Time";
+  String jobType = "Full Time";
+  bool isLoading = false;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// ✅ AUTO FILL FROM WORKER SESSION
+    final worker = WorkerSession.currentWorker;
+
+    if (worker != null) {
+      nameCtrl.text = worker.name;
+      emailCtrl.text = worker.email;
+      phoneCtrl.text = worker.phone;
+    }
+  }
+
+  Future<void> submitApplication() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final success =
+      await WorkerServiceApi.applyForService(widget.serviceId);
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Applied successfully ✅"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        setState(() {
+          errorMessage = "Failed to apply. Try again.";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString().replaceAll("Exception:", "");
+      });
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Scaffold(
-      backgroundColor: const Color(0xffF2F3F7),
-      body: Column(
-        children: [
-          /// 🔵 HEADER
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(20, topPadding + 20, 20, 30),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff2563EB), Color(0xff1E40AF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text("Apply Job"),
+        backgroundColor: const Color(0xff2563EB),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Job Application",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
+              const SizedBox(height: 20),
+
+              _inputField(
+                controller: nameCtrl,
+                label: "Full Name",
+                icon: Icons.person,
+                validator: (v) =>
+                v!.isEmpty ? "Name is required" : null,
               ),
-            ),
-            child: Row(
-              children: const [
-                BackButton(color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  "Apply Job",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+
+              _inputField(
+                controller: emailCtrl,
+                label: "Email",
+                icon: Icons.email,
+                keyboard: TextInputType.emailAddress,
+                validator: (v) =>
+                v!.contains("@") ? null : "Enter valid email",
+              ),
+
+              _inputField(
+                controller: phoneCtrl,
+                label: "Phone Number",
+                icon: Icons.phone,
+                keyboard: TextInputType.phone,
+                validator: (v) =>
+                v!.length < 10 ? "Enter valid phone" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              if (errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                )
-              ],
-            ),
-          ),
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
 
-          /// 📄 FORM
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _sectionTitle("Personal Details"),
+              const SizedBox(height: 30),
 
-                    _inputField(
-                      controller: nameController,
-                      label: "Full Name",
-                      icon: Icons.person,
-                      validator: (v) =>
-                      v!.isEmpty ? "Name is required" : null,
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : submitApplication,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff2563EB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-
-                    _inputField(
-                      controller: phoneController,
-                      label: "Phone Number",
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                      validator: (v) {
-                        if (v!.isEmpty) return "Phone is required";
-                        if (v.length < 10) return "Invalid phone number";
-                        return null;
-                      },
-                    ),
-
-                    _sectionTitle("Work Details"),
-
-                    _inputField(
-                      controller: experienceController,
-                      label: "Experience",
-                      icon: Icons.work,
-                      keyboardType: TextInputType.text,
-                      validator: (v) =>
-                      v!.isEmpty ? "Experience required" : null,
-                    ),
-
-                    _inputField(
-                      controller: expectedSalaryController,
-                      label: "Expected Salary (₹)",
-                      icon: Icons.currency_rupee,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                      v!.isEmpty ? "Salary required" : null,
-                    ),
-
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Availability",
-                      style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          )
-                        ],
-                      ),
-                      child: DropdownButtonFormField<String>(
-                        value: selectedAvailability,
-                        decoration:
-                        const InputDecoration(border: InputBorder.none),
-                        items: const [
-                          DropdownMenuItem(
-                              value: "Full Time", child: Text("Full Time")),
-                          DropdownMenuItem(
-                              value: "Part Time", child: Text("Part Time")),
-                          DropdownMenuItem(
-                              value: "Freelance", child: Text("Freelance")),
-                        ],
-                        onChanged: (v) =>
-                            setState(() => selectedAvailability = v!),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    /// 🚀 APPLY BUTTON
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff2563EB),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 4,
-                        ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                const PaymentStatusScreen(),
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text(
-                          "Apply Job",
-                          style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                    "Submit Application",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
-            ),
-          )
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  /// 🔹 INPUT FIELD
   Widget _inputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
+    TextInputType keyboard = TextInputType.text,
     String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            )
-          ],
-        ),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          validator: validator,
-          decoration: InputDecoration(
-            labelText: label,
-            prefixIcon: Icon(icon),
-            border: InputBorder.none,
-            contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboard,
+        validator: validator,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
+          filled: true,
         ),
-      ),
-    );
-  }
-
-  /// 🔹 SECTION TITLE
-  Widget _sectionTitle(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10, top: 10),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
