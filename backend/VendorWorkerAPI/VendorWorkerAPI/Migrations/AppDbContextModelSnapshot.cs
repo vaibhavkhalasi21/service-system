@@ -207,6 +207,9 @@ namespace VendorWorkerAPI.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("ServiceDateTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ServiceName")
                         .IsRequired()
                         .HasMaxLength(150)

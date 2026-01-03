@@ -12,8 +12,8 @@ using VendorWorkerAPI.Data;
 namespace VendorWorkerAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260102104116_AddServiceCreatedUpdatedAt")]
-    partial class AddServiceCreatedUpdatedAt
+    [Migration("20260103143537_AddServiceDateTimeSchedule")]
+    partial class AddServiceDateTimeSchedule
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -209,6 +209,9 @@ namespace VendorWorkerAPI.Migrations
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ServiceDateTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ServiceName")
                         .IsRequired()

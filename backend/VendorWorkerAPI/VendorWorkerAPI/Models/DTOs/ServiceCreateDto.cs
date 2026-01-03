@@ -18,6 +18,10 @@ namespace VendorWorkerAPI.Models.DTOs
         [Range(1, 100000)]
         public decimal Price { get; set; }
 
+        // 🔥 REQUIRED: when service is needed
+        [Required]
+        public DateTime ServiceDateTime { get; set; }
+
         public IFormFile? Image { get; set; }
     }
 }

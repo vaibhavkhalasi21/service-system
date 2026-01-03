@@ -27,6 +27,9 @@ namespace VendorWorkerAPI.Models
 
         public bool IsActive { get; set; } = true;
 
+        // 🔥 WHEN SERVICE IS NEEDED (selected by vendor)
+        public DateTime ServiceDateTime { get; set; }
+
         // ✅ UTC timestamps
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

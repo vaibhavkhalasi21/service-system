@@ -38,7 +38,18 @@ namespace VendorWorkerAPI.Controllers
                     s.Category,
                     s.Price,
                     s.ImageUrl,
-                    CreatedAt = DateTime.SpecifyKind(s.CreatedAt, DateTimeKind.Utc)
+
+                    // 🔥 WHEN SERVICE IS NEEDED
+                    ServiceDateTime = DateTime.SpecifyKind(
+                        s.ServiceDateTime,
+                        DateTimeKind.Utc
+                    ),
+
+                    // 🔥 WHEN SERVICE WAS POSTED
+                    CreatedAt = DateTime.SpecifyKind(
+                        s.CreatedAt,
+                        DateTimeKind.Utc
+                    )
                 })
                 .ToListAsync();
 
@@ -53,7 +64,8 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> GetVendorServices()
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null) return Unauthorized();
+            if (vendorId == null)
+                return Unauthorized();
 
             var services = await _context.Services
                 .Where(s => s.VendorId == vendorId)
@@ -66,11 +78,25 @@ namespace VendorWorkerAPI.Controllers
                     s.Price,
                     s.ImageUrl,
                     s.IsActive,
-                    CreatedAt = DateTime.SpecifyKind(s.CreatedAt, DateTimeKind.Utc),
-                    UpdatedAt = s.UpdatedAt == null
-    ? (DateTime?)null
-    : DateTime.SpecifyKind(s.UpdatedAt.Value, DateTimeKind.Utc)
 
+                    // 🔥 WHEN SERVICE IS NEEDED
+                    ServiceDateTime = DateTime.SpecifyKind(
+                        s.ServiceDateTime,
+                        DateTimeKind.Utc
+                    ),
+
+                    // 🔥 POSTED TIME
+                    CreatedAt = DateTime.SpecifyKind(
+                        s.CreatedAt,
+                        DateTimeKind.Utc
+                    ),
+
+                    UpdatedAt = s.UpdatedAt == null
+                        ? (DateTime?)null
+                        : DateTime.SpecifyKind(
+                            s.UpdatedAt.Value,
+                            DateTimeKind.Utc
+                        )
                 })
                 .ToListAsync();
 
@@ -83,7 +109,8 @@ namespace VendorWorkerAPI.Controllers
         [HttpPost]
         [Authorize(Roles = "Vendor")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> CreateService([FromForm] ServiceCreateDto dto)
+        public async Task<IActionResult> CreateService(
+            [FromForm] ServiceCreateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -96,13 +123,19 @@ namespace VendorWorkerAPI.Controllers
 
             if (dto.Image != null)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "service-images");
+                var uploadsFolder =
+                    Path.Combine(_env.WebRootPath, "service-images");
+
                 Directory.CreateDirectory(uploadsFolder);
 
-                var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                var fileName =
+                    Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
-                using var stream = new FileStream(filePath, FileMode.Create);
+                using var stream =
+                    new FileStream(filePath, FileMode.Create);
+
                 await dto.Image.CopyToAsync(stream);
 
                 imagePath = "/service-images/" + fileName;
@@ -111,18 +144,43 @@ namespace VendorWorkerAPI.Controllers
             var service = new Service
             {
                 ServiceName = dto.ServiceName,
-                Category = dto.Category.ToString(), // ✅ enum → string
+                Category = dto.Category.ToString(), // enum → string
                 Price = dto.Price,
                 ImageUrl = imagePath,
                 VendorId = vendorId,
                 IsActive = true,
+
+                // 🔥 SERVICE NEEDED DATE & TIME (FROM VENDOR)
+                ServiceDateTime = DateTime.SpecifyKind(
+                    dto.ServiceDateTime,
+                    DateTimeKind.Utc
+                ),
+
+                // 🔥 POSTED TIME
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Services.Add(service);
             await _context.SaveChangesAsync();
 
-            return Ok(service);
+            return Ok(new
+            {
+                service.Id,
+                service.ServiceName,
+                service.Category,
+                service.Price,
+                service.ImageUrl,
+
+                ServiceDateTime = DateTime.SpecifyKind(
+                    service.ServiceDateTime,
+                    DateTimeKind.Utc
+                ),
+
+                CreatedAt = DateTime.SpecifyKind(
+                    service.CreatedAt,
+                    DateTimeKind.Utc
+                )
+            });
         }
 
         // ======================================
@@ -131,37 +189,75 @@ namespace VendorWorkerAPI.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Vendor")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UpdateService(int id, [FromForm] ServiceCreateDto dto)
+        public async Task<IActionResult> UpdateService(
+            int id,
+            [FromForm] ServiceCreateDto dto)
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null) return Unauthorized();
+            if (vendorId == null)
+                return Unauthorized();
 
             var service = await _context.Services.FindAsync(id);
-            if (service == null) return NotFound();
+            if (service == null)
+                return NotFound("Service not found");
 
-            if (service.VendorId != vendorId) return Forbid();
+            if (service.VendorId != vendorId)
+                return Forbid();
 
             service.ServiceName = dto.ServiceName;
-            service.Category = dto.Category.ToString(); // ✅ enum → string
+            service.Category = dto.Category.ToString();
             service.Price = dto.Price;
+            service.ServiceDateTime = DateTime.SpecifyKind(
+                dto.ServiceDateTime,
+                DateTimeKind.Utc
+            );
             service.UpdatedAt = DateTime.UtcNow;
 
             if (dto.Image != null)
             {
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "service-images");
+                var uploadsFolder =
+                    Path.Combine(_env.WebRootPath, "service-images");
+
                 Directory.CreateDirectory(uploadsFolder);
 
-                var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+                var fileName =
+                    Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
-                using var stream = new FileStream(filePath, FileMode.Create);
+                using var stream =
+                    new FileStream(filePath, FileMode.Create);
+
                 await dto.Image.CopyToAsync(stream);
 
                 service.ImageUrl = "/service-images/" + fileName;
             }
 
             await _context.SaveChangesAsync();
-            return Ok(service);
+
+            return Ok(new
+            {
+                service.Id,
+                service.ServiceName,
+                service.Category,
+                service.Price,
+                service.ImageUrl,
+
+                ServiceDateTime = DateTime.SpecifyKind(
+                    service.ServiceDateTime,
+                    DateTimeKind.Utc
+                ),
+
+                CreatedAt = DateTime.SpecifyKind(
+                    service.CreatedAt,
+                    DateTimeKind.Utc
+                ),
+
+                UpdatedAt = DateTime.SpecifyKind(
+                    service.UpdatedAt!.Value,
+                    DateTimeKind.Utc
+                )
+            });
         }
 
         // ======================================
@@ -172,12 +268,15 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> DeleteService(int id)
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null) return Unauthorized();
+            if (vendorId == null)
+                return Unauthorized();
 
             var service = await _context.Services.FindAsync(id);
-            if (service == null) return NotFound();
+            if (service == null)
+                return NotFound("Service not found");
 
-            if (service.VendorId != vendorId) return Forbid();
+            if (service.VendorId != vendorId)
+                return Forbid();
 
             _context.Services.Remove(service);
             await _context.SaveChangesAsync();
