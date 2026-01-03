@@ -9,7 +9,10 @@ import '../services/service_api.dart';
 class ManageServicePage extends StatefulWidget {
   final Service service;
 
-  const ManageServicePage({super.key, required this.service});
+  const ManageServicePage({
+    super.key,
+    required this.service,
+  });
 
   @override
   State<ManageServicePage> createState() => _ManageServicePageState();
@@ -40,11 +43,9 @@ class _ManageServicePageState extends State<ManageServicePage> {
   @override
   void initState() {
     super.initState();
-
     titleController = TextEditingController(text: widget.service.title);
     priceController =
         TextEditingController(text: widget.service.price.toString());
-
     selectedCategory = widget.service.category;
   }
 
@@ -84,8 +85,13 @@ class _ManageServicePageState extends State<ManageServicePage> {
       serviceName: titleController.text.trim(),
       category: selectedCategory!,
       price: double.parse(priceController.text),
+
+      // ✅ REQUIRED FIX
+      serviceDateTime: widget.service.serviceDateTime,
+
       description: null,
     );
+
 
     final success = await ServiceApi.updateService(
       widget.service.id,
@@ -104,7 +110,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); // refresh list
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -124,7 +130,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
       builder: (ctx) => AlertDialog(
         title: const Text("Delete Service"),
         content: const Text(
-          "Are you sure you want to delete this service?\nThis action cannot be undone.",
+          "Are you sure you want to delete this service?\n\nThis action cannot be undone.",
         ),
         actions: [
           TextButton(
@@ -144,8 +150,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     setState(() => isDeleting = true);
 
-    final success =
-    await ServiceApi.deleteService(widget.service.id);
+    final success = await ServiceApi.deleteService(widget.service.id);
 
     setState(() => isDeleting = false);
 
@@ -158,7 +163,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true); // refresh previous page
+      Navigator.pop(context, true); // refresh previous screen
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -175,7 +180,9 @@ class _ManageServicePageState extends State<ManageServicePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Service")),
+      appBar: AppBar(
+        title: const Text("Manage Service"),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

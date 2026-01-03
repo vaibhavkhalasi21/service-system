@@ -4,7 +4,9 @@ class ServiceRequest {
   final String category;
   final double price;
   final String? imageUrl;
-  final DateTime createdAt;
+
+  final DateTime createdAt;        // posted time
+  final DateTime serviceDateTime;  // scheduled time
 
   ServiceRequest({
     required this.id,
@@ -12,28 +14,20 @@ class ServiceRequest {
     required this.category,
     required this.price,
     required this.createdAt,
+    required this.serviceDateTime,
     this.imageUrl,
   });
 
   factory ServiceRequest.fromJson(Map<String, dynamic> json) {
-    print("🟡 RAW createdAt FROM API: ${json['createdAt']}");
-
-    final parsed = DateTime.parse(json['createdAt']);
-    print("🟠 PARSED DateTime     : $parsed");
-    print("🟠 PARSED TZ OFFSET   : ${parsed.timeZoneOffset}");
-
-    final local = parsed.toLocal();
-    print("🟢 LOCAL DateTime      : $local");
-    print("🟢 LOCAL TZ OFFSET    : ${local.timeZoneOffset}");
-
     return ServiceRequest(
       id: json['id'],
       serviceName: json['serviceName'],
       category: json['category'],
       price: (json['price'] as num).toDouble(),
       imageUrl: json['imageUrl'],
-      createdAt: local,
+      createdAt: DateTime.parse(json['createdAt']).toLocal(),
+      serviceDateTime:
+      DateTime.parse(json['serviceDateTime']).toLocal(),
     );
   }
-
 }

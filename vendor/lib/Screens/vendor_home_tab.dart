@@ -49,7 +49,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       final List<Service> mappedServices =
       apiServices.map(_mapApiToUi).toList();
 
-      // 🔥 Latest service first (LOCAL time already)
+      // 🔥 Sort by posted time (latest first)
       mappedServices.sort(
             (a, b) => b.createdAt.compareTo(a.createdAt),
       );
@@ -59,12 +59,13 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
         isLoading = false;
       });
     } catch (e) {
+      debugPrint("FETCH SERVICES ERROR: $e");
       setState(() => isLoading = false);
     }
   }
 
   // ===============================
-  // API → UI MAPPER (NO TIME CONVERSION)
+  // API → UI MAPPER
   // ===============================
   Service _mapApiToUi(ServiceRequest api) {
     return Service(
@@ -77,10 +78,15 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
 
-      // ✅ already LOCAL from ServiceRequest.fromJson()
+      // 🕒 when service was posted
       createdAt: api.createdAt,
+
+      // 🗓 TEMP: scheduled time (until backend supports it)
+      serviceDateTime: api.createdAt,
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -91,8 +97,9 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     if (searchQuery.isNotEmpty) {
       filteredServices = filteredServices
           .where(
-            (s) =>
-            s.title.toLowerCase().contains(searchQuery.toLowerCase()),
+            (s) => s.title.toLowerCase().contains(
+          searchQuery.toLowerCase(),
+        ),
       )
           .toList();
     }

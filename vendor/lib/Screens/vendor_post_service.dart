@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../models/create_service_request.dart';
 import '../services/service_api.dart';
@@ -21,6 +22,9 @@ class _PostServicePageState extends State<PostServicePage> {
 
   String? selectedCategory;
   bool isLoading = false;
+
+  /// 🗓 Service scheduling date & time
+  DateTime? selectedServiceDateTime;
 
   File? selectedImage;
   final ImagePicker picker = ImagePicker();
@@ -44,6 +48,37 @@ class _PostServicePageState extends State<PostServicePage> {
   }
 
   // =====================
+  // DATE & TIME PICKER
+  // =====================
+  Future<void> pickServiceDateTime() async {
+    final DateTime? date = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: DateTime.now(),
+    );
+
+    if (date == null) return;
+
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (time == null) return;
+
+    setState(() {
+      selectedServiceDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  // =====================
   // SUBMIT SERVICE
   // =====================
   Future<void> publishService() async {
@@ -56,12 +91,20 @@ class _PostServicePageState extends State<PostServicePage> {
       return;
     }
 
+    if (selectedServiceDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select service date & time")),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
     final service = CreateServiceRequest(
       serviceName: _titleController.text.trim(),
       category: selectedCategory!,
       price: double.parse(_priceController.text),
+      serviceDateTime: selectedServiceDateTime!, // ✅ IMPORTANT
       description: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
@@ -91,6 +134,11 @@ class _PostServicePageState extends State<PostServicePage> {
   // =====================
   @override
   Widget build(BuildContext context) {
+    final String scheduledText = selectedServiceDateTime == null
+        ? "Select service date & time"
+        : DateFormat('dd MMM yyyy • hh:mm a')
+        .format(selectedServiceDateTime!);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Post New Service"),
@@ -153,6 +201,15 @@ class _PostServicePageState extends State<PostServicePage> {
                 ),
                 validator: (v) =>
                 v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // SERVICE DATE & TIME
+              OutlinedButton.icon(
+                onPressed: pickServiceDateTime,
+                icon: const Icon(Icons.schedule),
+                label: Text(scheduledText),
               ),
 
               const SizedBox(height: 16),

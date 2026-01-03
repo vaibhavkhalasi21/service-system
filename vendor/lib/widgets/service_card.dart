@@ -13,26 +13,35 @@ class ServiceCard extends StatelessWidget {
     required this.onUpdated,
   });
 
+  /// ⏱ Relative time (posted)
+  String timeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+
+    if (diff.inSeconds < 60) return "Just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hours ago";
+    return "${diff.inDays} days ago";
+  }
+
   @override
   Widget build(BuildContext context) {
-    // ✅ SAFE: already local time, no conversion here
-    final String formattedDate =
-    DateFormat('dd MMM yyyy').format(service.createdAt);
+    final scheduledDate =
+    DateFormat('dd MMM yyyy').format(service.serviceDateTime);
 
-    final String formattedTime =
-    DateFormat('hh:mm a').format(service.createdAt);
+    final scheduledTime =
+    DateFormat('hh:mm a').format(service.serviceDateTime);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      clipBehavior: Clip.antiAlias,
       elevation: 3,
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🖼 IMAGE
+          /// 🖼 IMAGE
           SizedBox(
             height: 160,
             width: double.infinity,
@@ -52,69 +61,91 @@ class ServiceCard extends StatelessWidget {
 
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 🏷 TITLE
-                      Text(
-                        service.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // 📂 CATEGORY
-                      Text(
-                        service.category,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // 💰 PRICE + RATING
-                      Text(
-                        "₹${service.price} • ⭐ ${service.rating}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      // 🕒 DATE & TIME
-                      const SizedBox(height: 6),
-                      Text(
-                        "$formattedDate • $formattedTime",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.blueGrey,
-                        ),
-                      ),
-                    ],
+                /// 🏷 TITLE
+                Text(
+                  service.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                // ⚙ MANAGE BUTTON
-                ElevatedButton(
-                  onPressed: () async {
-                    final updated = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            ManageServicePage(service: service),
-                      ),
-                    );
+                const SizedBox(height: 4),
 
-                    if (updated == true) {
-                      onUpdated();
-                    }
-                  },
-                  child: const Text("Manage"),
+                /// 📂 CATEGORY
+                Text(
+                  service.category,
+                  style: const TextStyle(color: Colors.grey),
+                ),
+
+                const SizedBox(height: 6),
+
+                /// 💰 PRICE + RATING
+                Text(
+                  "₹${service.price} • ⭐ ${service.rating}",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+
+                const SizedBox(height: 8),
+
+                /// 🗓 SERVICE SCHEDULE
+                Row(
+                  children: [
+                    const Icon(Icons.schedule,
+                        size: 16, color: Colors.blueGrey),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Service on $scheduledDate • $scheduledTime",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.blueGrey,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+
+                /// ⏱ POSTED AGO
+                Row(
+                  children: [
+                    const Icon(Icons.history,
+                        size: 14, color: Colors.grey),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Posted ${timeAgo(service.createdAt)}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                /// ⚙ MANAGE BUTTON
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final updated = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ManageServicePage(service: service),
+                        ),
+                      );
+
+                      if (updated == true) {
+                        onUpdated();
+                      }
+                    },
+                    child: const Text("Manage"),
+                  ),
                 ),
               ],
             ),

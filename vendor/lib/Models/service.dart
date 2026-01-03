@@ -6,8 +6,11 @@ class Service {
   final double rating;
   final String imagePath;
 
-  /// ✅ Already LOCAL time
+  /// 🕒 when service was POSTED
   final DateTime createdAt;
+
+  /// 🗓 when service is SCHEDULED
+  final DateTime serviceDateTime;
 
   Service({
     required this.id,
@@ -17,5 +20,6 @@ class Service {
     required this.rating,
     required this.imagePath,
     required this.createdAt,
+    required this.serviceDateTime, // ✅ REQUIRED
   });
 }

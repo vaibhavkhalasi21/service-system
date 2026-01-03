@@ -13,12 +13,9 @@ class ServiceApi {
   // WORKER: GET PUBLIC SERVICES
   // =========================================
   static Future<List<ServiceRequest>> getPublicServices() async {
-    final response = await http.get(
-      Uri.parse("$baseUrl/public"),
-    );
+    final response = await http.get(Uri.parse("$baseUrl/public"));
 
     if (response.statusCode != 200) {
-      print("PUBLIC SERVICES ERROR: ${response.body}");
       throw Exception("Failed to load public services");
     }
 
@@ -33,8 +30,6 @@ class ServiceApi {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
 
-    print("VENDOR TOKEN (GET): $token");
-
     if (token == null) {
       throw Exception("Vendor token not found");
     }
@@ -45,9 +40,6 @@ class ServiceApi {
         "Authorization": "Bearer $token",
       },
     );
-
-    print("GET SERVICES STATUS: ${response.statusCode}");
-    print("GET SERVICES BODY: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception("Failed to load vendor services");
@@ -66,21 +58,20 @@ class ServiceApi {
       ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
-
-    print("VENDOR TOKEN (ADD): $token");
-
     if (token == null) return false;
 
-    final request = http.MultipartRequest(
-      "POST",
-      Uri.parse(baseUrl),
-    );
+    final request =
+    http.MultipartRequest("POST", Uri.parse(baseUrl));
 
     request.headers["Authorization"] = "Bearer $token";
 
     request.fields["serviceName"] = service.serviceName;
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
+
+    // 🆕 scheduled date & time (UTC)
+    request.fields["serviceDateTime"] =
+        service.serviceDateTime.toUtc().toIso8601String();
 
     if (image != null) {
       request.files.add(
@@ -89,11 +80,6 @@ class ServiceApi {
     }
 
     final response = await request.send();
-    final body = await response.stream.bytesToString();
-
-    print("ADD SERVICE STATUS: ${response.statusCode}");
-    print("ADD SERVICE BODY: $body");
-
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
@@ -107,9 +93,6 @@ class ServiceApi {
       ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
-
-    print("VENDOR TOKEN (UPDATE): $token");
-
     if (token == null) return false;
 
     final request = http.MultipartRequest(
@@ -123,6 +106,10 @@ class ServiceApi {
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
 
+    // 🆕 keep scheduled time in update also
+    request.fields["serviceDateTime"] =
+        service.serviceDateTime.toUtc().toIso8601String();
+
     if (image != null) {
       request.files.add(
         await http.MultipartFile.fromPath("image", image.path),
@@ -130,11 +117,6 @@ class ServiceApi {
     }
 
     final response = await request.send();
-    final body = await response.stream.bytesToString();
-
-    print("UPDATE SERVICE STATUS: ${response.statusCode}");
-    print("UPDATE SERVICE BODY: $body");
-
     return response.statusCode == 200;
   }
 
@@ -144,9 +126,6 @@ class ServiceApi {
   static Future<bool> deleteService(int serviceId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
-
-    print("VENDOR TOKEN (DELETE): $token");
-
     if (token == null) return false;
 
     final response = await http.delete(
@@ -155,9 +134,6 @@ class ServiceApi {
         "Authorization": "Bearer $token",
       },
     );
-
-    print("DELETE SERVICE STATUS: ${response.statusCode}");
-    print("DELETE SERVICE BODY: ${response.body}");
 
     return response.statusCode == 200;
   }
