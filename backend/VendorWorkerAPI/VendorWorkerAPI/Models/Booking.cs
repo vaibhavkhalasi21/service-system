@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace VendorWorkerAPI.Models
 {
@@ -11,16 +10,14 @@ namespace VendorWorkerAPI.Models
         [Required]
         public int ServiceId { get; set; }
 
+        // 🔥 MUST BE STRING
         [Required]
         public string VendorId { get; set; } = null!;
 
+        // 🔥 MUST BE STRING
         [Required]
         public string WorkerId { get; set; } = null!;
 
-        [Required]
-        [StringLength(20)]
         public string Status { get; set; } = "Pending";
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

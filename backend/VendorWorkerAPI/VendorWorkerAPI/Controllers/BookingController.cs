@@ -26,10 +26,12 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> ApplyForService(int serviceId)
         {
             var workerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerId == null) return Unauthorized();
+            if (workerId == null)
+                return Unauthorized();
 
             var service = await _context.Services.FindAsync(serviceId);
-            if (service == null) return NotFound("Service not found");
+            if (service == null)
+                return NotFound("Service not found");
 
             bool alreadyApplied = await _context.Bookings.AnyAsync(b =>
                 b.ServiceId == serviceId && b.WorkerId == workerId);
@@ -40,9 +42,11 @@ namespace VendorWorkerAPI.Controllers
             var booking = new Booking
             {
                 ServiceId = serviceId,
-                VendorId = service.VendorId,
+                VendorId = service.VendorId, // ✅ string → string
                 WorkerId = workerId
             };
+
+
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
@@ -58,6 +62,8 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> VendorBookings()
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorId == null)
+                return Unauthorized();
 
             var bookings = await _context.Bookings
                 .Where(b => b.VendorId == vendorId && b.Status == "Pending")
@@ -74,10 +80,15 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> AcceptBooking(int id)
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var booking = await _context.Bookings.FindAsync(id);
+            if (vendorId == null)
+                return Unauthorized();
 
-            if (booking == null) return NotFound();
-            if (booking.VendorId != vendorId) return Forbid();
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+                return NotFound();
+
+            if (booking.VendorId != vendorId)
+                return Forbid();
 
             booking.Status = "Accepted";
             await _context.SaveChangesAsync();
@@ -93,10 +104,15 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> RejectBooking(int id)
         {
             var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var booking = await _context.Bookings.FindAsync(id);
+            if (vendorId == null)
+                return Unauthorized();
 
-            if (booking == null) return NotFound();
-            if (booking.VendorId != vendorId) return Forbid();
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+                return NotFound();
+
+            if (booking.VendorId != vendorId)
+                return Forbid();
 
             booking.Status = "Rejected";
             await _context.SaveChangesAsync();
