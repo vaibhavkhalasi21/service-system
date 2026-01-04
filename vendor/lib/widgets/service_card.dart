@@ -75,6 +75,26 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
+                /// 👤 VENDOR NAME
+                Row(
+                  children: [
+                    const Icon(Icons.person,
+                        size: 14, color: Colors.grey),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Posted by ${service.vendorName}",
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+
                 /// 📂 CATEGORY
                 Text(
                   service.category,

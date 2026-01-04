@@ -6,6 +6,8 @@ class Service {
   final double rating;
   final String imagePath;
 
+  final String vendorName; // ✅ NEW
+
   /// 🕒 when service was POSTED
   final DateTime createdAt;
 
@@ -19,7 +21,8 @@ class Service {
     required this.price,
     required this.rating,
     required this.imagePath,
+    required this.vendorName,
     required this.createdAt,
-    required this.serviceDateTime, // ✅ REQUIRED
+    required this.serviceDateTime,
   });
 }

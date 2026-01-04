@@ -65,7 +65,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // API → UI MAPPER
+  // API → UI MAPPER (FIXED)
   // ===============================
   Service _mapApiToUi(ServiceRequest api) {
     return Service(
@@ -78,14 +78,12 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
 
-      // 🕒 when service was posted
-      createdAt: api.createdAt,
+      vendorName: api.vendorName, // ✅ IMPORTANT
 
-      // 🗓 TEMP: scheduled time (until backend supports it)
-      serviceDateTime: api.createdAt,
+      createdAt: api.createdAt,
+      serviceDateTime: api.serviceDateTime, // ✅ FIXED
     );
   }
-
 
 
   @override
