@@ -5,6 +5,9 @@ class ServiceModel {
   final String description;
   final String imageUrl;
   final double price;
+  final String vendorName;
+  final DateTime createdAt;
+  final DateTime serviceDateTime;
 
   ServiceModel({
     required this.id,
@@ -13,6 +16,9 @@ class ServiceModel {
     required this.description,
     required this.imageUrl,
     required this.price,
+    required this.vendorName,
+    required this.createdAt,
+    required this.serviceDateTime,
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -23,12 +29,21 @@ class ServiceModel {
       title: json['serviceName'] ?? "No Title",
       category: json['category'] ?? "General",
       description: json['description'] ?? "",
-      price: (json['price'] != null)
+      price: json['price'] != null
           ? double.tryParse(json['price'].toString()) ?? 0
           : 0,
       imageUrl: (json['imageUrl'] != null && json['imageUrl'] != "")
           ? "$baseUrl${json['imageUrl']}"
           : "https://via.placeholder.com/150",
+
+      // 🔥 missing fields fixed
+      vendorName: json['VendorName'] ?? json['vendorName'] ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      serviceDateTime: json['serviceDateTime'] != null
+          ? DateTime.parse(json['serviceDateTime'])
+          : DateTime.now(),
     );
   }
 }

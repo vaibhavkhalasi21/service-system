@@ -1,66 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:vws/model/booking_model.dart';
+import '../model/booking_model.dart';
+import '../services/worker_service_api.dart';
+import 'package:intl/intl.dart';
 
-class MyBookingsScreen extends StatelessWidget {
+class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
 
-  // Dummy applied jobs data
-  List<Booking> get bookings => [
-    Booking(
-      jobTitle: "AC Repair",
-      location: "Surat",
-      date: "28 Dec 2025",
-      status: "Pending",
-    ),
-    Booking(
-      jobTitle: "Electric Wiring",
-      location: "Ahmedabad",
-      date: "25 Dec 2025",
-      status: "Accepted",
-    ),
-    Booking(
-      jobTitle: "Kitchen Cabinet Work",
-      location: "Vadodara",
-      date: "20 Dec 2025",
-      status: "Rejected",
-    ),
-  ];
+  @override
+  State<MyBookingsScreen> createState() => _MyBookingsScreenState();
+}
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case "Accepted":
-        return Colors.green;
-      case "Rejected":
-        return Colors.red;
-      default:
-        return Colors.orange;
-    }
+class _MyBookingsScreenState extends State<MyBookingsScreen> {
+  bool isLoading = true;
+  List<Booking> bookings = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadBookings();
   }
 
-  IconData _statusIcon(String status) {
-    switch (status) {
-      case "Accepted":
-        return Icons.check_circle;
-      case "Rejected":
-        return Icons.cancel;
-      default:
-        return Icons.hourglass_top;
+  Future<void> loadBookings() async {
+    try {
+      bookings = await WorkerServiceApi.getMyBookings();
+
+      // DEBUG: Check backend status
+      for (var b in bookings) {
+        debugPrint("Job: ${b.jobTitle}, Status: ${b.status}");
+      }
+    } catch (e) {
+      debugPrint("Error loading bookings: $e");
     }
+    setState(() => isLoading = false);
   }
+
+
+  Color statusColor(String status) {
+    status = status.toLowerCase();
+    if (status == "accepted") return Colors.green;
+    if (status == "rejected") return Colors.red;
+    if (status == "pending") return Colors.orange;
+    return Colors.grey;
+  }
+
+  IconData statusIcon(String status) {
+    status = status.toLowerCase();
+    if (status == "accepted") return Icons.check_circle;
+    if (status == "rejected") return Icons.cancel;
+    if (status == "pending") return Icons.hourglass_top;
+    return Icons.info;
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF2F3F7),
-      appBar: AppBar(
-        title: const Text("My Bookings"),
-        centerTitle: true,
-      ),
-      body: ListView.builder(
+      appBar: AppBar(title: const Text("My Bookings")),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : bookings.isEmpty
+          ? const Center(child: Text("No applications yet"))
+          : ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: bookings.length,
         itemBuilder: (context, index) {
-          final booking = bookings[index];
+          final b = bookings[index];
+
+          // Safe display of status
+          final displayStatus = b.status.isNotEmpty
+              ? b.status[0].toUpperCase() + b.status.substring(1).toLowerCase()
+              : "Pending";
+
+          Text(
+            displayStatus,
+            style: TextStyle(
+              color: statusColor(b.status),
+              fontWeight: FontWeight.bold,
+            ),
+          );
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -72,54 +90,42 @@ class MyBookingsScreen extends StatelessWidget {
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 6,
-                  offset: Offset(0, 3),
                 ),
               ],
             ),
             child: Row(
               children: [
-                // Status icon
                 CircleAvatar(
                   backgroundColor:
-                  _statusColor(booking.status).withOpacity(0.15),
+                  statusColor(b.status).withOpacity(0.15),
                   child: Icon(
-                    _statusIcon(booking.status),
-                    color: _statusColor(booking.status),
+                    statusIcon(b.status),
+                    color: statusColor(b.status),
                   ),
                 ),
                 const SizedBox(width: 16),
-
-                // Job info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        booking.jobTitle,
+                        b.jobTitle,
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        booking.location,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        booking.date,
+                        DateFormat('dd MMM yyyy')
+                            .format(b.serviceDateTime),
                         style: const TextStyle(color: Colors.grey),
                       ),
                     ],
                   ),
                 ),
-
-                // Status text
                 Text(
-                  booking.status,
+                  displayStatus,
                   style: TextStyle(
-                    color: _statusColor(booking.status),
+                    color: statusColor(b.status),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
