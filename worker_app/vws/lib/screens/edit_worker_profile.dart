@@ -11,14 +11,19 @@ class EditWorkerProfile extends StatefulWidget {
 
 class _EditWorkerProfileState extends State<EditWorkerProfile> {
   final _formKey = GlobalKey<FormState>();
+
   late TextEditingController nameController;
+  late TextEditingController emailController;
+
   Worker? worker;
 
   @override
   void initState() {
     super.initState();
     worker = WorkerSession.currentWorker;
+
     nameController = TextEditingController(text: worker?.name ?? "");
+    emailController = TextEditingController(text: worker?.email ?? "");
   }
 
   @override
@@ -31,7 +36,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Edit Name"),
+        title: const Text("Edit Profile"),
         backgroundColor: Colors.deepPurple,
       ),
       body: Padding(
@@ -40,6 +45,8 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
           key: _formKey,
           child: Column(
             children: [
+
+              /// 👤 NAME
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(
@@ -51,12 +58,18 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                validator: (v) => v!.isEmpty ? "Enter name" : null,
+                validator: (v) =>
+                v == null || v.isEmpty ? "Enter name" : null,
               ),
+
+              const SizedBox(height: 20),
+
+              /// 📧 EMAIL
               TextFormField(
-                controller: nameController,
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: "Email",
+                  labelText: "Email Address",
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -64,15 +77,25 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
                     borderSide: BorderSide.none,
                   ),
                 ),
-                validator: (v) => v!.isEmpty ? "Enter email" : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return "Enter email";
+                  }
+                  if (!v.contains('@')) {
+                    return "Enter valid email";
+                  }
+                  return null;
+                },
               ),
+
               const SizedBox(height: 30),
+
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _saveName,
-                  child: const Text("SAVE NAME"),
+                  onPressed: _saveProfile,
+                  child: const Text("SAVE PROFILE"),
                 ),
               ),
             ],
@@ -82,7 +105,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
     );
   }
 
-  void _saveName() async {
+  void _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
     String? token = await WorkerSession.getToken();
@@ -96,10 +119,11 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
       return;
     }
 
+    /// 🔥 UPDATED WORKER (NAME + EMAIL)
     Worker updatedWorker = Worker(
       id: worker!.id,
       name: nameController.text.trim(),
-      email: worker!.email,
+      email: emailController.text.trim(),
       phone: worker!.phone,
       skill: worker!.skill,
       address: worker!.address,
@@ -107,6 +131,6 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
 
     await WorkerSession.saveWorker(updatedWorker, token);
 
-    Navigator.pop(context); // go back to profile
+    Navigator.pop(context); // back to profile
   }
 }
