@@ -1,23 +1,53 @@
-﻿public class Service
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace VendorWorkerAPI.Models
 {
-    public int Id { get; set; }
+    public class Service
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public string ServiceName { get; set; } = null!;
+        // ===============================
+        // BASIC DETAILS
+        // ===============================
+        [Required]
+        public string ServiceName { get; set; } = null!;
 
-    public string Category { get; set; } = null!;
+        [Required]
+        public string Category { get; set; } = null!;
 
-    public decimal Price { get; set; }
+        [Required]
+        public decimal Price { get; set; }
 
-    public string? ImageUrl { get; set; }
+        // ===============================
+        // IMAGE (OPTIONAL)
+        // ===============================
+        public string? ImageUrl { get; set; }
 
-    // 🔥 FIXED
-    
-    public string VendorId { get; set; } = null!;
+        // ===============================
+        // VENDOR OWNERSHIP (CRITICAL)
+        // ===============================
+        [Required]
+        public string VendorId { get; set; } = null!;
 
-    public bool IsActive { get; set; } = true;
+        // ===============================
+        // STATUS
+        // ===============================
+        public bool IsActive { get; set; } = true;
 
-    public DateTime ServiceDateTime { get; set; }
+        // ===============================
+        // TIME FIELDS
+        // ===============================
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
+        // 🗓 When service is scheduled
+        [Required]
+        public DateTime ServiceDateTime { get; set; }
+
+        // 🕒 When service was created
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ✏ When service was last updated
+        public DateTime? UpdatedAt { get; set; }
+    }
 }

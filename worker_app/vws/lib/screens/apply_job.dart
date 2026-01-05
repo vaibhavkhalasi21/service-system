@@ -38,12 +38,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
   }
 
   Future<void> submitApplication() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
+    setState(() => isLoading = true);
 
     try {
       final success =
@@ -51,23 +46,22 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
       if (!mounted) return;
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Applied successfully ✅"),
-            backgroundColor: Colors.green,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? "Applied successfully ✅"
+                : "Already applied",
           ),
-        );
-        Navigator.pop(context);
-      } else {
-        setState(() {
-          errorMessage = "Failed to apply. Try again.";
-        });
-      }
+          backgroundColor: success ? Colors.green : Colors.orange,
+        ),
+      );
+
+      if (success) Navigator.pop(context);
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString().replaceAll("Exception:", "");
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     } finally {
       if (mounted) setState(() => isLoading = false);
     }

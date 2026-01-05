@@ -28,13 +28,19 @@ class JobList extends StatelessWidget {
           title: job.title,
           category: job.category,
           description: "Date: ${job.date}\nLocation: ${job.location}",
-          imageUrl: job.imageUrl.isNotEmpty == true
+          imageUrl: (job.imageUrl.isNotEmpty)
               ? job.imageUrl
-              : "https://via.placeholder.com/150",
-          price: job.price ?? 0,
+              : "https://via.placeholder.cosm/150",
+
+          // 🔥 required fields (updated JobCard)
+          price: job.price ?? 0.0,
           rating: job.rating ?? 4.0,
+          vendorName: job.vendorName ?? "Unknown Vendor",
+          createdAt: job.createdAt,
+          serviceDateTime: job.serviceDateTime ?? DateTime.now(),
+
           onApply: () {
-            // navigate to apply job screen
+            // TODO: Navigate to Apply Job Screen
           },
         );
       },
