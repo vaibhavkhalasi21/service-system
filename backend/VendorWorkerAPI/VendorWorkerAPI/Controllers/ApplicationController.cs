@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 
 namespace VendorWorkerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/application")]
     public class ApplicationController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -16,109 +18,178 @@ namespace VendorWorkerAPI.Controllers
             _context = context;
         }
 
-        // ===================== GET ALL APPLICATIONS =====================
-        [HttpGet]
-        public async Task<IActionResult> GetApplications()
+        // =====================================================
+        // WORKER: APPLY FOR A SERVICE
+        // =====================================================
+        [HttpPost("apply/{serviceId}")]
+        [Authorize(Roles = "Worker")]
+        public async Task<IActionResult> ApplyForService(int serviceId)
         {
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null)
+                return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
+
+            var service = await _context.Services.FindAsync(serviceId);
+            if (service == null)
+                return NotFound("Service not found");
+
+            bool alreadyApplied = await _context.Applications.AnyAsync(a =>
+                a.ServiceId == serviceId &&
+                a.WorkerId == workerId);
+
+            if (alreadyApplied)
+                return BadRequest("You have already applied for this service");
+
+            var application = new Application
+            {
+                ServiceId = serviceId,
+                WorkerId = workerId,
+                VendorId = int.Parse(service.VendorId), // ✅ FIX
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Applications.Add(application);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Application submitted successfully" });
+        }
+
+        // =====================================================
+        // WORKER: VIEW MY APPLICATIONS
+        // =====================================================
+        [HttpGet("worker")]
+        [Authorize(Roles = "Worker")]
+        public async Task<IActionResult> GetWorkerApplications()
+        {
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null)
+                return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
+
             var applications = await _context.Applications
-                .Include(a => a.Booking)
-                .Include(a => a.Worker)
+                .Where(a => a.WorkerId == workerId)
+                .Include(a => a.Service)
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Status,
+                    a.CreatedAt,
+
+                    ServiceName = a.Service.ServiceName,
+                    Category = a.Service.Category,
+                    Price = a.Service.Price,
+
+                    ServiceDateTime = DateTime.SpecifyKind(
+                        a.Service.ServiceDateTime,
+                        DateTimeKind.Utc
+                    )
+                })
                 .ToListAsync();
 
             return Ok(applications);
         }
 
-        // ===================== GET APPLICATION BY ID =====================
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetApplication(int id)
+        // =====================================================
+        // VENDOR: VIEW APPLICATIONS FOR MY SERVICES
+        // =====================================================
+        [HttpGet("vendor")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> GetVendorApplications()
         {
-            if (id <= 0)
-                return BadRequest("Invalid application id");
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
 
-            var application = await _context.Applications
-                .Include(a => a.Booking)
+            int vendorId = int.Parse(vendorIdStr);
+
+            var applications = await _context.Applications
+                .Where(a => a.VendorId == vendorId)
+                .Include(a => a.Service)
                 .Include(a => a.Worker)
-                .FirstOrDefaultAsync(a => a.ApplicationId == id);
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Status,
+                    a.CreatedAt,
 
-            if (application == null)
-                return NotFound("Application not found");
+                    WorkerName = a.Worker.Name,
+                    ServiceName = a.Service.ServiceName,
+                    Price = a.Service.Price,
 
-            return Ok(application);
+                    ServiceDateTime = DateTime.SpecifyKind(
+                        a.Service.ServiceDateTime,
+                        DateTimeKind.Utc
+                    )
+                })
+                .ToListAsync();
+
+            return Ok(applications);
         }
 
-        // ===================== APPLY =====================
-        [HttpPost]
-        public async Task<IActionResult> Apply([FromBody] Application application)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Check Booking exists
-            bool bookingExists = await _context.Bookings
-                .AnyAsync(b => b.Id == application.BookingId);
-            if (!bookingExists)
-                return BadRequest("Invalid BookingId");
-
-            // Check Worker exists
-            bool workerExists = await _context.Workers
-                .AnyAsync(w => w.Id == application.WorkerId);
-            if (!workerExists)
-                return BadRequest("Invalid WorkerId");
-
-            // Prevent duplicate application
-            bool alreadyApplied = await _context.Applications.AnyAsync(a =>
-                a.BookingId == application.BookingId &&
-                a.WorkerId == application.WorkerId);
-            if (alreadyApplied)
-                return BadRequest("Worker has already applied for this booking");
-
-            application.Status = "Pending";
-            application.AppliedDate = DateTime.UtcNow;
-
-            _context.Applications.Add(application);
-            await _context.SaveChangesAsync();
-
-            return Ok("Application submitted successfully");
-        }
-
-        // ===================== UPDATE STATUS =====================
+        // =====================================================
+        // VENDOR: ACCEPT / REJECT APPLICATION
+        // =====================================================
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] string status)
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromQuery] string status)
         {
-            if (id <= 0)
-                return BadRequest("Invalid application id");
+            if (status != "Accepted" && status != "Rejected")
+                return BadRequest("Status must be Accepted or Rejected");
 
-            if (string.IsNullOrEmpty(status))
-                return BadRequest("Status is required");
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
 
-            if (status != "Pending" && status != "Approved" && status != "Rejected")
-                return BadRequest("Status must be Pending, Approved, or Rejected");
+            int vendorId = int.Parse(vendorIdStr);
 
             var application = await _context.Applications.FindAsync(id);
             if (application == null)
                 return NotFound("Application not found");
+
+            if (application.VendorId != vendorId)
+                return Forbid();
 
             application.Status = status;
             await _context.SaveChangesAsync();
 
-            return Ok("Application status updated successfully");
+            return Ok(new
+            {
+                message = $"Application {status.ToLower()} successfully"
+            });
         }
 
-        // ===================== DELETE APPLICATION =====================
+        // =====================================================
+        // VENDOR: DELETE APPLICATION
+        // =====================================================
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> DeleteApplication(int id)
         {
-            if (id <= 0)
-                return BadRequest("Invalid application id");
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
 
             var application = await _context.Applications.FindAsync(id);
             if (application == null)
-                return NotFound("Application not found");
+                return NotFound();
+
+            if (application.VendorId != vendorId)
+                return Forbid();
 
             _context.Applications.Remove(application);
             await _context.SaveChangesAsync();
 
-            return Ok("Application deleted successfully");
+            return Ok(new { message = "Application deleted successfully" });
         }
     }
 }

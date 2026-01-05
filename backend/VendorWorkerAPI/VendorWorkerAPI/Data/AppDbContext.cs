@@ -22,11 +22,12 @@ namespace VendorWorkerAPI.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Worker>()
-                .HasIndex(w => w.Email)
-                .IsUnique();
+            modelBuilder.Entity<Application>()
+     .HasOne(a => a.Worker)
+     .WithMany()
+     .HasForeignKey(a => a.WorkerId)
+     .HasPrincipalKey(u => u.Id);
 
-            base.OnModelCreating(modelBuilder);
         }
     }
 }

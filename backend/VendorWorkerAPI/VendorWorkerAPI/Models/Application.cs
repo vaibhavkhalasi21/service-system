@@ -1,35 +1,21 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using VendorWorkerAPI.Models;
 
-namespace VendorWorkerAPI.Models
+public class Application
 {
-    public class Application
-    {
-        [Key]
-        public int ApplicationId { get; set; }
+    public int Id { get; set; }
 
-        [Required(ErrorMessage = "BookingId is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Invalid BookingId")]
-        public int BookingId { get; set; }
+    public int ServiceId { get; set; }
 
-        [Required(ErrorMessage = "WorkerId is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Invalid WorkerId")]
-        public int WorkerId { get; set; }
+    // 🔥 FIX HERE
+    public int WorkerId { get; set; }   // ✅ INT
 
-        [Required]
-        [StringLength(20)]
-        [RegularExpression("Pending|Approved|Rejected",
-            ErrorMessage = "Status must be Pending, Approved, or Rejected")]
-        public string Status { get; set; } = "Pending";
+    public int VendorId { get; set; }
 
-        public DateTime AppliedDate { get; set; } = DateTime.Now;
+    public string Status { get; set; } = "Pending";
 
-        // ================= Navigation Properties =================
-        [ForeignKey("BookingId")]
-        public Booking Booking { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-        [ForeignKey("WorkerId")]
-        public User Worker { get; set; }
-    }
+    // Navigation
+    public User Worker { get; set; }
+    public Service Service { get; set; }
 }

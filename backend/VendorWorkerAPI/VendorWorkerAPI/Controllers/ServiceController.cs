@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 using VendorWorkerAPI.Models.DTOs;
@@ -19,9 +19,9 @@ public class ServiceController : ControllerBase
         _env = env;
     }
 
-    // ======================================
-    // WORKER: VIEW ALL ACTIVE SERVICES
-    // ======================================
+    // =====================================================
+    // WORKER: VIEW PUBLIC SERVICES
+    // =====================================================
     [HttpGet("public")]
     [AllowAnonymous]
     public async Task<IActionResult> GetPublicServices()
@@ -37,9 +37,8 @@ public class ServiceController : ControllerBase
                 s.Price,
                 s.ImageUrl,
 
-                // 🔥 Vendor name via subquery
                 VendorName = _context.Vendors
-                    .Where(v => v.Id.ToString() == s.VendorId)
+                    .Where(v => v.Id.ToString() == s.VendorId) // ✅ FIX
                     .Select(v => v.Name)
                     .FirstOrDefault(),
 
@@ -47,7 +46,6 @@ public class ServiceController : ControllerBase
                     s.ServiceDateTime,
                     DateTimeKind.Utc
                 ),
-
                 CreatedAt = DateTime.SpecifyKind(
                     s.CreatedAt,
                     DateTimeKind.Utc
@@ -58,16 +56,15 @@ public class ServiceController : ControllerBase
         return Ok(services);
     }
 
-    // ======================================
+    // =====================================================
     // VENDOR: VIEW MY SERVICES
-    // ======================================
+    // =====================================================
     [HttpGet("vendor")]
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> GetVendorServices()
     {
         var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null)
-            return Unauthorized();
+        if (vendorId == null) return Unauthorized();
 
         var services = await _context.Services
             .Where(s => s.VendorId == vendorId)
@@ -82,7 +79,7 @@ public class ServiceController : ControllerBase
                 s.IsActive,
 
                 VendorName = _context.Vendors
-                    .Where(v => v.Id.ToString() == s.VendorId)
+                    .Where(v => v.Id.ToString() == s.VendorId) // ✅ FIX
                     .Select(v => v.Name)
                     .FirstOrDefault(),
 
@@ -90,14 +87,13 @@ public class ServiceController : ControllerBase
                     s.ServiceDateTime,
                     DateTimeKind.Utc
                 ),
-
                 CreatedAt = DateTime.SpecifyKind(
                     s.CreatedAt,
                     DateTimeKind.Utc
                 ),
 
                 UpdatedAt = s.UpdatedAt == null
-                    ? (DateTime?)null
+                    ? (DateTime?)null // ✅ FIX
                     : DateTime.SpecifyKind(
                         s.UpdatedAt.Value,
                         DateTimeKind.Utc
@@ -108,32 +104,28 @@ public class ServiceController : ControllerBase
         return Ok(services);
     }
 
-    // ======================================
+    // =====================================================
     // VENDOR: CREATE SERVICE
-    // ======================================
+    // =====================================================
     [HttpPost]
     [Authorize(Roles = "Vendor")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> CreateService([FromForm] ServiceCreateDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null)
-            return Unauthorized();
+        if (vendorId == null) return Unauthorized();
 
         string? imagePath = null;
 
         if (dto.Image != null)
         {
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "service-images");
-            Directory.CreateDirectory(uploadsFolder);
+            var folder = Path.Combine(_env.WebRootPath, "service-images");
+            Directory.CreateDirectory(folder);
 
             var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
-            var filePath = Path.Combine(uploadsFolder, fileName);
+            var fullPath = Path.Combine(folder, fileName);
 
-            using var stream = new FileStream(filePath, FileMode.Create);
+            using var stream = new FileStream(fullPath, FileMode.Create);
             await dto.Image.CopyToAsync(stream);
 
             imagePath = "/service-images/" + fileName;
@@ -142,10 +134,10 @@ public class ServiceController : ControllerBase
         var service = new Service
         {
             ServiceName = dto.ServiceName,
-            Category = dto.Category.ToString(),
+            Category = dto.Category.ToString(), // ✅ enum → string
             Price = dto.Price,
             ImageUrl = imagePath,
-            VendorId = vendorId, // ✅ STRING
+            VendorId = vendorId,
             IsActive = true,
             ServiceDateTime = DateTime.SpecifyKind(
                 dto.ServiceDateTime,
@@ -160,23 +152,66 @@ public class ServiceController : ControllerBase
         return Ok(new { message = "Service created successfully" });
     }
 
-    // ======================================
+    // =====================================================
+    // VENDOR: UPDATE SERVICE
+    // =====================================================
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Vendor")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdateService(
+        int id,
+        [FromForm] ServiceCreateDto dto)
+    {
+        var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (vendorId == null) return Unauthorized();
+
+        var service = await _context.Services.FindAsync(id);
+        if (service == null) return NotFound("Service not found");
+
+        if (service.VendorId != vendorId) return Forbid();
+
+        if (dto.Image != null)
+        {
+            var folder = Path.Combine(_env.WebRootPath, "service-images");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+            var fullPath = Path.Combine(folder, fileName);
+
+            using var stream = new FileStream(fullPath, FileMode.Create);
+            await dto.Image.CopyToAsync(stream);
+
+            service.ImageUrl = "/service-images/" + fileName;
+        }
+
+        service.ServiceName = dto.ServiceName;
+        service.Category = dto.Category.ToString();
+        service.Price = dto.Price;
+        service.ServiceDateTime = DateTime.SpecifyKind(
+            dto.ServiceDateTime,
+            DateTimeKind.Utc
+        );
+        service.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Service updated successfully" });
+    }
+
+    // =====================================================
     // VENDOR: DELETE SERVICE
-    // ======================================
+    // =====================================================
     [HttpDelete("{id}")]
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> DeleteService(int id)
     {
         var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null)
-            return Unauthorized();
+        if (vendorId == null) return Unauthorized();
 
         var service = await _context.Services.FindAsync(id);
-        if (service == null)
-            return NotFound("Service not found");
+        if (service == null) return NotFound();
 
-        if (service.VendorId != vendorId)
-            return Forbid();
+        if (service.VendorId != vendorId) return Forbid();
 
         _context.Services.Remove(service);
         await _context.SaveChangesAsync();
