@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../constants/service_categories.dart';
 import '../models/service.dart';
 import '../models/create_service_request.dart';
 import '../services/service_api.dart';
@@ -24,29 +25,25 @@ class _ManageServicePageState extends State<ManageServicePage> {
   late TextEditingController titleController;
   late TextEditingController priceController;
 
+  String? selectedCategory;
+  File? selectedImage;
+
   bool isLoading = false;
   bool isDeleting = false;
 
-  File? selectedImage;
   final ImagePicker picker = ImagePicker();
-
-  final List<String> categories = [
-    "Cleaning",
-    "Plumber",
-    "Electrician",
-    "AC Repair",
-    "Painter",
-  ];
-
-  String? selectedCategory;
 
   @override
   void initState() {
     super.initState();
+
     titleController = TextEditingController(text: widget.service.title);
     priceController =
         TextEditingController(text: widget.service.price.toString());
-    selectedCategory = widget.service.category;
+
+    selectedCategory = serviceCategories.contains(widget.service.category)
+        ? widget.service.category
+        : null;
   }
 
   @override
@@ -71,53 +68,43 @@ class _ManageServicePageState extends State<ManageServicePage> {
   // =============================
   Future<void> updateService() async {
     if (!_formKey.currentState!.validate()) return;
+    if (selectedCategory == null) return;
 
-    if (selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a category")),
-      );
-      return;
-    }
+    FocusScope.of(context).unfocus();
 
     setState(() => isLoading = true);
 
-    final updatedService = CreateServiceRequest(
+    final request = CreateServiceRequest(
       serviceName: titleController.text.trim(),
       category: selectedCategory!,
       price: double.parse(priceController.text),
-
-      // ✅ REQUIRED FIX
       serviceDateTime: widget.service.serviceDateTime,
-
-      description: null,
     );
-
 
     final success = await ServiceApi.updateService(
       widget.service.id,
-      updatedService,
+      request,
       selectedImage,
     );
 
-    setState(() => isLoading = false);
-
     if (!mounted) return;
 
+    setState(() => isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? "Service updated successfully"
+              : "Failed to update service",
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ),
+    );
+
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Service updated successfully"),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context, true); // refresh list
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Failed to update service"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      await Future.delayed(const Duration(milliseconds: 300));
+      Navigator.pop(context, true);
     }
   }
 
@@ -125,21 +112,21 @@ class _ManageServicePageState extends State<ManageServicePage> {
   // DELETE SERVICE
   // =============================
   Future<void> deleteService() async {
-    final confirm = await showDialog<bool>(
+    final bool? confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text("Delete Service"),
         content: const Text(
           "Are you sure you want to delete this service?\n\nThis action cannot be undone.",
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text("Delete"),
           ),
         ],
@@ -152,25 +139,12 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     final success = await ServiceApi.deleteService(widget.service.id);
 
-    setState(() => isDeleting = false);
-
     if (!mounted) return;
 
+    setState(() => isDeleting = false);
+
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Service deleted successfully"),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context, true); // refresh previous screen
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Failed to delete service"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Navigator.pop(context, true);
     }
   }
 
@@ -180,16 +154,14 @@ class _ManageServicePageState extends State<ManageServicePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Manage Service"),
-      ),
+      appBar: AppBar(title: const Text("Manage Service")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              // IMAGE PREVIEW
+              // IMAGE
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: selectedImage != null
@@ -209,37 +181,32 @@ class _ManageServicePageState extends State<ManageServicePage> {
                 ),
               ),
 
-              const SizedBox(height: 12),
-
-              OutlinedButton.icon(
+              TextButton.icon(
                 onPressed: pickImage,
                 icon: const Icon(Icons.image),
                 label: const Text("Change Image"),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
-              // SERVICE NAME
               TextFormField(
                 controller: titleController,
                 decoration: const InputDecoration(
                   labelText: "Service Name",
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                v == null || v.isEmpty ? "Required" : null,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),
 
               const SizedBox(height: 12),
 
-              // CATEGORY
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 decoration: const InputDecoration(
                   labelText: "Category",
                   border: OutlineInputBorder(),
                 ),
-                items: categories
+                items: serviceCategories
                     .map(
                       (c) => DropdownMenuItem(
                     value: c,
@@ -248,13 +215,11 @@ class _ManageServicePageState extends State<ManageServicePage> {
                 )
                     .toList(),
                 onChanged: (v) => setState(() => selectedCategory = v),
-                validator: (v) =>
-                v == null ? "Select category" : null,
+                validator: (v) => v == null ? "Select category" : null,
               ),
 
               const SizedBox(height: 12),
 
-              // PRICE
               TextFormField(
                 controller: priceController,
                 keyboardType: TextInputType.number,
@@ -262,29 +227,24 @@ class _ManageServicePageState extends State<ManageServicePage> {
                   labelText: "Price",
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                v == null || v.isEmpty ? "Required" : null,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),
 
               const SizedBox(height: 24),
 
-              // SAVE BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : updateService,
                   child: isLoading
-                      ? const CircularProgressIndicator(
-                    color: Colors.white,
-                  )
+                      ? const CircularProgressIndicator(color: Colors.white)
                       : const Text("Save Changes"),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // DELETE BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 48,

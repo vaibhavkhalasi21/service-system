@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/booking_request.dart';
 
 class BookingRequestCard extends StatelessWidget {
@@ -13,8 +14,26 @@ class BookingRequestCard extends StatelessWidget {
     this.onReject,
   });
 
+  Color _statusColor() {
+    switch (request.status) {
+      case "Accepted":
+        return Colors.green;
+      case "Rejected":
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final date =
+    DateFormat("dd MMM yyyy").format(request.serviceDateTime);
+    final time =
+    DateFormat("hh:mm a").format(request.serviceDateTime);
+
+    final bool isPending = request.status == "Pending";
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -23,6 +42,7 @@ class BookingRequestCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// 👤 Worker info
             Row(
               children: [
                 const CircleAvatar(
@@ -50,9 +70,30 @@ class BookingRequestCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                /// 🔖 Status badge
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _statusColor().withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    request.status,
+                    style: TextStyle(
+                      color: _statusColor(),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            /// 📅 Date & 💰 Price
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -61,7 +102,7 @@ class BookingRequestCard extends StatelessWidget {
                     const Icon(Icons.calendar_today,
                         size: 16, color: Colors.grey),
                     const SizedBox(width: 6),
-                    Text("${request.date} • ${request.time}"),
+                    Text("$date • $time"),
                   ],
                 ),
                 Text(
@@ -73,31 +114,35 @@ class BookingRequestCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onReject,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
+
+            /// ✅ Actions (only if Pending)
+            if (isPending)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onReject,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                      child: const Text("Reject"),
                     ),
-                    child: const Text("Reject"),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onAccept,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onAccept,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: const Text("Accept"),
                     ),
-                    child: const Text("Accept"),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

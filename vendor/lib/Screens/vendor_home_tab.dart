@@ -22,7 +22,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   final List<String> categories = [
     "All",
     "Electrician",
-    "Plumber",
+    "Plumbing",
     "Cleaning",
     "AC Repair",
     "Painter",

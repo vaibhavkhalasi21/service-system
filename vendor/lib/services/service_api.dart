@@ -93,23 +93,28 @@ class ServiceApi {
       ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
+
     if (token == null) return false;
 
     final request = http.MultipartRequest(
-      "PUT",
+      "PUT", // ✅ MUST BE PUT
       Uri.parse("$baseUrl/$serviceId"),
     );
 
     request.headers["Authorization"] = "Bearer $token";
 
+    // REQUIRED FIELDS
     request.fields["serviceName"] = service.serviceName;
-    request.fields["category"] = service.category;
+    request.fields["category"] = service.category; // ✅ STRING
     request.fields["price"] = service.price.toString();
-
-    // 🆕 keep scheduled time in update also
     request.fields["serviceDateTime"] =
         service.serviceDateTime.toUtc().toIso8601String();
 
+    if (service.description != null) {
+      request.fields["description"] = service.description!;
+    }
+
+    // IMAGE OPTIONAL
     if (image != null) {
       request.files.add(
         await http.MultipartFile.fromPath("image", image.path),
@@ -117,8 +122,17 @@ class ServiceApi {
     }
 
     final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    // 🔎 DEBUG (TEMP)
+    // ignore: avoid_print
+    print("UPDATE STATUS: ${response.statusCode}");
+    // ignore: avoid_print
+    print("UPDATE BODY: $body");
+
     return response.statusCode == 200;
   }
+
 
   // =========================================
   // VENDOR: DELETE SERVICE

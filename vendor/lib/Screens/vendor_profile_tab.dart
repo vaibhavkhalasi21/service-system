@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vendor/Screens/vendor_application_page.dart';
 
-import '../models/booking_request.dart';
 import 'vendor_login.dart';
 import 'booking_request_page.dart';
 import 'vendor_post_service.dart';
+import 'my_services_page.dart';
 
 class VendorProfileTab extends StatefulWidget {
   const VendorProfileTab({super.key});
@@ -17,23 +18,6 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
   String vendorName = "Vendor Name";
   String vendorEmail = "vendor@email.com";
 
-  List<BookingRequest> bookingRequests = [
-    BookingRequest(
-      workerName: "Rahul Sharma",
-      serviceName: "Electrician Service",
-      price: 350,
-      date: "29 Dec 2025",
-      time: "10:30 AM",
-    ),
-    BookingRequest(
-      workerName: "Amit Patel",
-      serviceName: "Plumbing Service",
-      price: 450,
-      date: "30 Dec 2025",
-      time: "02:00 PM",
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -41,7 +25,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
   }
 
   // =============================
-  // LOAD SESSION DATA
+  // LOAD VENDOR SESSION DATA
   // =============================
   Future<void> loadVendorData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -52,21 +36,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
   }
 
   // =============================
-  // SAVE PROFILE DATA
-  // =============================
-  Future<void> saveVendorData(String name, String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("vendor_name", name);
-    await prefs.setString("vendor_email", email);
-
-    setState(() {
-      vendorName = name;
-      vendorEmail = email;
-    });
-  }
-
-  // =============================
-  // LOGOUT (CLEAR SESSION)
+  // LOGOUT
   // =============================
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -75,85 +45,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const VendorLoginScreen()),
-          (route) => false,
-    );
-  }
-
-  // =============================
-  // EDIT PROFILE UI
-  // =============================
-  void openEditProfile() {
-    final nameController = TextEditingController(text: vendorName);
-    final emailController = TextEditingController(text: vendorEmail);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Edit Profile",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: "Vendor Name",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    saveVendorData(
-                      nameController.text.trim(),
-                      emailController.text.trim(),
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Save Changes"),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+          (_) => false,
     );
   }
 
@@ -165,127 +57,137 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // PROFILE CARD
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                const CircleAvatar(
-                  radius: 45,
-                  backgroundColor: Colors.deepPurple,
-                  child: Icon(Icons.person, size: 45, color: Colors.white),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  vendorName,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  vendorEmail,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.edit),
-                  label: const Text("Edit Profile"),
-                  onPressed: openEditProfile,
-                ),
-              ],
-            ),
-          ),
+          _profileCard(),
 
           const SizedBox(height: 24),
 
-          // VIEW APPLICATIONS
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.list_alt),
-              label: const Text("View Applications"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          /// 📥 VIEW APPLICATIONS (REAL API DATA)
+          _actionButton(
+            icon: Icons.list_alt,
+            label: "View Applications",
+            color: Colors.deepPurple,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VendorApplicationsPage(),
                 ),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BookingRequestsPage(
-                      bookingRequests: bookingRequests,
-                    ),
-                  ),
-                );
-              },
-            ),
+              );
+            },
+          ),
+
+
+          const SizedBox(height: 16),
+
+          /// ➕ POST NEW SERVICE
+          _actionButton(
+            icon: Icons.add_circle_outline,
+            label: "Post New Service",
+            color: Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PostServicePage()),
+              );
+            },
           ),
 
           const SizedBox(height: 16),
 
-          // POST SERVICE
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text("Post New Service"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PostServicePage(),
-                  ),
-                );
-              },
-            ),
+          /// 👁 MY SERVICES
+          _actionButton(
+            icon: Icons.remove_red_eye,
+            label: "My Services",
+            color: Colors.blue,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyServicesPage()),
+              );
+            },
           ),
 
-          const SizedBox(height: 30),
+          const SizedBox(height: 16),
 
-          // LOGOUT
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.logout),
-              label: const Text("Logout"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              onPressed: () => logout(context),
-            ),
+          /// 🚪 LOGOUT
+          _actionButton(
+            icon: Icons.logout,
+            label: "Logout",
+            color: Colors.deepPurple,
+            onTap: () => logout(context),
           ),
         ],
+      ),
+    );
+  }
+
+  // =============================
+  // PROFILE CARD
+  // =============================
+  Widget _profileCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const CircleAvatar(
+            radius: 45,
+            backgroundColor: Colors.deepPurple,
+            child: Icon(Icons.person, size: 45, color: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            vendorName,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            vendorEmail,
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =============================
+  // REUSABLE ACTION BUTTON
+  // =============================
+  Widget _actionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: Icon(icon),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        onPressed: onTap,
       ),
     );
   }
