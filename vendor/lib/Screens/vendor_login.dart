@@ -46,11 +46,33 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       if (status == 200 && body is Map<String, dynamic>) {
         final prefs = await SharedPreferences.getInstance();
 
-        await prefs.setInt("vendor_id", body["vendorId"]);
-        await prefs.setString("vendor_name", body["vendorName"] ?? "");
-        await prefs.setString("vendor_email", body["vendorEmail"] ?? "");
-        await prefs.setString("vendor_token", body["token"]);
-        await prefs.setString("role", body["role"] ?? "Vendor");
+        // ✅ SAFE SAVES (NO CRASH)
+        await prefs.setInt(
+          "vendor_id",
+          int.parse(body["userId"].toString()),
+        );
+
+        await prefs.setString(
+          "vendor_email",
+          body["email"] ?? "",
+        );
+
+        await prefs.setString(
+          "role",
+          body["role"] ?? "Vendor",
+        );
+
+        // ✅ TOKEN ONLY IF EXISTS
+        if (body.containsKey("token") && body["token"] != null) {
+          await prefs.setString("vendor_token", body["token"]);
+        }
+
+        // 🔍 DEBUG
+        print("LOGIN OK");
+        print("ID    => ${prefs.getInt("vendor_id")}");
+        print("EMAIL => ${prefs.getString("vendor_email")}");
+        print("ROLE  => ${prefs.getString("role")}");
+        print("TOKEN => ${prefs.getString("vendor_token")}");
 
         if (!mounted) return;
 
@@ -72,6 +94,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       if (mounted) setState(() => isLoading = false);
     }
   }
+
 
   // =============================
   // UI

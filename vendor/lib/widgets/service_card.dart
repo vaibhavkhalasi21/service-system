@@ -30,6 +30,10 @@ class ServiceCard extends StatelessWidget {
     final time =
     DateFormat('hh:mm a').format(service.serviceDateTime);
 
+    // ✅ SAFE vendor name
+    final vendorName =
+    service.vendorName.isNotEmpty ? service.vendorName : "Vendor";
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
@@ -39,15 +43,20 @@ class ServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // IMAGE
+          // ================= IMAGE =================
           SizedBox(
             height: 160,
             width: double.infinity,
-            child: Image.network(
+            child: service.imagePath.startsWith("http")
+                ? Image.network(
               service.imagePath,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) =>
               const Center(child: Icon(Icons.broken_image)),
+            )
+                : Image.asset(
+              service.imagePath,
+              fit: BoxFit.cover,
             ),
           ),
 
@@ -56,7 +65,7 @@ class ServiceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // TITLE
+                // ================= TITLE =================
                 Text(
                   service.title,
                   style: const TextStyle(
@@ -67,7 +76,7 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // CATEGORY
+                // ================= CATEGORY =================
                 Text(
                   service.category,
                   style: const TextStyle(color: Colors.grey),
@@ -75,7 +84,7 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                // PRICE
+                // ================= PRICE =================
                 Text(
                   "₹${service.price}",
                   style: const TextStyle(
@@ -86,7 +95,7 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // SERVICE DATE & TIME
+                // ================= SERVICE DATE & TIME =================
                 Row(
                   children: [
                     const Icon(Icons.schedule,
@@ -101,7 +110,7 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                // POSTED BY + TIME AGO
+                // ================= POSTED BY =================
                 Row(
                   children: [
                     const Icon(Icons.person,
@@ -109,7 +118,7 @@ class ServiceCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "Posted by ${service.vendorName} • ${timeAgo(service.createdAt)}",
+                        "Posted by $vendorName • ${timeAgo(service.createdAt)}",
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -119,7 +128,7 @@ class ServiceCard extends StatelessWidget {
                   ],
                 ),
 
-                // ACTIONS (EDIT)
+                // ================= ACTIONS =================
                 if (showActions) ...[
                   const SizedBox(height: 12),
                   Row(

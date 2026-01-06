@@ -22,13 +22,13 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   final List<String> categories = [
     "All",
     "Electrician",
-    "Plumbing",
+    "Plumber",
     "Cleaning",
     "AC Repair",
     "Painter",
   ];
 
-  static const String baseUrl = "http://10.141.25.37:5244";
+  static const String baseUrl = "http://10.172.79.37:5244";
 
   @override
   void initState() {
@@ -46,13 +46,12 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       final List<ServiceRequest> apiServices =
       await ServiceApi.getVendorServices();
 
+      // 🔴 DEBUG
+      debugPrint("API SERVICES COUNT: ${apiServices.length}");
+      debugPrint(apiServices.map((e) => e.serviceName).toList().toString());
+
       final List<Service> mappedServices =
       apiServices.map(_mapApiToUi).toList();
-
-      // 🔥 Sort by posted time (latest first)
-      mappedServices.sort(
-            (a, b) => b.createdAt.compareTo(a.createdAt),
-      );
 
       setState(() {
         services = mappedServices;
@@ -63,6 +62,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       setState(() => isLoading = false);
     }
   }
+
 
   // ===============================
   // API → UI MAPPER (FIXED)
@@ -78,7 +78,8 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
 
-      vendorName: api.vendorName, // ✅ IMPORTANT
+      vendorName: api.vendorName ??"posted by",
+
 
       createdAt: api.createdAt,
       serviceDateTime: api.serviceDateTime, // ✅ FIXED
@@ -90,7 +91,12 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   Widget build(BuildContext context) {
     List<Service> filteredServices = selectedCategory == "All"
         ? services
-        : services.where((s) => s.category == selectedCategory).toList();
+        : services.where((s) =>
+    s.category.toLowerCase().trim() ==
+        selectedCategory.toLowerCase().trim()
+    ).toList();
+
+
 
     if (searchQuery.isNotEmpty) {
       filteredServices = filteredServices

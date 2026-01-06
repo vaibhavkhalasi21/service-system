@@ -7,7 +7,7 @@ import '../models/service_request.dart';
 import '../models/create_service_request.dart';
 
 class ServiceApi {
-  static const String baseUrl = "http://10.141.25.37:5244/api/service";
+  static const String baseUrl = "http://10.172.79.37:5244/api/service";
 
   // =========================================
   // WORKER: GET PUBLIC SERVICES
@@ -30,6 +30,8 @@ class ServiceApi {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
 
+    print("VENDOR TOKEN FROM FLUTTER: $token");
+
     if (token == null) {
       throw Exception("Vendor token not found");
     }
@@ -41,6 +43,9 @@ class ServiceApi {
       },
     );
 
+    print("STATUS CODE: ${response.statusCode}");
+    print("RESPONSE BODY: ${response.body}");
+
     if (response.statusCode != 200) {
       throw Exception("Failed to load vendor services");
     }
@@ -48,6 +53,7 @@ class ServiceApi {
     final List data = jsonDecode(response.body);
     return data.map((e) => ServiceRequest.fromJson(e)).toList();
   }
+
 
   // =========================================
   // VENDOR: ADD SERVICE
