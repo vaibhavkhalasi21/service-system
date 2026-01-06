@@ -28,7 +28,7 @@ class MyJob {
   });
 
   factory MyJob.fromJson(Map<String, dynamic> json) {
-    const baseUrl = "http://10.141.25.37:5244";
+    const baseUrl = "http://10.172.79.37:5244";
 
     return MyJob(
       id: json['id'] ?? 0,

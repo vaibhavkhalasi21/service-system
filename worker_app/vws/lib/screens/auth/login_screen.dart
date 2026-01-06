@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        "Welcome Back",
+                        "Worker Login",
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _loading ? null : login,
                           child: _loading
                               ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text("LOGIN", style: TextStyle(fontSize: 18)),
+                              : const Text("Login", style: TextStyle(fontSize: 18)),
                         ),
                       ),
                       const SizedBox(height: 16),

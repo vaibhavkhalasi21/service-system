@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class WorkerApi {
-  static const String baseUrl = "http://10.141.25.37:5244/api/worker";
+  static const String baseUrl = "http://10.172.79.37:5244/api/worker";
 
   // ======== REGISTER ========
   static Future<String?> signupWorker({
