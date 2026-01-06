@@ -12,7 +12,7 @@ using VendorWorkerAPI.Data;
 namespace VendorWorkerAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260102072929_InitialCreate")]
+    [Migration("20260106082843_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,82 @@ namespace VendorWorkerAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Application", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("VendorId");
+
+                    b.HasIndex("WorkerId");
+
+                    b.ToTable("Applications");
+                });
+
+            modelBuilder.Entity("Vendor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ServiceType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vendors");
+                });
 
             modelBuilder.Entity("VendorWorkerAPI.Models.Admin", b =>
                 {
@@ -56,37 +132,6 @@ namespace VendorWorkerAPI.Migrations
                     b.ToTable("Admins");
                 });
 
-            modelBuilder.Entity("VendorWorkerAPI.Models.Application", b =>
-                {
-                    b.Property<int>("ApplicationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ApplicationId"));
-
-                    b.Property<DateTime>("AppliedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("BookingId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("WorkerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ApplicationId");
-
-                    b.HasIndex("BookingId");
-
-                    b.HasIndex("WorkerId");
-
-                    b.ToTable("Applications");
-                });
-
             modelBuilder.Entity("VendorWorkerAPI.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
@@ -103,18 +148,21 @@ namespace VendorWorkerAPI.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("VendorId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("WorkerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkerId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("VendorId");
+
+                    b.HasIndex("WorkerId");
 
                     b.ToTable("Bookings");
                 });
@@ -195,8 +243,10 @@ namespace VendorWorkerAPI.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
@@ -207,16 +257,22 @@ namespace VendorWorkerAPI.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("ServiceName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                    b.Property<DateTime>("ServiceDateTime")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("VendorId")
+                    b.Property<string>("ServiceName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("VendorId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("VendorId");
 
                     b.ToTable("Services");
                 });
@@ -251,52 +307,6 @@ namespace VendorWorkerAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("VendorWorkerAPI.Models.Vendor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ServiceType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Vendors");
                 });
 
             modelBuilder.Entity("VendorWorkerAPI.Models.Worker", b =>
@@ -335,29 +345,77 @@ namespace VendorWorkerAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
-
                     b.ToTable("Workers");
                 });
 
-            modelBuilder.Entity("VendorWorkerAPI.Models.Application", b =>
+            modelBuilder.Entity("Application", b =>
                 {
-                    b.HasOne("VendorWorkerAPI.Models.Booking", "Booking")
+                    b.HasOne("VendorWorkerAPI.Models.Service", "Service")
                         .WithMany()
-                        .HasForeignKey("BookingId")
+                        .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VendorWorkerAPI.Models.Worker", "Worker")
+                        .WithMany()
+                        .HasForeignKey("WorkerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Vendor");
+
+                    b.Navigation("Worker");
+                });
+
+            modelBuilder.Entity("VendorWorkerAPI.Models.Booking", b =>
+                {
+                    b.HasOne("VendorWorkerAPI.Models.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Vendor", "Vendor")
+                        .WithMany()
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("VendorWorkerAPI.Models.User", "Worker")
                         .WithMany()
                         .HasForeignKey("WorkerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Vendor");
+
+                    b.Navigation("Worker");
+                });
+
+            modelBuilder.Entity("VendorWorkerAPI.Models.Service", b =>
+                {
+                    b.HasOne("Vendor", "Vendor")
+                        .WithMany("Services")
+                        .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Booking");
+                    b.Navigation("Vendor");
+                });
 
-                    b.Navigation("Worker");
+            modelBuilder.Entity("Vendor", b =>
+                {
+                    b.Navigation("Services");
                 });
 #pragma warning restore 612, 618
         }

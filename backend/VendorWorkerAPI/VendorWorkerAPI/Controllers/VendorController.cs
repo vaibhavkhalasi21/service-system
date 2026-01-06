@@ -75,22 +75,18 @@ namespace VendorWorkerAPI.Controllers
             }
 
             // 3️⃣ Generate JWT
-            var token = _jwt.GenerateToken(
-                vendor.Id,
-                vendor.Email,
-                vendor.Role
-            );
+            var token = _jwt.GenerateToken(vendor.Id, vendor.Email, "Vendor");
 
-            // 4️⃣ Return response
             return Ok(new
             {
-                message = "Login successful",
-                token,
-                vendorId = vendor.Id,
-                vendorName = vendor.Name,
-                vendorEmail = vendor.Email,
-                role = vendor.Role
+                userId = vendor.Id,
+                email = vendor.Email,
+                role = "Vendor",
+                token = token   // 🔴 THIS WAS MISSING
             });
+
+
+
         }
 
         // ================= PROFILE =================

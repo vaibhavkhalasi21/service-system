@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VendorWorkerAPI.Models
 {
@@ -10,14 +12,24 @@ namespace VendorWorkerAPI.Models
         [Required]
         public int ServiceId { get; set; }
 
-        // 🔥 MUST BE STRING
         [Required]
-        public string VendorId { get; set; } = null!;
+        public int VendorId { get; set; }
 
-        // 🔥 MUST BE STRING
         [Required]
-        public string WorkerId { get; set; } = null!;
+        public int WorkerId { get; set; }
 
         public string Status { get; set; } = "Pending";
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ================= NAVIGATION =================
+        [ForeignKey(nameof(ServiceId))]
+        public Service Service { get; set; } = null!;
+
+        [ForeignKey(nameof(VendorId))]
+        public Vendor Vendor { get; set; } = null!;
+
+        [ForeignKey(nameof(WorkerId))]
+        public User Worker { get; set; } = null!;
     }
 }

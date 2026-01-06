@@ -46,7 +46,7 @@ namespace VendorWorkerAPI.Controllers
             {
                 ServiceId = serviceId,
                 WorkerId = workerId,
-                VendorId = int.Parse(service.VendorId), // ✅ FIX
+                VendorId = service.VendorId,  // ✅ FIXED (NO PARSE)
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -79,15 +79,10 @@ namespace VendorWorkerAPI.Controllers
                     a.Id,
                     a.Status,
                     a.CreatedAt,
-
                     ServiceName = a.Service.ServiceName,
                     Category = a.Service.Category,
                     Price = a.Service.Price,
-
-                    ServiceDateTime = DateTime.SpecifyKind(
-                        a.Service.ServiceDateTime,
-                        DateTimeKind.Utc
-                    )
+                    ServiceDateTime = a.Service.ServiceDateTime
                 })
                 .ToListAsync();
 
@@ -117,15 +112,10 @@ namespace VendorWorkerAPI.Controllers
                     a.Id,
                     a.Status,
                     a.CreatedAt,
-
                     WorkerName = a.Worker.Name,
                     ServiceName = a.Service.ServiceName,
                     Price = a.Service.Price,
-
-                    ServiceDateTime = DateTime.SpecifyKind(
-                        a.Service.ServiceDateTime,
-                        DateTimeKind.Utc
-                    )
+                    ServiceDateTime = a.Service.ServiceDateTime
                 })
                 .ToListAsync();
 
@@ -160,10 +150,7 @@ namespace VendorWorkerAPI.Controllers
             application.Status = status;
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                message = $"Application {status.ToLower()} successfully"
-            });
+            return Ok(new { message = $"Application {status.ToLower()} successfully" });
         }
 
         // =====================================================

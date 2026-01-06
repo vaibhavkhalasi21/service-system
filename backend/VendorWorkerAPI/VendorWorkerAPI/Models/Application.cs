@@ -1,21 +1,24 @@
-﻿using VendorWorkerAPI.Models;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using VendorWorkerAPI.Models;   // 👈 THIS IS THE FIX
 
-public class Application
+namespace VendorWorkerAPI.Models
 {
-    public int Id { get; set; }
+    public class Application
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public int ServiceId { get; set; }
+        public int ServiceId { get; set; }
+        public Service Service { get; set; } = null!;
 
-    // 🔥 FIX HERE
-    public int WorkerId { get; set; }   // ✅ INT
+        public int VendorId { get; set; }
+        public Vendor Vendor { get; set; } = null!;
 
-    public int VendorId { get; set; }
+        public int WorkerId { get; set; }
+        public Worker Worker { get; set; } = null!;
 
-    public string Status { get; set; } = "Pending";
-
-    public DateTime CreatedAt { get; set; }
-
-    // Navigation
-    public User Worker { get; set; }
-    public Service Service { get; set; }
+        public string Status { get; set; } = "Pending";
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
 }

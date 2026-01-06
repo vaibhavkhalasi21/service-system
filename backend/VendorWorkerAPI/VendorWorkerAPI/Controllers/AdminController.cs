@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 using VendorWorkerAPI.Services;
@@ -81,19 +82,19 @@ namespace VendorWorkerAPI.Controllers
                 return Unauthorized("Invalid email or password");
 
             var token = _jwt.GenerateToken(
-                admin.AdminId,
-                admin.Email,
-                admin.Role
-            );
+    admin.AdminId,
+    admin.Email,
+    "Admin"
+);
+
+
 
             return Ok(new
             {
-                Message = "Login successful",
-                Token = token,
-                admin.AdminId,
-                admin.Name,
-                admin.Email,
-                admin.Role
+                adminId = admin.AdminId,
+                email = admin.Email,
+                role = "Admin",
+                token = token
             });
         }
 

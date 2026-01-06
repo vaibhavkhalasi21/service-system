@@ -19,5 +19,7 @@ namespace VendorWorkerAPI.Models.DTOs
         public DateTime ServiceDateTime { get; set; }
 
         public IFormFile? Image { get; set; }
+
+        public string VendorName { get; set; }
     }
 }
