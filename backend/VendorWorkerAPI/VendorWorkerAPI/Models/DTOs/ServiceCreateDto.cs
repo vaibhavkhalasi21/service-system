@@ -1,25 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace VendorWorkerAPI.Models.DTOs
+public class ServiceCreateDto
 {
-    public class ServiceCreateDto
-    {
-        [Required]
-        public string ServiceName { get; set; } = null!;
+    [Required]
+    public string ServiceName { get; set; } = null!;
 
-        [Required]
-        public string Category { get; set; } = null!;
+    [Required]
+    public string Category { get; set; } = null!;
 
-        [Required]
-        public decimal Price { get; set; }
+    [Required]
+    public decimal Price { get; set; }
 
-        [Required]
-        public DateTime ServiceDateTime { get; set; }
+    [Required]
+    public DateTime ServiceDateTime { get; set; }
 
-        public IFormFile? Image { get; set; }
-
-        public string VendorName { get; set; }
-    }
+    public IFormFile? Image { get; set; }
 }
