@@ -7,7 +7,7 @@ import '../models/service_request.dart';
 import '../models/create_service_request.dart';
 
 class ServiceApi {
-  static const String baseUrl = "http://10.172.79.37:5244/api/service";
+  static const String baseUrl = "http://10.29.111.37:5244/api/service";
 
   // =========================================
   // WORKER: GET PUBLIC SERVICES
@@ -54,7 +54,6 @@ class ServiceApi {
     return data.map((e) => ServiceRequest.fromJson(e)).toList();
   }
 
-
   // =========================================
   // VENDOR: ADD SERVICE
   // =========================================
@@ -64,7 +63,12 @@ class ServiceApi {
       ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
-    if (token == null) return false;
+
+    print("POST SERVICE TOKEN: $token");
+
+    if (token == null) {
+      throw Exception("Vendor token not found. Please login again.");
+    }
 
     final request =
     http.MultipartRequest("POST", Uri.parse(baseUrl));
@@ -75,9 +79,9 @@ class ServiceApi {
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
 
-    // 🆕 scheduled date & time (UTC)
+    // ✅ IMPORTANT FIX (NO toUtc)
     request.fields["serviceDateTime"] =
-        service.serviceDateTime.toUtc().toIso8601String();
+        service.serviceDateTime.toIso8601String();
 
     if (image != null) {
       request.files.add(
@@ -86,6 +90,11 @@ class ServiceApi {
     }
 
     final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    print("POST STATUS: ${response.statusCode}");
+    print("POST BODY: $body");
+
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
@@ -103,24 +112,24 @@ class ServiceApi {
     if (token == null) return false;
 
     final request = http.MultipartRequest(
-      "PUT", // ✅ MUST BE PUT
+      "PUT",
       Uri.parse("$baseUrl/$serviceId"),
     );
 
     request.headers["Authorization"] = "Bearer $token";
 
-    // REQUIRED FIELDS
     request.fields["serviceName"] = service.serviceName;
-    request.fields["category"] = service.category; // ✅ STRING
+    request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
+
+    // ✅ IMPORTANT FIX (NO toUtc)
     request.fields["serviceDateTime"] =
-        service.serviceDateTime.toUtc().toIso8601String();
+        service.serviceDateTime.toIso8601String();
 
     if (service.description != null) {
       request.fields["description"] = service.description!;
     }
 
-    // IMAGE OPTIONAL
     if (image != null) {
       request.files.add(
         await http.MultipartFile.fromPath("image", image.path),
@@ -130,15 +139,11 @@ class ServiceApi {
     final response = await request.send();
     final body = await response.stream.bytesToString();
 
-    // 🔎 DEBUG (TEMP)
-    // ignore: avoid_print
     print("UPDATE STATUS: ${response.statusCode}");
-    // ignore: avoid_print
     print("UPDATE BODY: $body");
 
     return response.statusCode == 200;
   }
-
 
   // =========================================
   // VENDOR: DELETE SERVICE

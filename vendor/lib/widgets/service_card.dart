@@ -16,12 +16,16 @@ class ServiceCard extends StatelessWidget {
   });
 
   String timeAgo(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inMinutes < 1) return "Just now";
-    if (diff.inHours < 1) return "${diff.inMinutes} min ago";
-    if (diff.inDays < 1) return "${diff.inHours} hrs ago";
+    final now = DateTime.now().toLocal();
+    final localDate = date.toLocal();
+    final diff = now.difference(localDate);
+
+    if (diff.inSeconds < 60) return "Just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hrs ago";
     return "${diff.inDays} days ago";
   }
+
 
   @override
   Widget build(BuildContext context) {

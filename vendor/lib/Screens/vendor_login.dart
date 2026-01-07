@@ -58,14 +58,23 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
         );
 
         await prefs.setString(
+          "vendor_name",
+          body["name"] ?? "Vendor", // 🔥 ADD THIS LINE
+        );
+
+        await prefs.setString(
           "role",
           body["role"] ?? "Vendor",
         );
 
+
         // ✅ TOKEN ONLY IF EXISTS
-        if (body.containsKey("token") && body["token"] != null) {
-          await prefs.setString("vendor_token", body["token"]);
+        if (body["token"] == null) {
+          throw Exception("Login failed: token missing");
         }
+
+        await prefs.setString("vendor_token", body["token"]);
+
 
         // 🔍 DEBUG
         print("LOGIN OK");

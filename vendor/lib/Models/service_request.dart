@@ -33,9 +33,10 @@ class ServiceRequest {
       vendorName: json['vendorName'] ?? "You",
 
 
-      createdAt: DateTime.parse(json['createdAt']).toLocal(),
-      serviceDateTime:
-      DateTime.parse(json['serviceDateTime']).toLocal(),
+      createdAt: DateTime.parse(json['createdAt'] + 'Z').toLocal(),
+      serviceDateTime: DateTime.parse(json['serviceDateTime'] + 'Z').toLocal(),
+
+
     );
   }
 }

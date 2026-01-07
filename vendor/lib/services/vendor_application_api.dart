@@ -5,7 +5,7 @@ import '../models/booking_request.dart';
 
 class VendorApplicationApi {
   static const String baseUrl =
-      "http://10.172.79.37:5244/api/application";
+      "http://10.29.111.37:5244/api/application";
 
   static Future<List<BookingRequest>> getRequests() async {
     final prefs = await SharedPreferences.getInstance();
