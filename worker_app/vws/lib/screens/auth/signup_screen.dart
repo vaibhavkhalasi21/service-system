@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'package:vws/screens/worker_api.dart';
+import 'package:vws/services/worker_api.dart';
 
 class WorkerRegisterScreen extends StatefulWidget {
   const WorkerRegisterScreen({super.key});

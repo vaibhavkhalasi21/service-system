@@ -17,12 +17,11 @@ class Booking {
     return Booking(
       id: json['id'],
       jobTitle: json['serviceName'] ?? "Job",
-      status: (json['status'] != null && json['status'].toString().isNotEmpty)
-          ? json['status']
-          : "Pending", // <- default Pending
-      price: json['price'] ?? 0,
+      status: json['status'] ?? "Pending",
+      price: (json['price'] as num).toInt(), // ✅ FIX
       serviceDateTime: DateTime.parse(json['serviceDateTime']),
     );
   }
+
 
 }

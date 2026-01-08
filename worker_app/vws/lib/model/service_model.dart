@@ -22,7 +22,7 @@ class ServiceModel {
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
-    const baseUrl = "http://10.172.79.37:5244";
+    const baseUrl = "http://10.29.111.37:5244";
 
     return ServiceModel(
       id: json['id'] ?? 0,
