@@ -5,7 +5,8 @@ class ServiceRequest {
   final double price;
   final String? imageUrl;
 
-  final String vendorName; // ✅ NEW
+  final String? vendorName;
+
 
   final DateTime createdAt;        // posted time
   final DateTime serviceDateTime;  // scheduled time
@@ -29,11 +30,13 @@ class ServiceRequest {
       price: (json['price'] as num).toDouble(),
       imageUrl: json['imageUrl'],
 
-      vendorName: json['vendorName'], // ✅ MATCH SWAGGER
+      vendorName: json['vendorName'] ?? "You",
 
-      createdAt: DateTime.parse(json['createdAt']).toLocal(),
-      serviceDateTime:
-      DateTime.parse(json['serviceDateTime']).toLocal(),
+
+      createdAt: DateTime.parse(json['createdAt'] + 'Z').toLocal(),
+      serviceDateTime: DateTime.parse(json['serviceDateTime'] + 'Z').toLocal(),
+
+
     );
   }
 }

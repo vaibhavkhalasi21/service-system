@@ -28,6 +28,7 @@ public class ServiceController : ControllerBase
     {
         var services = await _context.Services
             .Where(s => s.IsActive)
+            .Include(s => s.Vendor)
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new
             {
@@ -36,20 +37,9 @@ public class ServiceController : ControllerBase
                 s.Category,
                 s.Price,
                 s.ImageUrl,
-
-                VendorName = _context.Vendors
-                    .Where(v => v.Id.ToString() == s.VendorId) // ✅ FIX
-                    .Select(v => v.Name)
-                    .FirstOrDefault(),
-
-                ServiceDateTime = DateTime.SpecifyKind(
-                    s.ServiceDateTime,
-                    DateTimeKind.Utc
-                ),
-                CreatedAt = DateTime.SpecifyKind(
-                    s.CreatedAt,
-                    DateTimeKind.Utc
-                )
+                VendorName = s.Vendor.Name,
+                ServiceDateTime = s.ServiceDateTime,
+                CreatedAt = s.CreatedAt
             })
             .ToListAsync();
 
@@ -63,8 +53,10 @@ public class ServiceController : ControllerBase
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> GetVendorServices()
     {
-        var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null) return Unauthorized();
+        var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (vendorIdStr == null) return Unauthorized();
+
+        int vendorId = int.Parse(vendorIdStr);
 
         var services = await _context.Services
             .Where(s => s.VendorId == vendorId)
@@ -77,27 +69,9 @@ public class ServiceController : ControllerBase
                 s.Price,
                 s.ImageUrl,
                 s.IsActive,
-
-                VendorName = _context.Vendors
-                    .Where(v => v.Id.ToString() == s.VendorId) // ✅ FIX
-                    .Select(v => v.Name)
-                    .FirstOrDefault(),
-
-                ServiceDateTime = DateTime.SpecifyKind(
-                    s.ServiceDateTime,
-                    DateTimeKind.Utc
-                ),
-                CreatedAt = DateTime.SpecifyKind(
-                    s.CreatedAt,
-                    DateTimeKind.Utc
-                ),
-
-                UpdatedAt = s.UpdatedAt == null
-                    ? (DateTime?)null // ✅ FIX
-                    : DateTime.SpecifyKind(
-                        s.UpdatedAt.Value,
-                        DateTimeKind.Utc
-                    )
+                ServiceDateTime = s.ServiceDateTime,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt
             })
             .ToListAsync();
 
@@ -112,8 +86,10 @@ public class ServiceController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> CreateService([FromForm] ServiceCreateDto dto)
     {
-        var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null) return Unauthorized();
+        var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (vendorIdStr == null) return Unauthorized();
+
+        int vendorId = int.Parse(vendorIdStr);
 
         string? imagePath = null;
 
@@ -134,15 +110,12 @@ public class ServiceController : ControllerBase
         var service = new Service
         {
             ServiceName = dto.ServiceName,
-            Category = dto.Category.ToString(), // ✅ enum → string
+            Category = dto.Category.ToString(),
             Price = dto.Price,
             ImageUrl = imagePath,
             VendorId = vendorId,
             IsActive = true,
-            ServiceDateTime = DateTime.SpecifyKind(
-                dto.ServiceDateTime,
-                DateTimeKind.Utc
-            ),
+            ServiceDateTime = dto.ServiceDateTime,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -158,15 +131,15 @@ public class ServiceController : ControllerBase
     [HttpPut("{id}")]
     [Authorize(Roles = "Vendor")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UpdateService(
-        int id,
-        [FromForm] ServiceCreateDto dto)
+    public async Task<IActionResult> UpdateService(int id, [FromForm] ServiceCreateDto dto)
     {
-        var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null) return Unauthorized();
+        var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (vendorIdStr == null) return Unauthorized();
+
+        int vendorId = int.Parse(vendorIdStr);
 
         var service = await _context.Services.FindAsync(id);
-        if (service == null) return NotFound("Service not found");
+        if (service == null) return NotFound();
 
         if (service.VendorId != vendorId) return Forbid();
 
@@ -187,10 +160,7 @@ public class ServiceController : ControllerBase
         service.ServiceName = dto.ServiceName;
         service.Category = dto.Category.ToString();
         service.Price = dto.Price;
-        service.ServiceDateTime = DateTime.SpecifyKind(
-            dto.ServiceDateTime,
-            DateTimeKind.Utc
-        );
+        service.ServiceDateTime = dto.ServiceDateTime;
         service.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -205,8 +175,10 @@ public class ServiceController : ControllerBase
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> DeleteService(int id)
     {
-        var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorId == null) return Unauthorized();
+        var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (vendorIdStr == null) return Unauthorized();
+
+        int vendorId = int.Parse(vendorIdStr);
 
         var service = await _context.Services.FindAsync(id);
         if (service == null) return NotFound();

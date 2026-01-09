@@ -22,17 +22,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Future<void> loadBookings() async {
     try {
-      bookings = await WorkerServiceApi.getMyBookings();
+      final result = await WorkerServiceApi.getMyBookings();
 
-      // DEBUG: Check backend status
-      for (var b in bookings) {
-        debugPrint("Job: ${b.jobTitle}, Status: ${b.status}");
-      }
+      if (!mounted) return;
+
+      setState(() {
+        bookings = result;
+        isLoading = false;
+      });
+
+      // DEBUG
+      debugPrint("Loaded bookings: ${bookings.length}");
     } catch (e) {
       debugPrint("Error loading bookings: $e");
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
     }
-    setState(() => isLoading = false);
   }
+
 
 
   Color statusColor(String status) {

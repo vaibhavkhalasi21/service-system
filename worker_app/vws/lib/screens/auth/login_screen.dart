@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vws/screens/worker_bottom_nav.dart';
 import 'package:vws/sessions/worker_session.dart';
 import 'package:vws/model/worker_model.dart';
-import 'package:vws/screens/worker_api.dart';
+import 'package:vws/services/worker_api.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {

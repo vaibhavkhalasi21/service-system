@@ -76,20 +76,16 @@ namespace VendorWorkerAPI.Controllers
                 return Unauthorized(new { message = "Invalid email or password" });
             }
 
-            var token = _jwt.GenerateToken(
-                worker.Id,
-                worker.Email,
-                "Worker"
-            );
+            var token = _jwt.GenerateToken(worker.Id, worker.Email, "Worker");
 
             return Ok(new
             {
-                message = "Login successful",
                 token,
                 workerId = worker.Id,
                 workerName = worker.Name,
                 role = "Worker"
             });
+
         }
 
         // =============================

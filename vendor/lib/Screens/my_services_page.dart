@@ -15,7 +15,7 @@ class _MyServicesPageState extends State<MyServicesPage> {
   bool isLoading = true;
   List<Service> myServices = [];
 
-  static const String baseUrl = "http://10.141.25.37:5244";
+  static const String baseUrl = "http://10.29.111.37:5244";
 
   @override
   void initState() {
@@ -38,8 +38,9 @@ class _MyServicesPageState extends State<MyServicesPage> {
         price: e.price.toInt(),
         rating: 4.5,
         imagePath: "$baseUrl${e.imageUrl}",
-        vendorName: e.vendorName,
-        createdAt: e.createdAt,
+            vendorName: e.vendorName ?? "You",
+
+            createdAt: e.createdAt,
         serviceDateTime: e.serviceDateTime,
       ),
     )

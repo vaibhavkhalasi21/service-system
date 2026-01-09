@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/service.dart';
 import '../models/service_request.dart';
 import '../services/service_api.dart';
@@ -17,42 +19,51 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   String searchQuery = "";
   bool isLoading = true;
 
+  // 🔥 NEW: Vendor name
+  String vendorName = "Vendor";
+
   List<Service> services = [];
 
   final List<String> categories = [
     "All",
     "Electrician",
-    "Plumbing",
+    "Plumber",
     "Cleaning",
     "AC Repair",
     "Painter",
   ];
 
-  static const String baseUrl = "http://10.141.25.37:5244";
+  static const String baseUrl = "http://10.29.111.37:5244";
 
   @override
   void initState() {
     super.initState();
+    loadVendorName();
     fetchServices();
   }
 
   // ===============================
-  // FETCH SERVICES FROM API
+  // LOAD VENDOR NAME FROM SESSION
+  // ===============================
+  Future<void> loadVendorName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      vendorName = prefs.getString("vendor_name") ?? "Vendor";
+    });
+  }
+
+  // ===============================
+  // FETCH SERVICES (PUBLIC)
   // ===============================
   Future<void> fetchServices() async {
     setState(() => isLoading = true);
 
     try {
       final List<ServiceRequest> apiServices =
-      await ServiceApi.getVendorServices();
+      await ServiceApi.getPublicServices();
 
       final List<Service> mappedServices =
       apiServices.map(_mapApiToUi).toList();
-
-      // 🔥 Sort by posted time (latest first)
-      mappedServices.sort(
-            (a, b) => b.createdAt.compareTo(a.createdAt),
-      );
 
       setState(() {
         services = mappedServices;
@@ -65,7 +76,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // API → UI MAPPER (FIXED)
+  // API → UI MAPPER
   // ===============================
   Service _mapApiToUi(ServiceRequest api) {
     return Service(
@@ -77,27 +88,29 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       imagePath: api.imageUrl != null
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
-
-      vendorName: api.vendorName, // ✅ IMPORTANT
-
+      vendorName: api.vendorName ?? "Vendor",
       createdAt: api.createdAt,
-      serviceDateTime: api.serviceDateTime, // ✅ FIXED
+      serviceDateTime: api.serviceDateTime,
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
     List<Service> filteredServices = selectedCategory == "All"
         ? services
-        : services.where((s) => s.category == selectedCategory).toList();
+        : services
+        .where(
+          (s) =>
+      s.category.toLowerCase().trim() ==
+          selectedCategory.toLowerCase().trim(),
+    )
+        .toList();
 
     if (searchQuery.isNotEmpty) {
       filteredServices = filteredServices
           .where(
-            (s) => s.title.toLowerCase().contains(
-          searchQuery.toLowerCase(),
-        ),
+            (s) =>
+            s.title.toLowerCase().contains(searchQuery.toLowerCase()),
       )
           .toList();
     }
@@ -107,13 +120,18 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Hello, Vendor 👋",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          // ================= HELLO TEXT =================
+          Text(
+            "Hello, $vendorName 👋",
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+
           const SizedBox(height: 16),
 
-          // 🔍 SEARCH
+          // ================= SEARCH =================
           TextField(
             onChanged: (v) => setState(() => searchQuery = v),
             decoration: InputDecoration(
@@ -129,7 +147,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 16),
 
-          // 🏷 CATEGORY FILTER
+          // ================= CATEGORY FILTER =================
           SizedBox(
             height: 40,
             child: ListView(
@@ -148,7 +166,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 16),
 
-          // 📃 SERVICES LIST
+          // ================= SERVICES LIST =================
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

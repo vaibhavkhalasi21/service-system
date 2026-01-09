@@ -11,7 +11,7 @@ namespace VendorWorkerAPI.Data
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<Service> Services { get; set; }
+        public DbSet<Service> Services { get; set; } // ✅
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Rating> Ratings { get; set; }
@@ -23,10 +23,23 @@ namespace VendorWorkerAPI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Application>()
-     .HasOne(a => a.Worker)
-     .WithMany()
-     .HasForeignKey(a => a.WorkerId)
-     .HasPrincipalKey(u => u.Id);
+       .HasOne(a => a.Worker)
+       .WithMany()
+       .HasForeignKey(a => a.WorkerId)
+       .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Application>()
+                .HasOne(a => a.Vendor)
+                .WithMany()
+                .HasForeignKey(a => a.VendorId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.Vendor)
+                .WithMany()
+                .HasForeignKey(b => b.VendorId)
+                .OnDelete(DeleteBehavior.NoAction);
+
 
         }
     }

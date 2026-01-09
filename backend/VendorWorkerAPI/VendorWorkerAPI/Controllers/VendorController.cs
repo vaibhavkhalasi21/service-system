@@ -4,6 +4,8 @@ using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 using VendorWorkerAPI.Models.DTOs;
 using VendorWorkerAPI.Services;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace VendorWorkerAPI.Controllers
 {
@@ -76,35 +78,52 @@ namespace VendorWorkerAPI.Controllers
 
             // 3️⃣ Generate JWT
             var token = _jwt.GenerateToken(
-                vendor.Id,
-                vendor.Email,
-                vendor.Role
-            );
+    vendor.Id,
+    vendor.Email,
+    vendor.Role
+);
 
-            // 4️⃣ Return response
             return Ok(new
             {
-                message = "Login successful",
-                token,
-                vendorId = vendor.Id,
-                vendorName = vendor.Name,
-                vendorEmail = vendor.Email,
-                role = vendor.Role
+                userId = vendor.Id,
+                name = vendor.Name,   // ✅ frontend ke liye
+                email = vendor.Email,
+                role = vendor.Role,
+                token = token
             });
+
+
+
+
         }
 
         // ================= PROFILE =================
         [Authorize(Roles = "Vendor")]
         [HttpGet("profile")]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            return Ok(new
-            {
-                message = "JWT verified",
-                userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
-                email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
-                role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
-            });
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var vendor = await _context.Vendors
+                .Where(v => v.Id.ToString() == userId)
+                .Select(v => new
+                {
+                    v.Id,
+                    name = v.Name,     // ✅ REGISTERED NAME
+                    email = v.Email,
+                    role = v.Role
+                })
+                .FirstOrDefaultAsync();
+
+            if (vendor == null)
+                return NotFound("Vendor not found");
+
+            return Ok(vendor);
         }
+
+
     }
 }

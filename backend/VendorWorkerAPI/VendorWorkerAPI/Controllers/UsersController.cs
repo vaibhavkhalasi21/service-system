@@ -52,6 +52,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // ================= LOGIN =================
+        // ================= LOGIN =================
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
         {
@@ -68,18 +69,24 @@ namespace VendorWorkerAPI.Controllers
             if (user == null)
                 return Unauthorized("Invalid email or password");
 
-            var token = _jwt.GenerateToken(user.Id, user.Email, user.Role);
+            // ✅ TOKEN MUST BE STORED IN VARIABLE
+            var token = _jwt.GenerateToken(
+                user.Id,
+                user.Email,
+                user.Role   // "Customer"
+            );
 
             return Ok(new
             {
                 message = "Login successful",
-                token,
-                user.Id,
-                user.Name,
-                user.Email,
-                user.Role
+                token = token,
+                userId = user.Id,
+                userName = user.Name,
+                userEmail = user.Email,
+                role = user.Role
             });
         }
+
 
         // ================= PASSWORD HASH =================
         private static string HashPassword(string password)

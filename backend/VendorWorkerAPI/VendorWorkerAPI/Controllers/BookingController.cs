@@ -25,9 +25,11 @@ namespace VendorWorkerAPI.Controllers
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> ApplyForService(int serviceId)
         {
-            var workerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerId == null)
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null)
                 return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
 
             var service = await _context.Services.FindAsync(serviceId);
             if (service == null)
@@ -42,11 +44,11 @@ namespace VendorWorkerAPI.Controllers
             var booking = new Booking
             {
                 ServiceId = serviceId,
-                VendorId = service.VendorId, // ✅ string → string
-                WorkerId = workerId
+                VendorId = service.VendorId, // ✅ int → int
+                WorkerId = workerId,         // ✅ int → int
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
             };
-
-
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
@@ -61,12 +63,26 @@ namespace VendorWorkerAPI.Controllers
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> VendorBookings()
         {
-            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null)
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
                 return Unauthorized();
 
+            int vendorId = int.Parse(vendorIdStr);
+
             var bookings = await _context.Bookings
-                .Where(b => b.VendorId == vendorId && b.Status == "Pending")
+                .Where(b => b.VendorId == vendorId)
+                .Include(b => b.Service)
+                .Include(b => b.Worker)
+                .OrderByDescending(b => b.CreatedAt)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.Status,
+                    WorkerName = b.Worker.Name,
+                    ServiceName = b.Service.ServiceName,
+                    b.Service.Price,
+                    b.CreatedAt
+                })
                 .ToListAsync();
 
             return Ok(bookings);
@@ -79,9 +95,11 @@ namespace VendorWorkerAPI.Controllers
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> AcceptBooking(int id)
         {
-            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null)
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
                 return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
 
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
@@ -103,9 +121,11 @@ namespace VendorWorkerAPI.Controllers
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> RejectBooking(int id)
         {
-            var vendorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorId == null)
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
                 return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
 
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)

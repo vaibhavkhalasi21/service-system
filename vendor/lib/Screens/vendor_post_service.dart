@@ -31,7 +31,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
   final List<String> categories = [
     "Cleaning",
-    "Plumbing",
+    "Plumber",
     "Electrician",
     "AC Repair",
     "Painter",

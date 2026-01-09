@@ -5,7 +5,7 @@ import '../model/booking_model.dart';
 import '../model/service_model.dart';
 
 class WorkerServiceApi {
-  static const String baseUrl = "http://10.172.79.37:5244/api";
+  static const String baseUrl = "http://10.29.111.37:5244/api";
 
   // ===============================
   // PUBLIC SERVICES

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vendor/Screens/vendor_application_page.dart';
 
+import '../services/vendor_api.dart';
 import 'vendor_login.dart';
-import 'booking_request_page.dart';
+import 'vendor_application_page.dart';
 import 'vendor_post_service.dart';
 import 'my_services_page.dart';
 
@@ -15,24 +15,49 @@ class VendorProfileTab extends StatefulWidget {
 }
 
 class _VendorProfileTabState extends State<VendorProfileTab> {
-  String vendorName = "Vendor Name";
-  String vendorEmail = "vendor@email.com";
+  bool isLoading = true;
+
+  String vendorName = "";
+  String vendorEmail = "";
 
   @override
   void initState() {
     super.initState();
-    loadVendorData();
+    fetchProfile();
   }
 
   // =============================
-  // LOAD VENDOR SESSION DATA
+  // FETCH PROFILE FROM API
   // =============================
-  Future<void> loadVendorData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      vendorName = prefs.getString("vendor_name") ?? "Vendor Name";
-      vendorEmail = prefs.getString("vendor_email") ?? "vendor@email.com";
-    });
+  Future<void> fetchProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("vendor_token");
+
+      if (token == null) {
+        debugPrint("NO TOKEN FOUND");
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final result = await VendorApi.getProfile(token);
+
+      if (result["status"] == 200) {
+        final data = result["body"];
+
+        setState(() {
+          vendorName = data["name"] ?? "Vendor";
+          vendorEmail = data["email"] ?? "";
+          isLoading = false;
+        });
+      } else {
+        debugPrint("PROFILE ERROR: ${result["body"]}");
+        setState(() => isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("PROFILE EXCEPTION: $e");
+      setState(() => isLoading = false);
+    }
   }
 
   // =============================
@@ -54,6 +79,10 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
   // =============================
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -62,7 +91,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 24),
 
-          /// 📥 VIEW APPLICATIONS (REAL API DATA)
+          // 📥 VIEW APPLICATIONS
           _actionButton(
             icon: Icons.list_alt,
             label: "View Applications",
@@ -77,10 +106,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
             },
           ),
 
-
           const SizedBox(height: 16),
 
-          /// ➕ POST NEW SERVICE
+          // ➕ POST NEW SERVICE
           _actionButton(
             icon: Icons.add_circle_outline,
             label: "Post New Service",
@@ -95,7 +123,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 16),
 
-          /// 👁 MY SERVICES
+          // 👁 MY SERVICES
           _actionButton(
             icon: Icons.remove_red_eye,
             label: "My Services",
@@ -110,7 +138,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
 
           const SizedBox(height: 16),
 
-          /// 🚪 LOGOUT
+          // 🚪 LOGOUT
           _actionButton(
             icon: Icons.logout,
             label: "Logout",
