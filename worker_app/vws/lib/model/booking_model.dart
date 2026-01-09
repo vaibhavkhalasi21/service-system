@@ -1,9 +1,10 @@
 class Booking {
   final int id;
   final String jobTitle;      // serviceName
-  final String category;      // category
-  final String vendorName;    // vendorName
-  final String status;
+  final String category;
+  final String vendorName;
+  final String status;        // Job status
+  final String paymentStatus; // Paid / Pending
   final int price;
   final DateTime serviceDateTime;
 
@@ -13,6 +14,7 @@ class Booking {
     required this.category,
     required this.vendorName,
     required this.status,
+    required this.paymentStatus,
     required this.price,
     required this.serviceDateTime,
   });
@@ -24,8 +26,10 @@ class Booking {
       category: json['category'],
       vendorName: json['vendorName'],
       status: json['status'],
-      price: (json['price'] as num).toInt(), // already fixed
-      serviceDateTime: DateTime.parse(json['serviceDateTime']),
+      paymentStatus: json['paymentStatus'],
+      price: (json['price'] as num).toInt(),
+      serviceDateTime:
+      DateTime.parse(json['serviceDateTime']),
     );
   }
 }

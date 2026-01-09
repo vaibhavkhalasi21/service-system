@@ -4,6 +4,7 @@ import 'package:vws/screens/auth/login_screen.dart';
 import 'package:vws/sessions/worker_session.dart';
 import 'package:vws/screens/my_booking_screen.dart';
 import 'package:vws/model/worker_model.dart';
+import 'package:vws/screens/worker_payment_page.dart'; // ✅ ADD THIS
 
 class WorkerProfile extends StatefulWidget {
   const WorkerProfile({super.key});
@@ -60,6 +61,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // 🔵 HEADER
             Container(
               width: double.infinity,
               height: 240,
@@ -107,6 +109,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
 
             const SizedBox(height: 20),
 
+            // 🔘 BUTTONS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -122,10 +125,12 @@ class _WorkerProfileState extends State<WorkerProfile> {
                           builder: (_) => const EditWorkerProfile(),
                         ),
                       );
-                      _refreshWorker(); // refresh name after edit
+                      _refreshWorker();
                     },
                   ),
+
                   const SizedBox(height: 16),
+
                   _ProfileButton(
                     icon: Icons.book_online,
                     text: "My Bookings",
@@ -139,7 +144,26 @@ class _WorkerProfileState extends State<WorkerProfile> {
                       );
                     },
                   ),
+
                   const SizedBox(height: 16),
+
+                  // ✅ NEW: MY PAYMENTS
+                  _ProfileButton(
+                    icon: Icons.payments,
+                    text: "My Payments",
+                    color: Colors.purple,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WorkerPaymentsPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
                   _ProfileButton(
                     icon: Icons.logout,
                     text: "Logout",
@@ -148,7 +172,9 @@ class _WorkerProfileState extends State<WorkerProfile> {
                       await WorkerSession.logout();
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const LoginScreen(),
+                        ),
                             (route) => false,
                       );
                     },
