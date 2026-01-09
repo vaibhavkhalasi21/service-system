@@ -61,4 +61,32 @@ class VendorApplicationApi {
       throw Exception("Failed to update status");
     }
   }
+  static Future<void> markPaymentPaid(int applicationId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("vendor_token");
+
+    if (token == null) {
+      throw Exception("Vendor not logged in");
+    }
+
+    final url = Uri.parse("$baseUrl/$applicationId/pay");
+
+    print("💰 PAY URL: $url");
+
+    final response = await http.put(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    print("💰 PAY STATUS: ${response.statusCode}");
+    print("💰 PAY BODY: ${response.body}");
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to mark payment as paid");
+    }
+  }
+
+
 }

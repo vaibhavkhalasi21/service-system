@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vendor/Screens/vendor_payment_page.dart';
 
 import '../services/vendor_api.dart';
 import 'vendor_login.dart';
@@ -135,6 +136,25 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
               );
             },
           ),
+
+          const SizedBox(height: 16),
+
+// 💰 PAYMENTS
+          _actionButton(
+            icon: Icons.payments,
+            label: "Payments",
+            color: Colors.green,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VendorPaymentsPage(),
+                ),
+              );
+            },
+          ),
+
+
 
           const SizedBox(height: 16),
 

@@ -29,10 +29,13 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localServiceTime = service.serviceDateTime.toLocal();
+
     final date =
-    DateFormat('dd MMM yyyy').format(service.serviceDateTime);
+    DateFormat('dd MMM yyyy').format(localServiceTime);
     final time =
-    DateFormat('hh:mm a').format(service.serviceDateTime);
+    DateFormat('hh:mm a').format(localServiceTime);
+
 
     // ✅ SAFE vendor name
     final vendorName =

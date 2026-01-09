@@ -27,10 +27,9 @@ class BookingRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date =
-    DateFormat("dd MMM yyyy").format(request.serviceDateTime);
-    final time =
-    DateFormat("hh:mm a").format(request.serviceDateTime);
+    final localTime = request.serviceDateTime.toLocal();
+    final date = DateFormat("dd MMM yyyy").format(localTime);
+    final time = DateFormat("hh:mm a").format(localTime);
 
     final bool isPending = request.status == "Pending";
 
@@ -55,6 +54,7 @@ class BookingRequestCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Worker Name
                       Text(
                         request.workerName,
                         style: const TextStyle(
@@ -63,6 +63,20 @@ class BookingRequestCard extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
+
+                      // Worker Email ✅ NEW
+                      Text(
+                        request.workerEmail,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                      const SizedBox(height: 2),
+
+                      // Service Name
                       Text(
                         request.serviceName,
                         style: const TextStyle(color: Colors.grey),
