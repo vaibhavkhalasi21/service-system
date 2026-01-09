@@ -19,6 +19,9 @@ namespace VendorWorkerAPI.Models
         public Worker Worker { get; set; } = null!;
 
         public string Status { get; set; } = "Pending";
+
+        public string PaymentStatus { get; set; } = "Pending";
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

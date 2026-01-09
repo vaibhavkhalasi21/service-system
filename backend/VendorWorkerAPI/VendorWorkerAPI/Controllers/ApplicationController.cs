@@ -46,7 +46,8 @@ namespace VendorWorkerAPI.Controllers
             {
                 ServiceId = serviceId,
                 WorkerId = workerId,
-                VendorId = service.VendorId,  // ✅ FIXED (NO PARSE)
+                VendorId = service.VendorId,
+                PaymentStatus = "Pending",
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -71,20 +72,24 @@ namespace VendorWorkerAPI.Controllers
             int workerId = int.Parse(workerIdStr);
 
             var applications = await _context.Applications
-                .Where(a => a.WorkerId == workerId)
-                .Include(a => a.Service)
-                .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Status,
-                    a.CreatedAt,
-                    ServiceName = a.Service.ServiceName,
-                    Category = a.Service.Category,
-                    Price = a.Service.Price,
-                    ServiceDateTime = a.Service.ServiceDateTime
-                })
-                .ToListAsync();
+     .Where(a => a.WorkerId == workerId)
+     .Include(a => a.Service)
+         .ThenInclude(s => s.Vendor) // ✅ ADD THIS
+     .OrderByDescending(a => a.CreatedAt)
+     .Select(a => new
+     {
+         a.Id,
+         a.Status,
+         a.PaymentStatus,
+         a.CreatedAt,
+         ServiceName = a.Service.ServiceName,
+         Category = a.Service.Category,
+         Price = a.Service.Price,
+         ServiceDateTime = a.Service.ServiceDateTime,
+         VendorName = a.Service.Vendor.Name // ✅ ADD THIS
+     })
+     .ToListAsync();
+
 
             return Ok(applications);
         }
@@ -112,7 +117,9 @@ namespace VendorWorkerAPI.Controllers
                     a.Id,
                     a.Status,
                     a.CreatedAt,
+                    a.PaymentStatus,
                     WorkerName = a.Worker.Name,
+                    WorkerEmail = a.Worker.Email,
                     ServiceName = a.Service.ServiceName,
                     Price = a.Service.Price,
                     ServiceDateTime = a.Service.ServiceDateTime
@@ -152,6 +159,72 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(new { message = $"Application {status.ToLower()} successfully" });
         }
+
+        // ===============================
+        // WORKER: MARK JOB COMPLETED
+        // ===============================
+        [HttpPut("{id}/complete")]
+        [Authorize(Roles = "Worker")]
+        public async Task<IActionResult> MarkCompleted(int id )
+        {
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null)
+                return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
+
+            var application = await _context.Applications.FindAsync(id);
+            if (application == null)
+                return NotFound("Application not found");
+
+            if (application.WorkerId != workerId)
+                return Forbid();
+
+            if (application.Status != "Accepted")
+                return BadRequest("Job is not active");
+
+            application.Status = "Completed";
+            application.PaymentStatus = "Pending"; // 🔥 important
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Job marked as completed" });
+        }
+
+
+
+
+        // ===============================
+        // VENDOR: MARK PAYMENT AS PAID
+        // ===============================
+        [HttpPut("{id}/pay")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> MarkPaymentPaid(int id)
+        {
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
+
+            var application = await _context.Applications.FindAsync(id);
+            if (application == null)
+                return NotFound();
+
+            if (application.VendorId != vendorId)
+                return Forbid();
+
+            if (!string.Equals(application.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Job not completed yet");
+
+
+            application.PaymentStatus = "Paid";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Payment marked as paid" });
+        }
+
+
+
 
         // =====================================================
         // VENDOR: DELETE APPLICATION
