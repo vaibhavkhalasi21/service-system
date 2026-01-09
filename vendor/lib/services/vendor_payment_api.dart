@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/vendor_payment.dart';
 
 class VendorPaymentApi {
-  static const String baseUrl = "http://YOUR_IP:5244/api/application";
+  static const String baseUrl = "http://10.29.111.37:5244/api/application";
 
   // 🔹 Get completed jobs
   static Future<List<VendorPayment>> getPayments() async {
