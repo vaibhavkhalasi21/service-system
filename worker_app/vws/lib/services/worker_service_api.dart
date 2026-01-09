@@ -41,6 +41,22 @@ class WorkerServiceApi {
     return response.statusCode == 200;
   }
 
+  static Future<bool> markJobCompleted(int applicationId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("worker_token");
+
+    if (token == null) throw Exception("Worker not logged in");
+
+    final response = await http.put(
+      Uri.parse("$baseUrl/application/$applicationId/complete"),
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
   // ===============================
   // MY APPLICATIONS
   // ===============================

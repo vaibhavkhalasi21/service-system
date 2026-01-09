@@ -1,6 +1,8 @@
 class Booking {
   final int id;
-  final String jobTitle;
+  final String jobTitle;      // serviceName
+  final String category;      // category
+  final String vendorName;    // vendorName
   final String status;
   final int price;
   final DateTime serviceDateTime;
@@ -8,6 +10,8 @@ class Booking {
   Booking({
     required this.id,
     required this.jobTitle,
+    required this.category,
+    required this.vendorName,
     required this.status,
     required this.price,
     required this.serviceDateTime,
@@ -16,12 +20,12 @@ class Booking {
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'],
-      jobTitle: json['serviceName'] ?? "Job",
-      status: json['status'] ?? "Pending",
-      price: (json['price'] as num).toInt(), // ✅ FIX
+      jobTitle: json['serviceName'],
+      category: json['category'],
+      vendorName: json['vendorName'],
+      status: json['status'],
+      price: (json['price'] as num).toInt(), // already fixed
       serviceDateTime: DateTime.parse(json['serviceDateTime']),
     );
   }
-
-
 }

@@ -30,9 +30,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         bookings = result;
         isLoading = false;
       });
-
-      // DEBUG
-      debugPrint("Loaded bookings: ${bookings.length}");
     } catch (e) {
       debugPrint("Error loading bookings: $e");
 
@@ -43,8 +40,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       });
     }
   }
-
-
 
   Color statusColor(String status) {
     status = status.toLowerCase();
@@ -62,7 +57,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     return Icons.info;
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,18 +72,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         itemBuilder: (context, index) {
           final b = bookings[index];
 
-          // Safe display of status
           final displayStatus = b.status.isNotEmpty
-              ? b.status[0].toUpperCase() + b.status.substring(1).toLowerCase()
+              ? b.status[0].toUpperCase() +
+              b.status.substring(1).toLowerCase()
               : "Pending";
-
-          Text(
-            displayStatus,
-            style: TextStyle(
-              color: statusColor(b.status),
-              fontWeight: FontWeight.bold,
-            ),
-          );
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -119,16 +105,36 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Service name
                       Text(
                         b.jobTitle,
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
+
                       const SizedBox(height: 4),
+
+                      // Category + Vendor name
                       Text(
-                        DateFormat('dd MMM yyyy')
+                        "${b.category} • ${b.vendorName}",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // Date + Time
+                      Text(
+                        DateFormat('dd MMM yyyy • hh:mm a')
                             .format(b.serviceDateTime),
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
