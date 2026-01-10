@@ -19,6 +19,8 @@ namespace VendorWorkerAPI.Models
 
         // ================= STATUS =================
         public string Status { get; set; } = "Pending";
+
+        public string PaymentMethod { get; set; } = "Cash";
         public string PaymentStatus { get; set; } = "Pending";
 
         // ================= RATINGS =================

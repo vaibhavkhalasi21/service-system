@@ -37,7 +37,7 @@ namespace VendorWorkerAPI.Controllers
                 a.ServiceId == serviceId && a.WorkerId == workerId);
 
             if (alreadyApplied)
-                return BadRequest("You have already applied");
+                return BadRequest("You have already applied for this service");
 
             var application = new Application
             {
@@ -56,7 +56,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // WORKER: VIEW MY APPLICATIONS (🔥 FIXED)
+        // WORKER: VIEW MY APPLICATIONS
         // =====================================================
         [HttpGet("worker")]
         [Authorize(Roles = "Worker")]
@@ -78,14 +78,13 @@ namespace VendorWorkerAPI.Controllers
                     a.Status,
                     a.CreatedAt,
                     a.PaymentStatus,
+                    a.PaymentMethod,
 
-                    // ⭐ RATINGS
                     a.WorkerRated,
                     a.WorkerRating,
                     a.VendorRated,
                     a.VendorRating,
 
-                    // ⭐ DISPLAY DATA
                     ServiceName = a.Service.ServiceName,
                     Category = a.Service.Category,
                     Price = a.Service.Price,
@@ -120,6 +119,7 @@ namespace VendorWorkerAPI.Controllers
                     a.Status,
                     a.CreatedAt,
                     a.PaymentStatus,
+                    a.PaymentMethod,
 
                     a.VendorRated,
                     a.VendorRating,
@@ -136,7 +136,38 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // WORKER: MARK COMPLETED
+        // 🔥 VENDOR: ACCEPT / REJECT APPLICATION (FIX)
+        // =====================================================
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromQuery] string status
+        )
+        {
+            if (status != "Accepted" && status != "Rejected")
+                return BadRequest("Status must be Accepted or Rejected");
+
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null) return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
+
+            var app = await _context.Applications.FindAsync(id);
+            if (app == null) return NotFound("Application not found");
+
+            if (app.VendorId != vendorId)
+                return Forbid();
+
+            app.Status = status;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Application {status} successfully" });
+        }
+
+        // =====================================================
+        // WORKER: MARK JOB COMPLETED
         // =====================================================
         [HttpPut("{id}/complete")]
         [Authorize(Roles = "Worker")]
@@ -157,16 +188,22 @@ namespace VendorWorkerAPI.Controllers
             app.PaymentStatus = "Pending";
 
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { message = "Job marked as completed" });
         }
 
         // =====================================================
-        // VENDOR: MARK PAID
+        // VENDOR: MARK PAYMENT AS PAID (Cash / Online)
         // =====================================================
         [HttpPut("{id}/pay")]
         [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> MarkPaid(int id)
+        public async Task<IActionResult> MarkPaid(
+            int id,
+            [FromQuery] string method
+        )
         {
+            if (method != "Cash" && method != "Online")
+                return BadRequest("Invalid payment method");
+
             var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (vendorIdStr == null) return Unauthorized();
 
@@ -178,13 +215,17 @@ namespace VendorWorkerAPI.Controllers
 
             if (app == null) return NotFound();
             if (app.VendorId != vendorId) return Forbid();
-            if (app.Status != "Completed") return BadRequest();
+            if (app.Status != "Completed") return BadRequest("Job not completed");
 
             app.PaymentStatus = "Paid";
-            app.Service.Status = ServiceStatus.Completed;
+            app.PaymentMethod = method;
+
+            if (app.Service != null)
+                app.Service.Status = ServiceStatus.Completed;
 
             await _context.SaveChangesAsync();
-            return Ok();
+
+            return Ok(new { message = $"Payment marked as paid via {method}" });
         }
 
         // =====================================================
@@ -192,20 +233,28 @@ namespace VendorWorkerAPI.Controllers
         // =====================================================
         [HttpPost("{id}/rate-worker")]
         [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> RateWorker(int id, [FromQuery] int rating)
+        public async Task<IActionResult> RateWorker(
+            int id,
+            [FromQuery] int rating
+        )
         {
-            if (rating < 1 || rating > 5) return BadRequest();
+            if (rating < 1 || rating > 5)
+                return BadRequest("Rating must be between 1 and 5");
 
             var app = await _context.Applications.FindAsync(id);
             if (app == null) return NotFound();
-            if (app.PaymentStatus != "Paid") return BadRequest();
-            if (app.VendorRated) return BadRequest();
+
+            if (app.PaymentStatus != "Paid")
+                return BadRequest("Payment not completed");
+
+            if (app.VendorRated)
+                return BadRequest("Worker already rated");
 
             app.VendorRating = rating;
             app.VendorRated = true;
 
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { message = "Worker rated successfully" });
         }
 
         // =====================================================
@@ -213,21 +262,28 @@ namespace VendorWorkerAPI.Controllers
         // =====================================================
         [HttpPost("{id}/rate-vendor")]
         [Authorize(Roles = "Worker")]
-        public async Task<IActionResult> RateVendor(int id, [FromQuery] int rating)
+        public async Task<IActionResult> RateVendor(
+            int id,
+            [FromQuery] int rating
+        )
         {
-            if (rating < 1 || rating > 5) return BadRequest();
+            if (rating < 1 || rating > 5)
+                return BadRequest("Rating must be between 1 and 5");
 
             var app = await _context.Applications.FindAsync(id);
-
             if (app == null) return NotFound();
-            if (app.PaymentStatus != "Paid") return BadRequest();
-            if (app.WorkerRated) return BadRequest();
+
+            if (app.PaymentStatus != "Paid")
+                return BadRequest("Payment not completed");
+
+            if (app.WorkerRated)
+                return BadRequest("Vendor already rated");
 
             app.WorkerRating = rating;
             app.WorkerRated = true;
 
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { message = "Vendor rated successfully" });
         }
     }
 }

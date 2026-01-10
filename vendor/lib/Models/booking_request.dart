@@ -7,10 +7,12 @@ class BookingRequest {
   final DateTime serviceDateTime;
   final String workerEmail;
   final String paymentStatus;
+
   final bool vendorRated;
   final int? vendorRating;
 
-
+  // ⭐ NEW
+  final String? paymentMethod;
 
   BookingRequest({
     required this.id,
@@ -23,6 +25,7 @@ class BookingRequest {
     required this.paymentStatus,
     required this.vendorRated,
     required this.vendorRating,
+    required this.paymentMethod,
   });
 
   factory BookingRequest.fromJson(Map<String, dynamic> json) {
@@ -32,14 +35,12 @@ class BookingRequest {
       serviceName: json['serviceName'],
       price: (json['price'] as num).toInt(),
       status: json['status'],
-      serviceDateTime:
-      DateTime.parse(json['serviceDateTime']).toUtc(), // ✅ recommended
+      serviceDateTime: DateTime.parse(json['serviceDateTime']),
       workerEmail: json['workerEmail'],
-      paymentStatus: json['paymentStatus'] ?? "Pending",
+      paymentStatus: json['paymentStatus'],
       vendorRated: json['vendorRated'] ?? false,
       vendorRating: json['vendorRating'],
-
-
+      paymentMethod: json['paymentMethod'], // ⭐ IMPORTANT
     );
   }
 }

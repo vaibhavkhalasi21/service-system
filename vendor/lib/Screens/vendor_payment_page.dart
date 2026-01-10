@@ -20,10 +20,12 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     loadPayments();
   }
 
+  // ===============================
+  // LOAD PAYMENTS
+  // ===============================
   Future<void> loadPayments() async {
     try {
       final all = await VendorApplicationApi.getRequests();
-
       if (!mounted) return;
 
       setState(() {
@@ -37,23 +39,64 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     }
   }
 
-  Future<void> markPaid(int applicationId) async {
+  // ===============================
+  // MARK PAYMENT (CASH / ONLINE)
+  // ===============================
+  Future<void> markPaid(int applicationId, String method) async {
     try {
-      await VendorApplicationApi.markPaymentPaid(applicationId);
-      loadPayments();
-    } catch (_) {
-      _showSnack("Failed to mark payment as paid");
+      await VendorApplicationApi.markPaymentPaidWithMethod(applicationId, method);
+
+      await loadPayments();
+      _showSnack("Payment marked as paid via $method");
+    } catch (e) {
+      _showSnack("Failed to mark payment");
     }
   }
 
+  // ===============================
+  // PAYMENT METHOD DIALOG
+  // ===============================
+  void showPaymentMethodDialog(int applicationId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Select Payment Method"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.money),
+              title: const Text("Cash"),
+              onTap: () {
+                Navigator.pop(context);
+                markPaid(applicationId, "Cash");
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payment),
+              title: const Text("Online"),
+              onTap: () {
+                Navigator.pop(context);
+                markPaid(applicationId, "Online");
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===============================
+  // RATE WORKER
+  // ===============================
   Future<void> rateWorker(int applicationId, int rating) async {
     try {
       await VendorApplicationApi.rateWorker(applicationId, rating);
-      loadPayments();
+      await loadPayments();
       _showSnack("Rating submitted successfully");
-    } catch (e) {
+    } catch (_) {
       _showSnack("You have already rated this worker");
-      loadPayments();
+      await loadPayments();
     }
   }
 
@@ -62,37 +105,48 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Rate Worker"),
-        content: DropdownButton<int>(
-          value: rating,
-          isExpanded: true,
-          items: [1, 2, 3, 4, 5]
-              .map(
-                (e) => DropdownMenuItem(
-              value: e,
-              child: Text("$e ⭐"),
-            ),
-          )
-              .toList(),
-          onChanged: (v) => rating = v!,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await rateWorker(applicationId, rating);
-            },
-            child: const Text("Submit"),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Rate Worker"),
+              content: DropdownButton<int>(
+                value: rating,
+                isExpanded: true,
+                items: [1, 2, 3, 4, 5]
+                    .map(
+                      (e) => DropdownMenuItem(
+                    value: e,
+                    child: Text("$e ⭐"),
+                  ),
+                )
+                    .toList(),
+                onChanged: (v) {
+                  setDialogState(() {
+                    rating = v!;
+                  });
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await rateWorker(applicationId, rating);
+                  },
+                  child: const Text("Submit"),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
+
 
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context)
@@ -119,10 +173,8 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
           itemCount: payments.length,
           itemBuilder: (context, index) {
             final p = payments[index];
-
             final date = DateFormat('dd MMM yyyy')
                 .format(p.serviceDateTime.toLocal());
-
             final isPaid = p.paymentStatus == "Paid";
 
             return Card(
@@ -145,16 +197,30 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                     const SizedBox(height: 6),
                     Text(
                       "Worker: ${p.workerName}",
-                      style:
-                      const TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       "Date: $date",
-                      style:
-                      const TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                    const SizedBox(height: 10),
+
+// ✅ ADD THIS BLOCK
+                    if (isPaid && p.paymentMethod != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          "Paid via ${p.paymentMethod}",
+                          style: TextStyle(
+                            color: p.paymentMethod == "Cash"
+                                ? Colors.green
+                                : Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
 
                     Row(
                       mainAxisAlignment:
@@ -167,43 +233,23 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-
                         if (!isPaid)
                           ElevatedButton(
                             onPressed: () =>
-                                markPaid(p.id),
-                            style:
-                            ElevatedButton.styleFrom(
-                              backgroundColor:
-                              Colors.green,
+                                showPaymentMethodDialog(p.id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
                             ),
-                            child: const Text(
-                                "Mark Paid"),
+                            child: const Text("Mark Paid"),
                           )
                         else if (!p.vendorRated)
                           ElevatedButton(
                             onPressed: () =>
                                 showRatingDialog(p.id),
-                            child: const Text(
-                                "Rate Worker"),
+                            child: const Text("Rate Worker"),
                           )
                         else
-                          Row(
-                            children: [
-                              _ratingStars(
-                                  p.vendorRating ?? 0),
-                              const SizedBox(width: 6),
-                              Text(
-                                "${p.vendorRating}/5",
-                                style: const TextStyle(
-                                  fontWeight:
-                                  FontWeight.bold,
-                                  color:
-                                  Colors.blueGrey,
-                                ),
-                              ),
-                            ],
-                          ),
+                          _ratingStars(p.vendorRating ?? 0),
                       ],
                     ),
                   ],
