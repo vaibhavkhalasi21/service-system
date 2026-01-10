@@ -20,14 +20,40 @@ public class ServiceController : ControllerBase
     }
 
     // =====================================================
-    // WORKER: VIEW PUBLIC SERVICES
+    // 🔒 PRIVATE: AUTO-EXPIRE SERVICES
+    // =====================================================
+    private async Task UpdateExpiredServices()
+    {
+        var expiredServices = await _context.Services
+            .Where(s =>
+                s.Status == ServiceStatus.Active &&
+                s.ExpiresAt != null &&
+                s.ExpiresAt < DateTime.UtcNow)
+            .ToListAsync();
+
+        if (expiredServices.Count == 0)
+            return;
+
+        foreach (var service in expiredServices)
+        {
+            service.Status = ServiceStatus.Expired;
+            service.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    // =====================================================
+    // 🏠 WORKER: VIEW PUBLIC (HOME TAB) SERVICES
     // =====================================================
     [HttpGet("public")]
     [AllowAnonymous]
     public async Task<IActionResult> GetPublicServices()
     {
+        await UpdateExpiredServices();
+
         var services = await _context.Services
-            .Where(s => s.IsActive)
+            .Where(s => s.Status == ServiceStatus.Active)
             .Include(s => s.Vendor)
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new
@@ -47,7 +73,7 @@ public class ServiceController : ControllerBase
     }
 
     // =====================================================
-    // VENDOR: VIEW MY SERVICES
+    // 🧑‍💼 VENDOR: VIEW MY SERVICES (ALL STATUSES)
     // =====================================================
     [HttpGet("vendor")]
     [Authorize(Roles = "Vendor")]
@@ -68,7 +94,7 @@ public class ServiceController : ControllerBase
                 s.Category,
                 s.Price,
                 s.ImageUrl,
-                s.IsActive,
+                Status = s.Status.ToString(),
                 ServiceDateTime = s.ServiceDateTime,
                 CreatedAt = s.CreatedAt,
                 UpdatedAt = s.UpdatedAt
@@ -79,7 +105,7 @@ public class ServiceController : ControllerBase
     }
 
     // =====================================================
-    // VENDOR: CREATE SERVICE
+    // ➕ VENDOR: CREATE SERVICE
     // =====================================================
     [HttpPost]
     [Authorize(Roles = "Vendor")]
@@ -90,7 +116,6 @@ public class ServiceController : ControllerBase
         if (vendorIdStr == null) return Unauthorized();
 
         int vendorId = int.Parse(vendorIdStr);
-
         string? imagePath = null;
 
         if (dto.Image != null)
@@ -114,8 +139,9 @@ public class ServiceController : ControllerBase
             Price = dto.Price,
             ImageUrl = imagePath,
             VendorId = vendorId,
-            IsActive = true,
+            Status = ServiceStatus.Active,
             ServiceDateTime = dto.ServiceDateTime,
+            ExpiresAt = dto.ServiceDateTime.AddHours(2), // ⏱ auto-expiry
             CreatedAt = DateTime.UtcNow
         };
 
@@ -126,7 +152,7 @@ public class ServiceController : ControllerBase
     }
 
     // =====================================================
-    // VENDOR: UPDATE SERVICE
+    // ✏️ VENDOR: UPDATE SERVICE
     // =====================================================
     [HttpPut("{id}")]
     [Authorize(Roles = "Vendor")]
@@ -142,6 +168,9 @@ public class ServiceController : ControllerBase
         if (service == null) return NotFound();
 
         if (service.VendorId != vendorId) return Forbid();
+
+        if (service.Status != ServiceStatus.Active)
+            return BadRequest("Only active services can be updated.");
 
         if (dto.Image != null)
         {
@@ -169,11 +198,11 @@ public class ServiceController : ControllerBase
     }
 
     // =====================================================
-    // VENDOR: DELETE SERVICE
+    // 🚫 VENDOR: DISABLE SERVICE (SOFT DELETE)
     // =====================================================
     [HttpDelete("{id}")]
     [Authorize(Roles = "Vendor")]
-    public async Task<IActionResult> DeleteService(int id)
+    public async Task<IActionResult> DisableService(int id)
     {
         var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (vendorIdStr == null) return Unauthorized();
@@ -185,9 +214,11 @@ public class ServiceController : ControllerBase
 
         if (service.VendorId != vendorId) return Forbid();
 
-        _context.Services.Remove(service);
+        service.Status = ServiceStatus.Disabled;
+        service.UpdatedAt = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Service deleted successfully" });
+        return Ok(new { message = "Service disabled successfully" });
     }
 }

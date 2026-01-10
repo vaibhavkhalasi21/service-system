@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VendorWorkerAPI.Data;
 
@@ -11,9 +12,11 @@ using VendorWorkerAPI.Data;
 namespace VendorWorkerAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260110050349_AddServiceStatusAndExpiry")]
+    partial class AddServiceStatusAndExpiry
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,19 +169,7 @@ namespace VendorWorkerAPI.Migrations
                     b.Property<int>("VendorId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("VendorRated")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("VendorRating")
-                        .HasColumnType("int");
-
                     b.Property<int>("WorkerId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("WorkerRated")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("WorkerRating")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
