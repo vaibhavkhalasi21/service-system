@@ -7,6 +7,12 @@ import '../models/service.dart';
 import '../models/create_service_request.dart';
 import '../services/service_api.dart';
 
+// ================= UI CONSTANTS =================
+const Color kBg = Color(0xFF0F0F0F);
+const Color kCard = Color(0xFF1A1A1A);
+const Color kPurple = Color(0xFF7B4DFF);
+const Color kGrey = Color(0xFF9E9E9E);
+
 class ManageServicePage extends StatefulWidget {
   final Service service;
 
@@ -71,7 +77,6 @@ class _ManageServicePageState extends State<ManageServicePage> {
     if (selectedCategory == null) return;
 
     FocusScope.of(context).unfocus();
-
     setState(() => isLoading = true);
 
     final request = CreateServiceRequest(
@@ -154,16 +159,29 @@ class _ManageServicePageState extends State<ManageServicePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Service")),
+      backgroundColor: kBg,
+
+      // ================= APP BAR =================
+      appBar: AppBar(
+        backgroundColor: kBg,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "Manage Service",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // IMAGE
+              // ================= IMAGE =================
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 child: selectedImage != null
                     ? Image.file(
                   selectedImage!,
@@ -176,36 +194,37 @@ class _ManageServicePageState extends State<ManageServicePage> {
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.broken_image, size: 40),
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image,
+                        size: 40, color: kGrey),
+                  ),
                 ),
               ),
 
               TextButton.icon(
                 onPressed: pickImage,
-                icon: const Icon(Icons.image),
-                label: const Text("Change Image"),
+                icon: const Icon(Icons.image, color: kPurple),
+                label: const Text(
+                  "Change Image",
+                  style: TextStyle(color: kPurple),
+                ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
-              TextFormField(
+              _darkField(
                 controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: "Service Name",
-                  border: OutlineInputBorder(),
-                ),
+                label: "Service Name",
                 validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               DropdownButtonFormField<String>(
                 value: selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: "Category",
-                  border: OutlineInputBorder(),
-                ),
+                dropdownColor: kCard,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration("Category"),
                 items: serviceCategories
                     .map(
                       (c) => DropdownMenuItem(
@@ -218,33 +237,41 @@ class _ManageServicePageState extends State<ManageServicePage> {
                 validator: (v) => v == null ? "Select category" : null,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              TextFormField(
+              _darkField(
                 controller: priceController,
+                label: "Price (₹)",
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Price",
-                  border: OutlineInputBorder(),
-                ),
                 validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
+              // ================= SAVE =================
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: isLoading ? null : updateService,
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Save Changes"),
+                      : const Text(
+                    "Save Changes",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
+              // ================= DELETE =================
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -252,6 +279,9 @@ class _ManageServicePageState extends State<ManageServicePage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: isDeleting ? null : deleteService,
                   child: isDeleting
@@ -262,6 +292,37 @@ class _ManageServicePageState extends State<ManageServicePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // =============================
+  // REUSABLE DARK FIELD
+  // =============================
+  Widget _darkField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      decoration: _inputDecoration(label),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: kGrey),
+      filled: true,
+      fillColor: kCard,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
       ),
     );
   }

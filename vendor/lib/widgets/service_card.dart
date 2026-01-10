@@ -3,6 +3,11 @@ import 'package:intl/intl.dart';
 import '../models/service.dart';
 import '../screens/manage_service_page.dart';
 
+// ================= UI CONSTANTS =================
+const Color kCardBg = Color(0xFF1A1A1A);
+const Color kPurple = Color(0xFF7B4DFF);
+const Color kTextGrey = Color(0xFF9E9E9E);
+
 class ServiceCard extends StatelessWidget {
   final Service service;
   final VoidCallback onUpdated;
@@ -50,7 +55,6 @@ class ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localServiceTime = service.serviceDateTime.toLocal();
-
     final date = DateFormat('dd MMM yyyy').format(localServiceTime);
     final time = DateFormat('hh:mm a').format(localServiceTime);
 
@@ -59,10 +63,18 @@ class ServiceCard extends StatelessWidget {
 
     final bool isActive = service.status == "Active";
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      decoration: BoxDecoration(
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -72,14 +84,15 @@ class ServiceCard extends StatelessWidget {
           Stack(
             children: [
               SizedBox(
-                height: 160,
+                height: 170,
                 width: double.infinity,
                 child: service.imagePath.startsWith("http")
                     ? Image.network(
                   service.imagePath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                  const Center(child: Icon(Icons.broken_image)),
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.broken_image, color: kTextGrey),
+                  ),
                 )
                     : Image.asset(
                   service.imagePath,
@@ -89,11 +102,11 @@ class ServiceCard extends StatelessWidget {
 
               // ================= STATUS BADGE =================
               Positioned(
-                top: 12,
-                right: 12,
+                top: 14,
+                right: 14,
                 child: Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor(service.status),
                     borderRadius: BorderRadius.circular(20),
@@ -112,17 +125,33 @@ class ServiceCard extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ================= TITLE =================
-                Text(
-                  service.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // ================= TITLE + PRICE =================
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        service.title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "₹${service.price}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: kPurple,
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 4),
@@ -130,49 +159,44 @@ class ServiceCard extends StatelessWidget {
                 // ================= CATEGORY =================
                 Text(
                   service.category,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-
-                const SizedBox(height: 6),
-
-                // ================= PRICE =================
-                Text(
-                  "₹${service.price}",
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    color: kTextGrey,
+                    fontSize: 13,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
                 // ================= SERVICE DATE & TIME =================
                 Row(
                   children: [
                     const Icon(Icons.schedule,
-                        size: 16, color: Colors.blueGrey),
+                        size: 16, color: kTextGrey),
                     const SizedBox(width: 6),
                     Text(
-                      "Service on $date • $time",
-                      style: const TextStyle(color: Colors.blueGrey),
+                      "$date • $time",
+                      style: const TextStyle(
+                        color: kTextGrey,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
 
-                // ================= POSTED BY =================
+                // ================= POSTED INFO =================
                 Row(
                   children: [
                     const Icon(Icons.person,
-                        size: 16, color: Colors.grey),
+                        size: 16, color: kTextGrey),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         "Posted by $vendorName • ${timeAgo(service.createdAt)}",
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: kTextGrey,
                         ),
                       ),
                     ),
@@ -181,37 +205,44 @@ class ServiceCard extends StatelessWidget {
 
                 // ================= ACTIONS =================
                 if (showActions) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
-                  // 🔥 ACTIVE SERVICE → EDIT
                   if (isActive)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              final updated = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ManageServicePage(service: service),
-                                ),
-                              );
-                              if (updated == true) onUpdated();
-                            },
-                            child: const Text("Edit"),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          final updated = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ManageServicePage(service: service),
+                            ),
+                          );
+                          if (updated == true) onUpdated();
+                        },
+                        child: const Text(
+                          "Edit Service",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
+                      ),
                     )
-
-                  // 🔒 NON-ACTIVE SERVICE → INFO
                   else
                     Text(
                       "This service is ${service.status.toLowerCase()}",
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.grey,
+                        color: kTextGrey,
                         fontStyle: FontStyle.italic,
                       ),
                     ),

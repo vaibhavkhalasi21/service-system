@@ -7,6 +7,12 @@ import '../services/service_api.dart';
 import '../widgets/service_card.dart';
 import '../widgets/category_chip.dart';
 
+// ================= UI CONSTANTS =================
+const Color kBg = Color(0xFF0F0F0F);
+const Color kCard = Color(0xFF1A1A1A);
+const Color kPurple = Color(0xFF7B4DFF);
+const Color kTextGrey = Color(0xFF9E9E9E);
+
 class VendorHomeTab extends StatefulWidget {
   const VendorHomeTab({super.key});
 
@@ -117,69 +123,119 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           .toList();
     }
 
-    return Padding(
+    return Container(
+      color: kBg,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ================= HELLO =================
+          // ================= HEADER =================
+          const Text(
+            "WELCOME BACK",
+            style: TextStyle(
+              color: kTextGrey,
+              letterSpacing: 1.2,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
-            "Hello, $vendorName 👋",
+            vendorName,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // ================= SEARCH =================
-          TextField(
-            onChanged: (v) => setState(() => searchQuery = v),
-            decoration: InputDecoration(
-              hintText: "Search services...",
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
+          Container(
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: kPurple.withOpacity(0.15),
+                  blurRadius: 12,
+                ),
+              ],
+            ),
+            child: TextField(
+              onChanged: (v) => setState(() => searchQuery = v),
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: "Search for a service...",
+                hintStyle: TextStyle(color: kTextGrey),
+                prefixIcon: Icon(Icons.search, color: kPurple),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 16),
               ),
-              filled: true,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
 
-          // ================= CATEGORY FILTER =================
+          // ================= CATEGORIES =================
+          const Text(
+            "Categories",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           SizedBox(
-            height: 40,
+            height: 42,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: categories.map((cat) {
+                final bool selected = selectedCategory == cat;
                 return GestureDetector(
                   onTap: () => setState(() => selectedCategory = cat),
-                  child: CategoryChip(
-                    title: cat,
-                    selected: selectedCategory == cat,
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selected ? kPurple : Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: kPurple),
+                    ),
+                    child: Text(
+                      cat,
+                      style: TextStyle(
+                        color: selected ? Colors.white : kPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 );
               }).toList(),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // ================= SERVICES LIST =================
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+              child: CircularProgressIndicator(color: kPurple),
+            )
                 : RefreshIndicator(
+              color: kPurple,
               onRefresh: fetchServices,
               child: filteredServices.isEmpty
-                  ? ListView(
-                children: const [
-                  SizedBox(height: 100),
-                  Center(child: Text("No services found")),
-                ],
+                  ? const Center(
+                child: Text(
+                  "No services found",
+                  style: TextStyle(color: kTextGrey),
+                ),
               )
                   : ListView.builder(
                 itemCount: filteredServices.length,
