@@ -6,7 +6,7 @@ class WorkerPayment {
   final String status;
   final String paymentStatus;
 
-  // ⭐ ADD THESE
+  // ⭐ WORKER → VENDOR RATING
   final bool workerRated;
   final int? workerRating;
 

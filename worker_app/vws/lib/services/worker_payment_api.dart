@@ -8,7 +8,7 @@ class WorkerPaymentApi {
       "http://10.29.111.37:5244/api/application";
 
   // ===============================
-  // WORKER: GET COMPLETED PAYMENTS
+  // GET WORKER PAYMENTS
   // ===============================
   static Future<List<WorkerPayment>> getPayments() async {
     final prefs = await SharedPreferences.getInstance();
@@ -27,19 +27,20 @@ class WorkerPaymentApi {
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        "Failed to load worker payments (${response.statusCode})",
-      );
+      throw Exception("Failed to load payments");
     }
 
-    final List<dynamic> data = jsonDecode(response.body);
+    final List data = jsonDecode(response.body);
 
-    // 🔥 Payments screen = ONLY completed jobs
     return data
         .where((e) => e['status'] == "Completed")
         .map((e) => WorkerPayment.fromJson(e))
         .toList();
   }
+
+  // ===============================
+  // RATE VENDOR
+  // ===============================
   static Future<void> rateVendor(int applicationId, int rating) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("worker_token");
@@ -55,5 +56,4 @@ class WorkerPaymentApi {
       throw Exception("Failed to rate vendor");
     }
   }
-
 }
