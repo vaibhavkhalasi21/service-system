@@ -6,6 +6,9 @@ class VendorPayment {
   final String status;
   final String paymentStatus;
 
+  // ⭐ NEW
+  final String? paymentMethod;
+
   VendorPayment({
     required this.id,
     required this.serviceName,
@@ -13,6 +16,7 @@ class VendorPayment {
     required this.price,
     required this.status,
     required this.paymentStatus,
+    required this.paymentMethod,
   });
 
   factory VendorPayment.fromJson(Map<String, dynamic> json) {
@@ -23,6 +27,7 @@ class VendorPayment {
       price: (json['price'] as num).toInt(),
       status: json['status'],
       paymentStatus: json['paymentStatus'],
+      paymentMethod: json['paymentMethod'], // ⭐ IMPORTANT
     );
   }
 }
