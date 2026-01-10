@@ -39,20 +39,31 @@ class JobCard extends StatelessWidget {
     final formattedDate =
     DateFormat("dd MMM yyyy, hh:mm a").format(serviceDateTime);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xff1E1E1E),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
           /// 🖼 IMAGE
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(18),
+            ),
             child: Image.network(
               imageUrl,
-              height: 180,
+              height: 190,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
@@ -70,59 +81,88 @@ class JobCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
 
                 /// 🔹 CATEGORY
-                Text(
-                  category,
-                  style: const TextStyle(color: Colors.blue),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    category,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
-                /// 🔹 VENDOR NAME
+                /// 🔹 VENDOR
                 Row(
                   children: [
-                    const Icon(Icons.store, size: 16, color: Colors.grey),
+                    const Icon(Icons.store,
+                        size: 16, color: Colors.white54),
                     const SizedBox(width: 6),
-                    Text(
-                      vendorName,
-                      style: const TextStyle(color: Colors.grey),
+                    Expanded(
+                      child: Text(
+                        vendorName,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
 
                 /// 🔹 POSTED TIME
                 Row(
                   children: [
-                    const Icon(Icons.history, size: 16, color: Colors.grey),
+                    const Icon(Icons.history,
+                        size: 16, color: Colors.white54),
                     const SizedBox(width: 6),
                     Text(
                       "Posted ${timeAgo(createdAt)}",
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
 
+                const SizedBox(height: 6),
 
-                /// 🔹 SERVICE DATE TIME
+                /// 🔹 SERVICE DATE
                 Row(
                   children: [
-                    const Icon(Icons.schedule, size: 16, color: Colors.grey),
+                    const Icon(Icons.schedule,
+                        size: 16, color: Colors.white54),
                     const SizedBox(width: 6),
                     Text(
                       formattedDate,
-                      style: const TextStyle(color: Colors.grey),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 /// 💰 PRICE & ⭐ RATING
                 Row(
@@ -131,15 +171,23 @@ class JobCard extends StatelessWidget {
                     Text(
                       "₹ ${price.toStringAsFixed(0)}",
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                          color: Colors.white,
                       ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        const Icon(Icons.star,
+                            color: Colors.amber, size: 18),
                         const SizedBox(width: 4),
-                        Text(rating.toString()),
+                        Text(
+                          rating.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -150,18 +198,22 @@ class JobCard extends StatelessWidget {
                 /// 🔘 APPLY BUTTON
                 SizedBox(
                   width: double.infinity,
-                  height: 45,
+                  height: 46,
                   child: ElevatedButton(
                     onPressed: onApply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: const Color(0xff7C3AED),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: const Text(
                       "Apply Job",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

@@ -31,8 +31,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("Error loading bookings: $e");
-
       if (!mounted) return;
 
       setState(() {
@@ -43,9 +41,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Color statusColor(String status) {
     status = status.toLowerCase();
-    if (status == "accepted") return Colors.green;
-    if (status == "rejected") return Colors.red;
-    if (status == "pending") return Colors.orange;
+    if (status == "accepted") return Colors.greenAccent;
+    if (status == "rejected") return Colors.redAccent;
+    if (status == "pending") return Colors.orangeAccent;
     return Colors.grey;
   }
 
@@ -60,14 +58,32 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF2F3F7),
-      appBar: AppBar(title: const Text("My Bookings")),
+      backgroundColor: const Color(0xff0F0F0F),
+      appBar: AppBar(
+        backgroundColor: const Color(0xff0F0F0F),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "My Bookings",
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xff7C3AED),
+        ),
+      )
           : bookings.isEmpty
-          ? const Center(child: Text("No applications yet"))
+          ? const Center(
+        child: Text(
+          "No applications yet",
+          style: TextStyle(color: Colors.white60),
+        ),
+      )
           : ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final b = bookings[index];
@@ -81,18 +97,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 6,
-                ),
-              ],
+              color: const Color(0xff1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
             ),
             child: Row(
               children: [
                 CircleAvatar(
+                  radius: 22,
                   backgroundColor:
                   statusColor(b.status).withOpacity(0.15),
                   child: Icon(
@@ -105,40 +117,43 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Service name
+                      /// 🔹 SERVICE NAME
                       Text(
                         b.jobTitle,
                         style: const TextStyle(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
 
-                      // Category + Vendor name
+                      /// 🔹 CATEGORY & VENDOR
                       Text(
                         "${b.category} • ${b.vendorName}",
                         style: const TextStyle(
-                          color: Colors.grey,
+                          color: Colors.white60,
                           fontSize: 13,
                         ),
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
 
-                      // Date + Time
+                      /// 🔹 DATE & TIME
                       Text(
                         DateFormat('dd MMM yyyy • hh:mm a')
                             .format(b.serviceDateTime),
                         style: const TextStyle(
-                          color: Colors.grey,
+                          color: Colors.white54,
                           fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
+
+                /// 🔹 STATUS
                 Text(
                   displayStatus,
                   style: TextStyle(

@@ -27,11 +27,14 @@ class WorkerPaymentApi {
     );
 
     if (response.statusCode != 200) {
-      throw Exception("Failed to load payments");
+      throw Exception(
+        "Failed to load payments (${response.statusCode})",
+      );
     }
 
     final List data = jsonDecode(response.body);
 
+    // 🔥 Worker sees ONLY completed jobs
     return data
         .where((e) => e['status'] == "Completed")
         .map((e) => WorkerPayment.fromJson(e))
@@ -41,12 +44,21 @@ class WorkerPaymentApi {
   // ===============================
   // RATE VENDOR
   // ===============================
-  static Future<void> rateVendor(int applicationId, int rating) async {
+  static Future<void> rateVendor(
+      int applicationId,
+      int rating,
+      ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("worker_token");
 
+    if (token == null) {
+      throw Exception("Worker not logged in");
+    }
+
     final response = await http.post(
-      Uri.parse("$baseUrl/$applicationId/rate-vendor?rating=$rating"),
+      Uri.parse(
+        "$baseUrl/$applicationId/rate-vendor?rating=$rating",
+      ),
       headers: {
         "Authorization": "Bearer $token",
       },

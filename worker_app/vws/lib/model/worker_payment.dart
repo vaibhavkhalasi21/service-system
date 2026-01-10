@@ -5,8 +5,7 @@ class WorkerPayment {
   final int price;
   final String status;
   final String paymentStatus;
-
-  // ⭐ WORKER → VENDOR RATING
+  final String? paymentMethod;
   final bool workerRated;
   final int? workerRating;
 
@@ -17,6 +16,7 @@ class WorkerPayment {
     required this.price,
     required this.status,
     required this.paymentStatus,
+    required this.paymentMethod,
     required this.workerRated,
     required this.workerRating,
   });
@@ -29,7 +29,8 @@ class WorkerPayment {
       price: (json['price'] as num).toInt(),
       status: json['status'],
       paymentStatus: json['paymentStatus'],
-      workerRated: json['workerRated'] ?? false,
+      paymentMethod: json['paymentMethod'],
+      workerRated: json['workerRated'],
       workerRating: json['workerRating'],
     );
   }

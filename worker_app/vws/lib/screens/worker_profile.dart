@@ -4,7 +4,7 @@ import 'package:vws/screens/auth/login_screen.dart';
 import 'package:vws/sessions/worker_session.dart';
 import 'package:vws/screens/my_booking_screen.dart';
 import 'package:vws/model/worker_model.dart';
-import 'package:vws/screens/worker_payment_page.dart'; // ✅ ADD THIS
+import 'package:vws/screens/worker_payment_page.dart';
 
 class WorkerProfile extends StatefulWidget {
   const WorkerProfile({super.key});
@@ -41,14 +41,23 @@ class _WorkerProfileState extends State<WorkerProfile> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: Color(0xff0F0F0F),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xff7C3AED),
+          ),
+        ),
       );
     }
 
     if (worker == null) {
       return const Scaffold(
+        backgroundColor: Color(0xff0F0F0F),
         body: Center(
-          child: Text("Worker data not found"),
+          child: Text(
+            "Worker data not found",
+            style: TextStyle(color: Colors.white60),
+          ),
         ),
       );
     }
@@ -57,19 +66,23 @@ class _WorkerProfileState extends State<WorkerProfile> {
         "https://png.pngtree.com/png-clipart/20230927/original/pngtree-man-avatar-image-for-profile-png-image_13001882.png";
 
     return Scaffold(
-      backgroundColor: const Color(0xffF2F3F7),
+      backgroundColor: const Color(0xff0F0F0F),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🔵 HEADER
+
+            /// 🔥 HEADER
             Container(
               width: double.infinity,
-              height: 240,
+              height: 260,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xff2563EB), Color(0xff1E40AF)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xff0F0F0F),
+                    Color(0xff1C1C1C),
+                  ],
                 ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(30),
@@ -80,14 +93,14 @@ class _WorkerProfileState extends State<WorkerProfile> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 52,
-                    backgroundColor: Colors.white,
+                    radius: 54,
+                    backgroundColor: const Color(0xff7C3AED),
                     child: CircleAvatar(
                       radius: 50,
                       backgroundImage: NetworkImage(imageUrl),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     worker!.name,
                     style: const TextStyle(
@@ -96,20 +109,21 @@ class _WorkerProfileState extends State<WorkerProfile> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     worker!.email,
                     style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
+                      color: Colors.white60,
+                      fontSize: 15,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // 🔘 BUTTONS
+            /// 🔘 ACTION BUTTONS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -117,7 +131,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
                   _ProfileButton(
                     icon: Icons.edit,
                     text: "Edit Name",
-                    color: Colors.blue,
+                    color: const Color(0xff7C3AED),
                     onTap: () async {
                       await Navigator.push(
                         context,
@@ -134,7 +148,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
                   _ProfileButton(
                     icon: Icons.book_online,
                     text: "My Bookings",
-                    color: Colors.green,
+                    color: Colors.greenAccent,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -147,11 +161,10 @@ class _WorkerProfileState extends State<WorkerProfile> {
 
                   const SizedBox(height: 16),
 
-                  // ✅ NEW: MY PAYMENTS
                   _ProfileButton(
                     icon: Icons.payments,
                     text: "My Payments",
-                    color: Colors.purple,
+                    color: Colors.purpleAccent,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -167,7 +180,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
                   _ProfileButton(
                     icon: Icons.logout,
                     text: "Logout",
-                    color: Colors.red,
+                    color: Colors.redAccent,
                     onTap: () async {
                       await WorkerSession.logout();
                       Navigator.pushAndRemoveUntil(
@@ -179,6 +192,8 @@ class _WorkerProfileState extends State<WorkerProfile> {
                       );
                     },
                   ),
+
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -206,19 +221,13 @@ class _ProfileButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
+          color: const Color(0xff1E1E1E),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white10),
         ),
         child: Row(
           children: [
@@ -229,13 +238,13 @@ class _ProfileButton extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const Spacer(),
             const Icon(
               Icons.arrow_forward_ios,
-              color: Colors.grey,
+              color: Colors.white38,
               size: 16,
             ),
           ],

@@ -32,7 +32,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("Error loading services: $e");
       if (!mounted) return;
       setState(() => isLoading = false);
     }
@@ -50,100 +49,115 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget _jobList(List<Booking> jobs, {bool allowComplete = false}) {
     if (jobs.isEmpty) {
       return const Center(
-        child: Text("No jobs found", style: TextStyle(color: Colors.grey)),
+        child: Text(
+          "No jobs found",
+          style: TextStyle(color: Colors.white60),
+        ),
       );
     }
 
     return RefreshIndicator(
+      color: const Color(0xff7C3AED),
       onRefresh: loadJobs,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
         itemCount: jobs.length,
         itemBuilder: (context, index) {
           final b = jobs[index];
 
-          return Card(
+          return Container(
             margin: const EdgeInsets.only(bottom: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xff1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
             ),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Service name
-                  Text(
-                    b.jobTitle,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                /// 🔹 SERVICE TITLE
+                Text(
+                  b.jobTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                /// 🔹 CATEGORY & VENDOR
+                Text(
+                  "${b.category} • ${b.vendorName}",
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 13,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// 🔹 DATE & TIME
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule,
+                      size: 16,
+                      color: Colors.white54,
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Text(
+                      DateFormat('dd MMM yyyy • hh:mm a')
+                          .format(b.serviceDateTime),
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                  ],
+                ),
 
-                  const SizedBox(height: 4),
+                const SizedBox(height: 14),
 
-                  /// Category + Vendor
-                  Text(
-                    "${b.category} • ${b.vendorName}",
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  /// Date & Time
-                  Row(
-                    children: [
-                      const Icon(Icons.schedule,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Text(
-                        DateFormat('dd MMM yyyy • hh:mm a')
-                            .format(b.serviceDateTime),
-                        style: const TextStyle(color: Colors.grey),
+                /// 🔹 PRICE + ACTION
+                Row(
+                  children: [
+                    Text(
+                      "₹${b.price}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
 
-                  const SizedBox(height: 10),
+                    if (allowComplete)
+                      ElevatedButton(
+                        onPressed: () async {
+                          final success =
+                          await WorkerServiceApi.markJobCompleted(b.id);
 
-                  /// Price + Button
-                  Row(
-                    children: [
-                      Text(
-                        "₹${b.price}",
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const Spacer(),
-
-                      /// ✅ MARK COMPLETED (only in Pending tab)
-                      if (allowComplete)
-                        ElevatedButton(
-                          onPressed: () async {
-                            final success =
-                            await WorkerServiceApi.markJobCompleted(b.id);
-
-                            if (success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                  Text("Job marked as completed"),
-                                ),
-                              );
-                              loadJobs();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Job marked as completed"),
+                              ),
+                            );
+                            loadJobs();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff7C3AED),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text("Mark Completed"),
                         ),
-                    ],
-                  ),
-                ],
-              ),
+                        child: const Text("Mark Completed"),
+                      ),
+                  ],
+                ),
+              ],
             ),
           );
         },
@@ -154,18 +168,20 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xff0F0F0F),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xff0F0F0F),
         elevation: 0,
-        title:
-        const Text("My Services", style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        title: const Text(
+          "My Services",
+          style: TextStyle(color: Colors.white),
+        ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.blue,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.blue,
+          indicatorColor: const Color(0xff7C3AED),
+          labelColor: const Color(0xff7C3AED),
+          unselectedLabelColor: Colors.white60,
           tabs: const [
             Tab(icon: Icon(Icons.access_time), text: "Pending"),
             Tab(icon: Icon(Icons.check_circle_outline), text: "Completed"),
@@ -174,7 +190,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xff7C3AED),
+        ),
+      )
           : TabBarView(
         controller: _tabController,
         children: [

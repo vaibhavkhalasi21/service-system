@@ -29,7 +29,6 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
 
     /// ✅ AUTO FILL FROM WORKER SESSION
     final worker = WorkerSession.currentWorker;
-
     if (worker != null) {
       nameCtrl.text = worker.name;
       emailCtrl.text = worker.email;
@@ -49,11 +48,10 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success
-                ? "Applied successfully ✅"
-                : "Already applied",
+            success ? "Applied successfully ✅" : "Already applied",
           ),
-          backgroundColor: success ? Colors.green : Colors.orange,
+          backgroundColor:
+          success ? Colors.greenAccent : Colors.orangeAccent,
         ),
       );
 
@@ -70,10 +68,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xff0F0F0F),
       appBar: AppBar(
-        title: const Text("Apply Job"),
-        backgroundColor: const Color(0xff2563EB),
+        backgroundColor: const Color(0xff0F0F0F),
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          "Apply Job",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -82,11 +86,18 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              /// 🔥 TITLE
               const Text(
                 "Job Application",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 24),
 
               _inputField(
                 controller: nameCtrl,
@@ -114,40 +125,45 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 v!.length < 10 ? "Enter valid phone" : null,
               ),
 
-              const SizedBox(height: 16),
-
               if (errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.redAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.redAccent),
                   ),
                 ),
 
               const SizedBox(height: 30),
 
+              /// 🔘 SUBMIT BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : submitApplication,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff2563EB),
+                    backgroundColor: const Color(0xff7C3AED),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const CircularProgressIndicator(
+                    color: Colors.white,
+                  )
                       : const Text(
                     "Submit Application",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -158,6 +174,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     );
   }
 
+  /// 🔹 INPUT FIELD (DARK STYLE)
   Widget _inputField({
     required TextEditingController controller,
     required String label,
@@ -166,18 +183,22 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     String? Function(String?)? validator,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboard,
         validator: validator,
+        style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          labelStyle: const TextStyle(color: Colors.white60),
+          prefixIcon: Icon(icon, color: Colors.white54),
           filled: true,
+          fillColor: const Color(0xff1E1E1E),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );

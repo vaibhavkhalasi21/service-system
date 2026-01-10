@@ -30,53 +30,63 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
   Widget build(BuildContext context) {
     if (worker == null) {
       return const Scaffold(
-        body: Center(child: Text("Worker not found")),
+        backgroundColor: Color(0xff0F0F0F),
+        body: Center(
+          child: Text(
+            "Worker not found",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xff0F0F0F),
       appBar: AppBar(
-        title: const Text("Edit Profile"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color(0xff0F0F0F),
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          "Edit Profile",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              /// 👤 NAME
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: "Full Name",
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14)),
-                    borderSide: BorderSide.none,
-                  ),
+              /// 🔥 TITLE
+              const Text(
+                "Update Your Profile",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+
+              const SizedBox(height: 24),
+
+              /// 👤 NAME
+              _inputField(
+                controller: nameController,
+                label: "Full Name",
+                icon: Icons.person,
                 validator: (v) =>
                 v == null || v.isEmpty ? "Enter name" : null,
               ),
 
-              const SizedBox(height: 20),
-
               /// 📧 EMAIL
-              TextFormField(
+              _inputField(
                 controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: "Email Address",
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(14)),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                label: "Email Address",
+                icon: Icons.email,
+                keyboard: TextInputType.emailAddress,
                 validator: (v) {
                   if (v == null || v.isEmpty) {
                     return "Enter email";
@@ -88,17 +98,60 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
                 },
               ),
 
-              const SizedBox(height: 30),
+              const Spacer(),
 
+              /// 🔘 SAVE BUTTON
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: ElevatedButton(
                   onPressed: _saveProfile,
-                  child: const Text("SAVE PROFILE"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff7C3AED),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    "SAVE PROFILE",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 DARK INPUT FIELD
+  Widget _inputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboard = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboard,
+        validator: validator,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white60),
+          prefixIcon: Icon(icon, color: Colors.white54),
+          filled: true,
+          fillColor: const Color(0xff1E1E1E),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
         ),
       ),

@@ -11,14 +11,18 @@ class WorkerRegisterScreen extends StatefulWidget {
 
 class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
-  String? selectedCategory;
 
-  final List<String> categories = [
+  String? selectedCategory;
+  bool isPasswordHidden = true;
+  bool isLoading = false;
+
+  final categories = [
     "Plumber",
     "Electrician",
     "AC Repairer",
@@ -26,27 +30,32 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
     "Painter",
   ];
 
-  bool isPasswordHidden = true;
-  bool isLoading = false;
-
-  @override
-  void dispose() {
-    nameCtrl.dispose();
-    emailCtrl.dispose();
-    phoneCtrl.dispose();
-    passwordCtrl.dispose();
-    addressCtrl.dispose();
-    super.dispose();
+  InputDecoration _inputStyle(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: const Color(0xff7C3AED)),
+      filled: true,
+      fillColor: const Color(0xff1E1E1E),
+      labelStyle: const TextStyle(color: Colors.white70),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+    );
   }
+
+  bool _isValidEmail(String email) =>
+      RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+          .hasMatch(email);
+
+  bool _isValidPassword(String password) =>
+      RegExp(r"^(?=.*[A-Za-z])(?=.*\d).{6,}$").hasMatch(password);
 
   Future<void> register() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Select category"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("Select category")),
       );
       return;
     }
@@ -65,136 +74,163 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
     setState(() => isLoading = false);
 
     if (error == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Registered successfully"),
-          backgroundColor: Colors.green,
-        ),
-      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     }
   }
-
-  InputDecoration inputStyle(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: Colors.deepPurple),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-    );
-  }
-
-  bool _isValidEmail(String email) =>
-      RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(email);
-
-  bool _isValidPassword(String password) =>
-      RegExp(r"^(?=.*[A-Za-z])(?=.*\d).{6,}$").hasMatch(password);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xff0F0F0F),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Card(
-            elevation: 12,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const Text("Worker Registration", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: nameCtrl,
-                      decoration: inputStyle("Full Name", Icons.person),
-                      validator: (v) => v!.isEmpty ? "Enter name" : null,
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xff1C1C1C),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Text(
+                    "Worker Registration",
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff7C3AED),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: emailCtrl,
-                      decoration: inputStyle("Email", Icons.email),
-                      validator: (v) => !_isValidEmail(v!) ? "Enter valid email" : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: _inputStyle("Full Name", Icons.person),
+                    style: const TextStyle(color: Colors.white),
+                    validator: (v) => v!.isEmpty ? "Enter name" : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: _inputStyle("Email", Icons.email),
+                    style: const TextStyle(color: Colors.white),
+                    validator: (v) =>
+                    !_isValidEmail(v!) ? "Enter valid email" : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: phoneCtrl,
+                    decoration: _inputStyle("Phone", Icons.phone),
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: Colors.white),
+                    validator: (v) =>
+                    v!.length != 10 ? "Enter valid phone" : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: passwordCtrl,
+                    obscureText: isPasswordHidden,
+                    decoration: _inputStyle("Password", Icons.lock).copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          isPasswordHidden
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.white54,
+                        ),
+                        onPressed: () => setState(
+                                () => isPasswordHidden = !isPasswordHidden),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: phoneCtrl,
-                      decoration: inputStyle("Phone", Icons.phone),
-                      keyboardType: TextInputType.phone,
-                      validator: (v) => v!.length != 10 ? "Enter valid phone" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: passwordCtrl,
-                      obscureText: isPasswordHidden,
-                      decoration: inputStyle("Password", Icons.lock).copyWith(
-                        suffixIcon: IconButton(
-                          icon: Icon(isPasswordHidden ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => isPasswordHidden = !isPasswordHidden),
+                    style: const TextStyle(color: Colors.white),
+                    validator: (v) => !_isValidPassword(v!)
+                        ? "Min 6 chars with letters & numbers"
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  TextFormField(
+                    controller: addressCtrl,
+                    decoration: _inputStyle("Address", Icons.location_on),
+                    style: const TextStyle(color: Colors.white),
+                    validator: (v) => v!.isEmpty ? "Enter address" : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: _inputStyle("Category", Icons.work),
+                    dropdownColor: const Color(0xff1C1C1C),
+                    style: const TextStyle(color: Colors.white),
+                    items: categories
+                        .map(
+                          (c) => DropdownMenuItem(
+                        value: c,
+                        child: Text(c),
+                      ),
+                    )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedCategory = v),
+                    validator: (v) => v == null ? "Select category" : null,
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff7C3AED),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      validator: (v) => !_isValidPassword(v!) ? "Min 6 chars with letters & numbers" : null,
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Register",
+                          style: TextStyle(fontSize: 16,color: Colors.white,)),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: addressCtrl,
-                      decoration: inputStyle("Address", Icons.location_on),
-                      validator: (v) => v!.isEmpty ? "Enter address" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      decoration: inputStyle("Category", Icons.work),
-                      items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) => setState(() => selectedCategory = v),
-                      validator: (v) => v == null ? "Select category" : null,
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : register,
-                        child: isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text("Register"),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Already have an account? "),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (_) => const WorkerRegisterScreen()));
-                          },
-                          child: const Text(
-                            "Login",
-                            style: TextStyle(
-                              color: Colors.deepPurple,
-                              fontWeight: FontWeight.bold,
-                            ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Already have an account? ",
+                          style: TextStyle(color: Colors.white70)),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const LoginScreen()),
+                          );
+                        },
+                        child: const Text(
+                          "Login",
+                          style: TextStyle(
+                            color: Color(0xff7C3AED),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

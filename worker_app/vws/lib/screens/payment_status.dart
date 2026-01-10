@@ -14,22 +14,29 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xff0F0F0F),
       appBar: AppBar(
-        title: const Text("Payment"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color(0xff0F0F0F),
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          "Payment",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 💼 Payment Summary
+
+            /// 💼 PAYMENT SUMMARY
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xff1E1E1E),
+                borderRadius: BorderRadius.circular(18),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -37,57 +44,66 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                   const Text(
                     "Application Fee",
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                      fontSize: 15,
                     ),
                   ),
                   Text(
                     "₹ ${amountCtrl.text}",
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
+                      color: Color(0xff7C3AED),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // 💰 Enter Amount
+            /// 💰 ENTER AMOUNT
             const Text(
               "Enter Amount",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             TextField(
               controller: amountCtrl,
               keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 prefixText: "₹ ",
+                prefixStyle: const TextStyle(color: Colors.white),
                 hintText: "Enter amount",
+                hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xff1E1E1E),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
               ),
-              onChanged: (_) {
-                setState(() {}); // update summary amount
-              },
+              onChanged: (_) => setState(() {}),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 28),
 
-            // 💳 Payment Method
+            /// 💳 PAYMENT METHOD
             const Text(
               "Select Payment Method",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             _paymentTile(
               value: "online",
@@ -105,15 +121,15 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
 
             const Spacer(),
 
-            // 🚀 Pay Button
+            /// 🚀 PAY BUTTON
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: const Color(0xff7C3AED),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 onPressed: _handlePay,
@@ -121,7 +137,10 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
                   paymentMethod == "online"
                       ? "Pay Now"
                       : "Confirm Offline Payment",
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -131,36 +150,46 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
     );
   }
 
-  // 🔹 Payment Option Tile
+  /// 🔹 PAYMENT TILE (DARK)
   Widget _paymentTile({
     required String value,
     required String title,
     required String subtitle,
     required IconData icon,
   }) {
+    final selected = paymentMethod == value;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xff1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? const Color(0xff7C3AED) : Colors.transparent,
+          width: 1.2,
+        ),
       ),
       child: RadioListTile(
         value: value,
         groupValue: paymentMethod,
-        activeColor: Colors.deepPurple,
+        activeColor: const Color(0xff7C3AED),
         onChanged: (value) {
-          setState(() {
-            paymentMethod = value!;
-          });
+          setState(() => paymentMethod = value!);
         },
-        title: Text(title),
-        subtitle: Text(subtitle),
-        secondary: Icon(icon),
+        title: Text(
+          title,
+          style: const TextStyle(color: Colors.white),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: Colors.white54),
+        ),
+        secondary: Icon(icon, color: Colors.white70),
       ),
     );
   }
 
-  // ✅ Handle Pay Button
+  /// ✅ HANDLE PAY
   void _handlePay() {
     if (amountCtrl.text.isEmpty || amountCtrl.text == "0") {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -168,15 +197,15 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
       );
       return;
     }
-
     _showResultDialog();
   }
 
-  // ✅ Result Dialog
+  /// ✅ RESULT DIALOG
   void _showResultDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xff1E1E1E),
         title: Row(
           children: [
             Icon(
@@ -186,11 +215,12 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
               color:
               paymentMethod == "online" ? Colors.green : Colors.orange,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               paymentMethod == "online"
                   ? "Payment Successful"
                   : "Offline Payment",
+              style: const TextStyle(color: Colors.white),
             ),
           ],
         ),
@@ -198,15 +228,19 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen> {
           paymentMethod == "online"
               ? "₹${amountCtrl.text} payment completed successfully."
               : "Please pay ₹${amountCtrl.text} directly to the vendor.",
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // dialog
-              Navigator.pop(context); // payment screen
-              Navigator.pop(context); // apply job screen
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
-            child: const Text("OK"),
+            child: const Text(
+              "OK",
+              style: TextStyle(color: Color(0xff7C3AED)),
+            ),
           ),
         ],
       ),

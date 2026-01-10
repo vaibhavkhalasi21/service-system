@@ -42,9 +42,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
         allJobs = jobs;
         isLoading = false;
       });
-      debugPrint("Fetched ${jobs.length} services");
     } catch (e) {
-      debugPrint("Error fetching services: $e");
       setState(() => isLoading = false);
     }
   }
@@ -70,46 +68,45 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
     final workerName = WorkerSession.currentWorker?.name ?? "Worker";
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xff0F0F0F),
       body: Column(
         children: [
 
-          /// 🔷 HEADER
+          /// 🔥 HEADER
           Container(
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xff2563EB), Color(0xff1E40AF)],
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xff0F0F0F),
+                  Color(0xff1C1C1C),
+                ],
               ),
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  offset: const Offset(0, 4),
-                  blurRadius: 8,
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Welcome",
+                  "WELCOME BACK",
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
+                    color: Colors.white60,
+                    fontSize: 14,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   workerName,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -124,23 +121,18 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
               height: 52,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xff1E1E1E),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ],
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  hintText: "Search services",
+                  hintText: "Search for a professional...",
+                  hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
-                  icon: Icon(Icons.search, color: Colors.blue),
+                  icon: Icon(Icons.search, color: Color(0xff7C3AED)),
                 ),
               ),
             ),
@@ -148,7 +140,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
           /// 🏷 CATEGORY FILTER
           SizedBox(
-            height: 50,
+            height: 48,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
@@ -161,26 +153,21 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                   onTap: () => setState(() => selectedCategory = cat),
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: selected ? Colors.blue : Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.blue),
-                      boxShadow: selected
-                          ? [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        )
-                      ]
-                          : [],
+                      color: selected
+                          ? const Color(0xff7C3AED)
+                          : const Color(0xff1E1E1E),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: const Color(0xff7C3AED),
+                      ),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       cat,
                       style: TextStyle(
-                        color: selected ? Colors.white : Colors.blue,
+                        color: selected ? Colors.white : Colors.white70,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -190,23 +177,32 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           /// 📋 JOB LIST
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xff7C3AED),
+              ),
+            )
                 : RefreshIndicator(
+              color: const Color(0xff7C3AED),
               onRefresh: fetchJobs,
               child: filteredJobs.isEmpty
                   ? const Center(
                 child: Text(
                   "No services found",
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white60,
+                  ),
                 ),
               )
                   : ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding:
+                const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: filteredJobs.length,
                 itemBuilder: (context, index) {
                   final job = filteredJobs[index];
@@ -217,7 +213,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                     description: job.description,
                     imageUrl: job.imageUrl,
                     price: job.price,
-                    rating: 4.5, // temporary
+                    rating: 4.5,
                     vendorName: job.vendorName,
                     createdAt: job.createdAt,
                     serviceDateTime: job.serviceDateTime,
