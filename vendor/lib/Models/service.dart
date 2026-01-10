@@ -5,13 +5,11 @@ class Service {
   final int price;
   final double rating;
   final String imagePath;
+  final String vendorName;
 
-  final String vendorName; // ✅ NEW
+  final String status; // 🔥 ADD THIS
 
-  /// 🕒 when service was POSTED
   final DateTime createdAt;
-
-  /// 🗓 when service is SCHEDULED
   final DateTime serviceDateTime;
 
   Service({
@@ -22,6 +20,7 @@ class Service {
     required this.rating,
     required this.imagePath,
     required this.vendorName,
+    required this.status, // 🔥
     required this.createdAt,
     required this.serviceDateTime,
   });

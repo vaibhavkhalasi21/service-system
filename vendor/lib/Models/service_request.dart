@@ -7,6 +7,8 @@ class ServiceRequest {
 
   final String? vendorName;
 
+  // 🔥 NEW: service lifecycle status
+  final String status;
 
   final DateTime createdAt;        // posted time
   final DateTime serviceDateTime;  // scheduled time
@@ -17,6 +19,7 @@ class ServiceRequest {
     required this.category,
     required this.price,
     required this.vendorName,
+    required this.status,          // 🔥 ADD
     required this.createdAt,
     required this.serviceDateTime,
     this.imageUrl,
@@ -32,13 +35,12 @@ class ServiceRequest {
 
       vendorName: json['vendorName'] ?? "You",
 
+      // 🔥 MAP STATUS FROM BACKEND
+      status: json['status'] ?? "Active",
 
-      createdAt: DateTime.parse(json['createdAt'] + 'Z').toLocal(), // KEEP THIS
-
-      serviceDateTime: DateTime.parse(json['serviceDateTime']).toUtc(), // FIX
-
-
-
+      // KEEP YOUR TIME LOGIC (CORRECT)
+      createdAt: DateTime.parse(json['createdAt'] + 'Z').toLocal(),
+      serviceDateTime: DateTime.parse(json['serviceDateTime']).toUtc(),
     );
   }
 }

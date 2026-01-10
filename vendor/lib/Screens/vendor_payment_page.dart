@@ -27,9 +27,7 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
       if (!mounted) return;
 
       setState(() {
-        payments = all
-            .where((j) => j.status == "Completed")
-            .toList();
+        payments = all.where((j) => j.status == "Completed").toList();
         isLoading = false;
       });
     } catch (e) {
@@ -42,14 +40,63 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   Future<void> markPaid(int applicationId) async {
     try {
       await VendorApplicationApi.markPaymentPaid(applicationId);
-      loadPayments(); // refresh list
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Failed to mark payment as paid"),
-        ),
-      );
+      loadPayments();
+    } catch (_) {
+      _showSnack("Failed to mark payment as paid");
     }
+  }
+
+  Future<void> rateWorker(int applicationId, int rating) async {
+    try {
+      await VendorApplicationApi.rateWorker(applicationId, rating);
+      loadPayments();
+      _showSnack("Rating submitted successfully");
+    } catch (e) {
+      _showSnack("You have already rated this worker");
+      loadPayments();
+    }
+  }
+
+  void showRatingDialog(int applicationId) {
+    int rating = 5;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Rate Worker"),
+        content: DropdownButton<int>(
+          value: rating,
+          isExpanded: true,
+          items: [1, 2, 3, 4, 5]
+              .map(
+                (e) => DropdownMenuItem(
+              value: e,
+              child: Text("$e ⭐"),
+            ),
+          )
+              .toList(),
+          onChanged: (v) => rating = v!,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await rateWorker(applicationId, rating);
+            },
+            child: const Text("Submit"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -95,21 +142,18 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       "Worker: ${p.workerName}",
-                      style: const TextStyle(color: Colors.grey),
+                      style:
+                      const TextStyle(color: Colors.grey),
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       "Date: $date",
-                      style: const TextStyle(color: Colors.grey),
+                      style:
+                      const TextStyle(color: Colors.grey),
                     ),
-
                     const SizedBox(height: 10),
 
                     Row(
@@ -124,17 +168,41 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                           ),
                         ),
 
-                        if (isPaid)
-                          _statusChip(
-                              "Paid", Colors.green)
-                        else
+                        if (!isPaid)
                           ElevatedButton(
                             onPressed: () =>
                                 markPaid(p.id),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                            style:
+                            ElevatedButton.styleFrom(
+                              backgroundColor:
+                              Colors.green,
                             ),
-                            child: const Text("Mark Paid"),
+                            child: const Text(
+                                "Mark Paid"),
+                          )
+                        else if (!p.vendorRated)
+                          ElevatedButton(
+                            onPressed: () =>
+                                showRatingDialog(p.id),
+                            child: const Text(
+                                "Rate Worker"),
+                          )
+                        else
+                          Row(
+                            children: [
+                              _ratingStars(
+                                  p.vendorRating ?? 0),
+                              const SizedBox(width: 6),
+                              Text(
+                                "${p.vendorRating}/5",
+                                style: const TextStyle(
+                                  fontWeight:
+                                  FontWeight.bold,
+                                  color:
+                                  Colors.blueGrey,
+                                ),
+                              ),
+                            ],
                           ),
                       ],
                     ),
@@ -148,21 +216,16 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     );
   }
 
-  Widget _statusChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
+  Widget _ratingStars(int rating) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+          size: 18,
+        );
+      }),
     );
   }
 }

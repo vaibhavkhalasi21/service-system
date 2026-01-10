@@ -23,7 +23,18 @@ class _VendorJobsTabState extends State<VendorJobsTab>
     loadJobs();
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ===============================
+  // LOAD VENDOR JOBS
+  // ===============================
   Future<void> loadJobs() async {
+    setState(() => isLoading = true);
+
     try {
       final data = await VendorApplicationApi.getRequests();
       if (!mounted) return;
@@ -48,19 +59,25 @@ class _VendorJobsTabState extends State<VendorJobsTab>
   List<BookingRequest> get cancelledJobs =>
       allJobs.where((j) => j.status == "Cancelled").toList();
 
+  // ===============================
+  // JOB LIST UI
+  // ===============================
   Widget _jobList(List<BookingRequest> jobs) {
-    if (jobs.isEmpty) {
-      return const Center(
-        child: Text(
-          "No jobs found",
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: loadJobs,
-      child: ListView.builder(
+      child: jobs.isEmpty
+          ? ListView(
+        children: const [
+          SizedBox(height: 120),
+          Center(
+            child: Text(
+              "No jobs found",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        ],
+      )
+          : ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: jobs.length,
         itemBuilder: (context, index) {
@@ -113,8 +130,10 @@ class _VendorJobsTabState extends State<VendorJobsTab>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
+                          color:
+                          statusColor.withOpacity(0.15),
+                          borderRadius:
+                          BorderRadius.circular(12),
                         ),
                         child: Text(
                           j.status,
@@ -133,7 +152,8 @@ class _VendorJobsTabState extends State<VendorJobsTab>
                   /// Worker info
                   Text(
                     "Worker: ${j.workerName}",
-                    style: const TextStyle(color: Colors.grey),
+                    style:
+                    const TextStyle(color: Colors.grey),
                   ),
 
                   const SizedBox(height: 6),
@@ -146,8 +166,8 @@ class _VendorJobsTabState extends State<VendorJobsTab>
                       const SizedBox(width: 6),
                       Text(
                         "$date • $time",
-                        style:
-                        const TextStyle(color: Colors.grey),
+                        style: const TextStyle(
+                            color: Colors.grey),
                       ),
                     ],
                   ),

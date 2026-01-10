@@ -39,6 +39,7 @@ class _MyServicesPageState extends State<MyServicesPage> {
         rating: 4.5,
         imagePath: "$baseUrl${e.imageUrl}",
             vendorName: e.vendorName ?? "You",
+            status: e.status,
 
             createdAt: e.createdAt,
         serviceDateTime: e.serviceDateTime,

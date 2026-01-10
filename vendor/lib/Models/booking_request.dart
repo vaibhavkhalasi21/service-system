@@ -7,6 +7,9 @@ class BookingRequest {
   final DateTime serviceDateTime;
   final String workerEmail;
   final String paymentStatus;
+  final bool vendorRated;
+  final int? vendorRating;
+
 
 
   BookingRequest({
@@ -18,7 +21,8 @@ class BookingRequest {
     required this.serviceDateTime,
     required this.workerEmail,
     required this.paymentStatus,
-
+    required this.vendorRated,
+    required this.vendorRating,
   });
 
   factory BookingRequest.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,9 @@ class BookingRequest {
       DateTime.parse(json['serviceDateTime']).toUtc(), // ✅ recommended
       workerEmail: json['workerEmail'],
       paymentStatus: json['paymentStatus'] ?? "Pending",
+      vendorRated: json['vendorRated'] ?? false,
+      vendorRating: json['vendorRating'],
+
 
     );
   }

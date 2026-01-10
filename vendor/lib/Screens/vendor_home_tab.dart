@@ -19,9 +19,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   String searchQuery = "";
   bool isLoading = true;
 
-  // 🔥 NEW: Vendor name
   String vendorName = "Vendor";
-
   List<Service> services = [];
 
   final List<String> categories = [
@@ -43,34 +41,37 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // LOAD VENDOR NAME FROM SESSION
+  // LOAD VENDOR NAME
   // ===============================
   Future<void> loadVendorName() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       vendorName = prefs.getString("vendor_name") ?? "Vendor";
     });
   }
 
   // ===============================
-  // FETCH SERVICES (PUBLIC)
+  // FETCH VENDOR SERVICES
   // ===============================
   Future<void> fetchServices() async {
     setState(() => isLoading = true);
 
     try {
       final List<ServiceRequest> apiServices =
-      await ServiceApi.getPublicServices();
+      await ServiceApi.getVendorServices();
 
       final List<Service> mappedServices =
       apiServices.map(_mapApiToUi).toList();
 
+      if (!mounted) return;
       setState(() {
         services = mappedServices;
         isLoading = false;
       });
     } catch (e) {
       debugPrint("FETCH SERVICES ERROR: $e");
+      if (!mounted) return;
       setState(() => isLoading = false);
     }
   }
@@ -89,6 +90,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           ? "$baseUrl${api.imageUrl}"
           : "assets/images/cleaning.png",
       vendorName: api.vendorName ?? "Vendor",
+      status: api.status,
       createdAt: api.createdAt,
       serviceDateTime: api.serviceDateTime,
     );
@@ -120,7 +122,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ================= HELLO TEXT =================
+          // ================= HELLO =================
           Text(
             "Hello, $vendorName 👋",
             style: const TextStyle(
@@ -170,16 +172,24 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : filteredServices.isEmpty
-                ? const Center(child: Text("No services found"))
-                : ListView.builder(
-              itemCount: filteredServices.length,
-              itemBuilder: (context, index) {
-                return ServiceCard(
-                  service: filteredServices[index],
-                  onUpdated: fetchServices,
-                );
-              },
+                : RefreshIndicator(
+              onRefresh: fetchServices,
+              child: filteredServices.isEmpty
+                  ? ListView(
+                children: const [
+                  SizedBox(height: 100),
+                  Center(child: Text("No services found")),
+                ],
+              )
+                  : ListView.builder(
+                itemCount: filteredServices.length,
+                itemBuilder: (context, index) {
+                  return ServiceCard(
+                    service: filteredServices[index],
+                    onUpdated: fetchServices,
+                  );
+                },
+              ),
             ),
           ),
         ],

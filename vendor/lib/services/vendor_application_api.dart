@@ -88,5 +88,28 @@ class VendorApplicationApi {
     }
   }
 
+  static Future<void> rateWorker(int applicationId, int rating) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("vendor_token");
+
+    if (token == null) {
+      throw Exception("Vendor token not found");
+    }
+
+    final response = await http.post(
+      Uri.parse(
+          "$baseUrl/$applicationId/rate-worker?rating=$rating"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to rate worker");
+    }
+  }
+
+
 
 }

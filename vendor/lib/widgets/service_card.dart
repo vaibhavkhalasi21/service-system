@@ -15,6 +15,9 @@ class ServiceCard extends StatelessWidget {
     this.showActions = false,
   });
 
+  // ===============================
+  // RELATIVE TIME
+  // ===============================
   String timeAgo(DateTime date) {
     final now = DateTime.now().toLocal();
     final localDate = date.toLocal();
@@ -26,20 +29,35 @@ class ServiceCard extends StatelessWidget {
     return "${diff.inDays} days ago";
   }
 
+  // ===============================
+  // STATUS COLOR
+  // ===============================
+  Color statusColor(String status) {
+    switch (status) {
+      case "Active":
+        return Colors.green;
+      case "Completed":
+        return Colors.blue;
+      case "Expired":
+        return Colors.orange;
+      case "Disabled":
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final localServiceTime = service.serviceDateTime.toLocal();
 
-    final date =
-    DateFormat('dd MMM yyyy').format(localServiceTime);
-    final time =
-    DateFormat('hh:mm a').format(localServiceTime);
+    final date = DateFormat('dd MMM yyyy').format(localServiceTime);
+    final time = DateFormat('hh:mm a').format(localServiceTime);
 
-
-    // ✅ SAFE vendor name
     final vendorName =
     service.vendorName.isNotEmpty ? service.vendorName : "Vendor";
+
+    final bool isActive = service.status == "Active";
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -51,20 +69,46 @@ class ServiceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ================= IMAGE =================
-          SizedBox(
-            height: 160,
-            width: double.infinity,
-            child: service.imagePath.startsWith("http")
-                ? Image.network(
-              service.imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-              const Center(child: Icon(Icons.broken_image)),
-            )
-                : Image.asset(
-              service.imagePath,
-              fit: BoxFit.cover,
-            ),
+          Stack(
+            children: [
+              SizedBox(
+                height: 160,
+                width: double.infinity,
+                child: service.imagePath.startsWith("http")
+                    ? Image.network(
+                  service.imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                  const Center(child: Icon(Icons.broken_image)),
+                )
+                    : Image.asset(
+                  service.imagePath,
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+              // ================= STATUS BADGE =================
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor(service.status),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    service.status,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           Padding(
@@ -138,25 +182,39 @@ class ServiceCard extends StatelessWidget {
                 // ================= ACTIONS =================
                 if (showActions) ...[
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            final updated = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ManageServicePage(service: service),
-                              ),
-                            );
-                            if (updated == true) onUpdated();
-                          },
-                          child: const Text("Edit"),
+
+                  // 🔥 ACTIVE SERVICE → EDIT
+                  if (isActive)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              final updated = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ManageServicePage(service: service),
+                                ),
+                              );
+                              if (updated == true) onUpdated();
+                            },
+                            child: const Text("Edit"),
+                          ),
                         ),
+                      ],
+                    )
+
+                  // 🔒 NON-ACTIVE SERVICE → INFO
+                  else
+                    Text(
+                      "This service is ${service.status.toLowerCase()}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
                       ),
-                    ],
-                  ),
+                    ),
                 ],
               ],
             ),
