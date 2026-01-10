@@ -6,12 +6,10 @@ class WorkerPaymentsPage extends StatefulWidget {
   const WorkerPaymentsPage({super.key});
 
   @override
-  State<WorkerPaymentsPage> createState() =>
-      _WorkerPaymentsPageState();
+  State<WorkerPaymentsPage> createState() => _WorkerPaymentsPageState();
 }
 
-class _WorkerPaymentsPageState
-    extends State<WorkerPaymentsPage> {
+class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
   bool isLoading = true;
   List<WorkerPayment> payments = [];
 
@@ -21,14 +19,16 @@ class _WorkerPaymentsPageState
     loadPayments();
   }
 
+  // ===============================
+  // LOAD PAYMENTS
+  // ===============================
   Future<void> loadPayments() async {
     try {
-      final all = await WorkerPaymentApi.getPayments();
-
+      final data = await WorkerPaymentApi.getPayments();
       if (!mounted) return;
 
       setState(() {
-        payments = all;
+        payments = data;
         isLoading = false;
       });
     } catch (e) {
@@ -38,85 +38,134 @@ class _WorkerPaymentsPageState
     }
   }
 
+  // ===============================
+  // RATE VENDOR
+  // ===============================
+  void showRatingDialog(int applicationId) {
+    int rating = 5;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Rate Vendor"),
+        content: DropdownButton<int>(
+          value: rating,
+          isExpanded: true,
+          items: [1, 2, 3, 4, 5]
+              .map(
+                (e) => DropdownMenuItem(
+              value: e,
+              child: Text("$e ⭐"),
+            ),
+          )
+              .toList(),
+          onChanged: (v) => rating = v!,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await WorkerPaymentApi.rateVendor(applicationId, rating);
+              loadPayments(); // 🔥 refresh UI
+            },
+            child: const Text("Submit"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("My Payments")),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : payments.isEmpty
-          ? const Center(
-        child: Text(
-          "No completed jobs yet",
-          style: TextStyle(color: Colors.grey),
-        ),
-      )
           : RefreshIndicator(
         onRefresh: loadPayments,
-        child: ListView.builder(
+        child: payments.isEmpty
+            ? ListView(
+          children: const [
+            SizedBox(height: 120),
+            Center(
+              child: Text(
+                "No completed jobs yet",
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
+        )
+            : ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: payments.length,
           itemBuilder: (context, index) {
             final p = payments[index];
-            final isPaid =
-                p.paymentStatus == "Paid";
+            final isPaid = p.paymentStatus == "Paid";
 
             return Card(
-              margin: const EdgeInsets.only(
-                  bottom: 16),
+              margin: const EdgeInsets.only(bottom: 16),
               shape: RoundedRectangleBorder(
-                borderRadius:
-                BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
               ),
+              elevation: 2,
               child: Padding(
-                padding:
-                const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(14),
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ================= SERVICE =================
                     Text(
                       p.serviceName,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                        FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
                     const SizedBox(height: 6),
 
+                    // ================= VENDOR =================
                     Text(
                       "Vendor: ${p.vendorName}",
-                      style: const TextStyle(
-                          color: Colors.grey),
+                      style:
+                      const TextStyle(color: Colors.grey),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
+                    // ================= PRICE + ACTION =================
                     Row(
                       mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween,
+                      MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           "₹${p.price}",
-                          style:
-                          const TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
-                            fontWeight:
-                            FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
 
-                        _statusChip(
-                          isPaid
-                              ? "Paid"
-                              : "Pending",
-                          isPaid
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
+                        // 🔥 MAIN LOGIC
+                        if (isPaid && !p.workerRated)
+                          ElevatedButton(
+                            onPressed: () =>
+                                showRatingDialog(p.id),
+                            child:
+                            const Text("Rate Vendor"),
+                          )
+                        else if (p.workerRated)
+                          _ratingStars(
+                              p.workerRating ?? 0)
+                        else
+                          _statusChip(
+                            "Pending",
+                            Colors.orange,
+                          ),
                       ],
                     ),
                   ],
@@ -129,10 +178,13 @@ class _WorkerPaymentsPageState
     );
   }
 
+  // ===============================
+  // STATUS CHIP
+  // ===============================
   Widget _statusChip(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 10, vertical: 4),
+      padding:
+      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
@@ -145,6 +197,22 @@ class _WorkerPaymentsPageState
           fontSize: 12,
         ),
       ),
+    );
+  }
+
+  // ===============================
+  // RATING STARS
+  // ===============================
+  Widget _ratingStars(int rating) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+          size: 18,
+        );
+      }),
     );
   }
 }

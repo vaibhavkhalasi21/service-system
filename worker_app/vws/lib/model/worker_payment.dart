@@ -3,8 +3,12 @@ class WorkerPayment {
   final String serviceName;
   final String vendorName;
   final int price;
-  final String status;         // Completed
-  final String paymentStatus;  // Pending / Paid
+  final String status;
+  final String paymentStatus;
+
+  // ⭐ ADD THESE
+  final bool workerRated;
+  final int? workerRating;
 
   WorkerPayment({
     required this.id,
@@ -13,6 +17,8 @@ class WorkerPayment {
     required this.price,
     required this.status,
     required this.paymentStatus,
+    required this.workerRated,
+    required this.workerRating,
   });
 
   factory WorkerPayment.fromJson(Map<String, dynamic> json) {
@@ -23,6 +29,8 @@ class WorkerPayment {
       price: (json['price'] as num).toInt(),
       status: json['status'],
       paymentStatus: json['paymentStatus'],
+      workerRated: json['workerRated'] ?? false,
+      workerRating: json['workerRating'],
     );
   }
 }
