@@ -5,6 +5,7 @@
         Active = 1,
     Completed = 2,
     Expired = 3,
-    Disabled = 4
+    Disabled = 4,
+        Inactive = 5
     }
 }

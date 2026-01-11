@@ -68,13 +68,20 @@ namespace VendorWorkerAPI.Controllers
                 return BadRequest(ModelState);
 
             var worker = await _context.Workers
-                .FirstOrDefaultAsync(w => w.Email == dto.Email);
+    .FirstOrDefaultAsync(w => w.Email == dto.Email);
 
-            if (worker == null ||
-                !BCrypt.Net.BCrypt.Verify(dto.Password, worker.PasswordHash))
-            {
+            // ❌ worker not found
+            if (worker == null)
                 return Unauthorized(new { message = "Invalid email or password" });
-            }
+
+            // ❌ worker blocked by admin
+            if (!worker.IsActive)
+                return Unauthorized(new { message = "Worker account is blocked" });
+
+            // ❌ wrong password
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, worker.PasswordHash))
+                return Unauthorized(new { message = "Invalid email or password" });
+
 
             var token = _jwt.GenerateToken(worker.Id, worker.Email, "Worker");
 

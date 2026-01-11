@@ -12,4 +12,6 @@ public class Worker
     public string Address { get; set; } = null!;
     public string PasswordHash { get; set; } = null!;
     public string Role { get; set; } = "Worker";
+
+    public bool IsActive { get; set; } = true;
 }

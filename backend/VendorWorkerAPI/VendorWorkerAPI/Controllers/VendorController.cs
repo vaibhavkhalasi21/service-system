@@ -67,14 +67,20 @@ namespace VendorWorkerAPI.Controllers
 
             // 1️⃣ Find vendor by email
             var vendor = _context.Vendors
-                .FirstOrDefault(v => v.Email == dto.Email);
+     .FirstOrDefault(v => v.Email == dto.Email);
 
-            // 2️⃣ Verify password using BCrypt
-            if (vendor == null ||
-                !BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
-            {
+            // ❌ vendor not found
+            if (vendor == null)
                 return Unauthorized("Invalid email or password");
-            }
+
+            // ❌ vendor blocked by admin
+            if (!vendor.IsActive)
+                return Unauthorized("Vendor account is blocked");
+
+            // ❌ wrong password
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
+                return Unauthorized("Invalid email or password");
+
 
             // 3️⃣ Generate JWT
             var token = _jwt.GenerateToken(
