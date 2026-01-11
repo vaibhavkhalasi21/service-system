@@ -290,6 +290,7 @@ namespace VendorWorkerAPI.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet("services")]
+        
         public async Task<IActionResult> GetServices()
         {
             var services = await _context.Services
@@ -297,13 +298,16 @@ namespace VendorWorkerAPI.Controllers
                 {
                     s.Id,
                     s.ServiceName,
+                    s.Category,
                     s.Price,
+                    s.ImageUrl,
                     s.Status
                 })
                 .ToListAsync();
 
             return Ok(services);
         }
+
 
         // ===================== APPLICATIONS & PAYMENTS =====================
 
@@ -380,6 +384,25 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(ratings);
         }
+
+        // ===================== ADMIN DASHBOARD =====================
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("dashboard")]
+        public IActionResult GetDashboard()
+        {
+            var vendorsCount = _context.Vendors.Count();
+            var workersCount = _context.Workers.Count();
+            var bookingsCount = _context.Applications.Count();
+
+            return Ok(new
+            {
+                vendors = vendorsCount,
+                workers = workersCount,
+                bookings = bookingsCount
+            });
+        }
+
 
 
     }
