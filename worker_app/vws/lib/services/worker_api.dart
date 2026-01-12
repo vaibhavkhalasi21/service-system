@@ -52,7 +52,7 @@ class WorkerApi {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
 
-        // Map backend JSON to Worker model keys
+        // Map backend JSON to Worker models keys
         final worker = {
           "id": jsonResponse["workerId"],
           "name": jsonResponse["workerName"],
