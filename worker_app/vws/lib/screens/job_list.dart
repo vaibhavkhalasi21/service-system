@@ -34,7 +34,6 @@ class JobList extends StatelessWidget {
 
           // 🔥 required fields (updated JobCard)
           price: job.price ?? 0.0,
-          rating: job.rating ?? 4.0,
           vendorName: job.vendorName ?? "Unknown Vendor",
           createdAt: job.createdAt,
           serviceDateTime: job.serviceDateTime ?? DateTime.now(),

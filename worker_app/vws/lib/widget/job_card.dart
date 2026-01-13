@@ -7,7 +7,6 @@ class JobCard extends StatelessWidget {
   final String description;
   final String imageUrl;
   final double price;
-  final double rating;
   final String vendorName;
   final DateTime createdAt;
   final DateTime serviceDateTime;
@@ -20,7 +19,6 @@ class JobCard extends StatelessWidget {
     required this.description,
     required this.imageUrl,
     required this.price,
-    required this.rating,
     required this.vendorName,
     required this.createdAt,
     required this.serviceDateTime,
@@ -175,20 +173,6 @@ class JobCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                           color: Colors.white,
                       ),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.star,
-                            color: Colors.amber, size: 18),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),

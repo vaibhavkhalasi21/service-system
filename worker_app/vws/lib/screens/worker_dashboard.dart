@@ -213,7 +213,6 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                     description: job.description,
                     imageUrl: job.imageUrl,
                     price: job.price,
-                    rating: 4.5,
                     vendorName: job.vendorName,
                     createdAt: job.createdAt,
                     serviceDateTime: job.serviceDateTime,
