@@ -1,35 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'auth/role_selection_screen.dart';
 import 'vendor/screens/vendor_home.dart';
-import 'auth/vendor_login.dart';
+import 'worker/screens/worker_bottom_nav.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
-  final bool isLoggedIn = prefs.containsKey("vendor_token");
+  final vendorToken = prefs.getString("vendor_token");
+  final workerToken = prefs.getString("worker_token");
 
-  runApp(VendorApp(isLoggedIn: isLoggedIn));
+  Widget startScreen;
+
+  if (vendorToken != null) {
+    startScreen = const VendorHomeScreen();
+  } else if (workerToken != null) {
+    startScreen = const WorkerBottomNav();
+  } else {
+    startScreen = const RoleSelectionScreen();
+  }
+
+  runApp(MyApp(startScreen: startScreen));
 }
 
-class VendorApp extends StatelessWidget {
-  final bool isLoggedIn;
+class MyApp extends StatelessWidget {
+  final Widget startScreen;
 
-  const VendorApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key, required this.startScreen});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Vendor App',
+      title: 'Service System',
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
-        scaffoldBackgroundColor: const Color(0xFFF6F6F6),
+        scaffoldBackgroundColor: const Color(0xFF0F0F0F),
       ),
-      home: isLoggedIn
-          ? const VendorHomeScreen()
-          : const VendorLoginScreen(),
+      home: startScreen,
     );
   }
 }

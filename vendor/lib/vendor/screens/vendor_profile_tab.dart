@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vendor/vendor/screens/vendor_payment_page.dart';
-import '../../auth/vendor_login.dart';
+
+import '../../auth/role_selection_screen.dart';
 import '../services/vendor_api.dart';
 import 'vendor_application_page.dart';
 import 'vendor_post_service.dart';
 import 'my_services_page.dart';
+import 'vendor_payment_page.dart';
 
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
@@ -63,16 +64,25 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
   }
 
   // =============================
-  // LOGOUT
+  // LOGOUT (FIXED)
   // =============================
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
 
+    // ✅ Clear ONLY vendor session
+    await prefs.remove("vendor_token");
+    await prefs.remove("vendor_id");
+    await prefs.remove("vendor_name");
+
+    if (!context.mounted) return;
+
+    // 🔁 Reset stack → Role Selection
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const VendorLoginScreen()),
-          (_) => false,
+      MaterialPageRoute(
+        builder: (_) => const RoleSelectionScreen(),
+      ),
+          (route) => false,
     );
   }
 
@@ -123,7 +133,9 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyServicesPage()),
+                  MaterialPageRoute(
+                    builder: (_) => const MyServicesPage(),
+                  ),
                 );
               },
             ),
@@ -159,6 +171,7 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
             ),
             const SizedBox(height: 14),
 
+            // 🔥 FIXED LOGOUT
             _menuTile(
               icon: Icons.logout,
               iconBg: Colors.red,
@@ -247,8 +260,11 @@ class _VendorProfileTabState extends State<VendorProfileTab> {
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 16, color: kGrey),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: kGrey,
+            ),
           ],
         ),
       ),

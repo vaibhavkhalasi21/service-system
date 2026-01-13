@@ -1,35 +1,68 @@
 name: vendor
-description: "A new Flutter project."
+description: "Vendor & Worker Service System App"
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
+# =======================
+# DEPENDENCIES
+# =======================
 dependencies:
   flutter:
     sdk: flutter
+
+  # Networking
   http: ^1.6.0
+
+  # Local storage
   shared_preferences: ^2.5.3
+
+  # Image picker
   image_picker: ^1.0.7
+
+  # Date & time
   intl: ^0.19.0
   timeago: ^3.6.0
+
+  # iOS icons
   cupertino_icons: ^1.0.8
 
+# =======================
+# DEV DEPENDENCIES
+# =======================
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^5.0.0
+
+  # Native splash (IMPORTANT)
   flutter_native_splash: ^2.4.7
 
+# =======================
+# FLUTTER CONFIG
+# =======================
 flutter:
   uses-material-design: true
+
   assets:
     - assets/images/
 
+# =======================
+# NATIVE SPLASH CONFIG
+# =======================
 flutter_native_splash:
-  color: "#6A11CB"
+  color: "#0B0B0B"         # Dark background (recommended)
   image: assets/images/splash1.png
+
   android: true
   ios: true
   web: false
+
+  # Android 12+ (VERY IMPORTANT)
+  android_12:
+    color: "#0B0B0B"
+    image: assets/images/urbancare1.png
