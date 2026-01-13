@@ -3,6 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../vendor/screens/vendor_home.dart';
 import '../vendor/services/vendor_api.dart';
 
+// ================= UI CONSTANTS =================
+const Color kBg = Color(0xFF0F0F0F);
+const Color kCard = Color(0xFF1A1A1A);
+const Color kPurple = Color(0xFF7B4DFF);
+const Color kGrey = Color(0xFF9E9E9E);
+
 class VendorLoginScreen extends StatefulWidget {
   const VendorLoginScreen({super.key});
 
@@ -26,7 +32,7 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
   }
 
   // =============================
-  // LOGIN + SESSION
+  // LOGIN
   // =============================
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -46,42 +52,16 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
       if (status == 200 && body is Map<String, dynamic>) {
         final prefs = await SharedPreferences.getInstance();
 
-        // ✅ SAFE SAVES (NO CRASH)
-        await prefs.setInt(
-          "vendor_id",
-          int.parse(body["userId"].toString()),
-        );
+        await prefs.setInt("vendor_id", int.parse(body["userId"].toString()));
+        await prefs.setString("vendor_email", body["email"] ?? "");
+        await prefs.setString("vendor_name", body["name"] ?? "Vendor");
+        await prefs.setString("role", body["role"] ?? "Vendor");
 
-        await prefs.setString(
-          "vendor_email",
-          body["email"] ?? "",
-        );
-
-        await prefs.setString(
-          "vendor_name",
-          body["name"] ?? "Vendor", // 🔥 ADD THIS LINE
-        );
-
-        await prefs.setString(
-          "role",
-          body["role"] ?? "Vendor",
-        );
-
-
-        // ✅ TOKEN ONLY IF EXISTS
         if (body["token"] == null) {
-          throw Exception("Login failed: token missing");
+          throw Exception("Login failed");
         }
 
         await prefs.setString("vendor_token", body["token"]);
-
-
-        // 🔍 DEBUG
-        print("LOGIN OK");
-        print("ID    => ${prefs.getInt("vendor_id")}");
-        print("EMAIL => ${prefs.getString("vendor_email")}");
-        print("ROLE  => ${prefs.getString("role")}");
-        print("TOKEN => ${prefs.getString("vendor_token")}");
 
         if (!mounted) return;
 
@@ -104,97 +84,164 @@ class _VendorLoginScreenState extends State<VendorLoginScreen> {
     }
   }
 
-
   // =============================
   // UI
   // =============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xff6A11CB), Color(0xff2575FC)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+      backgroundColor: kBg,
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white12),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Vendor Login",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ================= LOGO =================
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPurple.withOpacity(0.15),
                       ),
-                      const SizedBox(height: 20),
-
-                      TextFormField(
-                        controller: emailCtrl,
-                        decoration: const InputDecoration(
-                          labelText: "Email",
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (v) =>
-                        v == null || v.isEmpty ? "Enter email" : null,
+                      child: const Icon(
+                        Icons.storefront,
+                        color: kPurple,
+                        size: 36,
                       ),
+                    ),
 
-                      const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                      TextFormField(
-                        controller: passwordCtrl,
-                        obscureText: isPasswordHidden,
-                        decoration: InputDecoration(
-                          labelText: "Password",
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(isPasswordHidden
-                                ? Icons.visibility_off
-                                : Icons.visibility),
-                            onPressed: () {
-                              setState(() {
-                                isPasswordHidden = !isPasswordHidden;
-                              });
-                            },
+                    const Text(
+                      "Vendor Login",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    const Text(
+                      "Manage your services & workers",
+                      style: TextStyle(
+                        color: kGrey,
+                        fontSize: 13,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ================= EMAIL =================
+                    _darkField(
+                      controller: emailCtrl,
+                      label: "Email",
+                      icon: Icons.email,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? "Enter email" : null,
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ================= PASSWORD =================
+                    _darkField(
+                      controller: passwordCtrl,
+                      label: "Password",
+                      icon: Icons.lock,
+                      obscureText: isPasswordHidden,
+                      suffix: IconButton(
+                        icon: Icon(
+                          isPasswordHidden
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: kGrey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isPasswordHidden = !isPasswordHidden;
+                          });
+                        },
+                      ),
+                      validator: (v) =>
+                      v == null || v.length < 6 ? "Invalid password" : null,
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // ================= LOGIN BUTTON =================
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          border: const OutlineInputBorder(),
                         ),
-                        validator: (v) =>
-                        v == null || v.length < 6 ? "Invalid password" : null,
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: isLoading ? null : login,
-                          child: isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text("Login"),
+                        onPressed: isLoading ? null : login,
+                        child: isLoading
+                            ? const CircularProgressIndicator(
+                          color: Colors.white,
+                        )
+                            : const Text(
+                          "Login",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // =============================
+  // DARK INPUT FIELD
+  // =============================
+  Widget _darkField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    Widget? suffix,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: kGrey),
+        prefixIcon: Icon(icon, color: kGrey),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: kBg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
       ),
     );

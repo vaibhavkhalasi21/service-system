@@ -1,5 +1,5 @@
 name: vendor
-description: "Vendor & Worker Service System App"
+description: "UrbanCare – Vendor & Worker Service System App"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -39,8 +39,11 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
 
-  # Native splash (IMPORTANT)
+  # Native splash screen
   flutter_native_splash: ^2.4.7
+
+  # App launcher icon (IMPORTANT)
+  flutter_launcher_icons: ^0.13.1
 
 # =======================
 # FLUTTER CONFIG
@@ -55,14 +58,23 @@ flutter:
 # NATIVE SPLASH CONFIG
 # =======================
 flutter_native_splash:
-  color: "#0B0B0B"         # Dark background (recommended)
+  color: "#0B0B0B"
   image: assets/images/splash1.png
 
   android: true
   ios: true
   web: false
 
-  # Android 12+ (VERY IMPORTANT)
+  # Android 12+
   android_12:
     color: "#0B0B0B"
-    image: assets/images/urbancare1.png
+    image: assets/images/urbancare3.png
+
+# =======================
+# APP ICON CONFIG
+# =======================
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  image_path: assets/images/app_icon1.png

@@ -5,6 +5,12 @@ import '../worker/services/worker_api.dart';
 import '../worker/sessions/worker_session.dart';
 import 'worker_signup_screen.dart';
 
+// ================= UI CONSTANTS =================
+const Color kBg = Color(0xFF0F0F0F);
+const Color kCard = Color(0xFF1A1A1A);
+const Color kPurple = Color(0xFF7B4DFF);
+const Color kGrey = Color(0xFF9E9E9E);
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -20,25 +26,20 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _obscurePassword = true;
 
-  InputDecoration _inputStyle(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: const Color(0xff7C3AED)),
-      filled: true,
-      fillColor: const Color(0xff1E1E1E),
-      labelStyle: const TextStyle(color: Colors.white70),
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
-    );
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
-  void login() async {
+  // =============================
+  // LOGIN
+  // =============================
+  Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _loading = true);
 
     final workerData = await WorkerApi.loginWorkerData(
@@ -51,6 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (workerData != null) {
       final worker = Worker.fromJson(workerData);
       await WorkerSession.saveWorker(worker, workerData['token']);
+
+      if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -67,120 +70,198 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // =============================
+  // UI
+  // =============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff0F0F0F),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xff1C1C1C),
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black38,
-                  blurRadius: 16,
-                )
-              ],
-            ),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Worker Login",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff7C3AED),
+      backgroundColor: kBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ================= ICON =================
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPurple.withOpacity(0.15),
+                      ),
+                      child: const Icon(
+                        Icons.handyman,
+                        color: kPurple,
+                        size: 36,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
 
-                  TextFormField(
-                    controller: emailController,
-                    decoration: _inputStyle("Email", Icons.email),
-                    style: const TextStyle(color: Colors.white),
-                    validator: (v) => v!.isEmpty ? "Enter email" : null,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  TextFormField(
-                    controller: passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: _inputStyle("Password", Icons.lock).copyWith(
-                      suffixIcon: IconButton(
+                    const Text(
+                      "Worker Login",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    const Text(
+                      "Find jobs & start earning",
+                      style: TextStyle(
+                        color: kGrey,
+                        fontSize: 13,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ================= EMAIL =================
+                    _darkField(
+                      controller: emailController,
+                      label: "Email",
+                      icon: Icons.email,
+                      validator: (v) =>
+                      v == null || v.isEmpty ? "Enter email" : null,
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ================= PASSWORD =================
+                    _darkField(
+                      controller: passwordController,
+                      label: "Password",
+                      icon: Icons.lock,
+                      obscureText: _obscurePassword,
+                      suffix: IconButton(
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_off
                               : Icons.visibility,
-                          color: Colors.white54,
+                          color: kGrey,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    validator: (v) =>
-                    v!.length < 6 ? "Min 6 characters" : null,
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff7C3AED),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: _loading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                        "Login",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white,),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? ",
-                          style: TextStyle(color: Colors.white70)),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const WorkerRegisterScreen()),
-                          );
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
                         },
-                        child: const Text(
-                          "Sign Up",
+                      ),
+                      validator: (v) =>
+                      v == null || v.length < 6
+                          ? "Min 6 characters"
+                          : null,
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // ================= LOGIN BUTTON =================
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: _loading ? null : login,
+                        child: _loading
+                            ? const CircularProgressIndicator(
+                          color: Colors.white,
+                        )
+                            : const Text(
+                          "Login",
                           style: TextStyle(
-                            color: Color(0xff7C3AED),
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            fontSize: 16,
                           ),
                         ),
                       ),
-                    ],
-                  )
-                ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // ================= SIGN UP =================
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(color: kGrey),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                const WorkerRegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              color: kPurple,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // =============================
+  // DARK INPUT FIELD
+  // =============================
+  Widget _darkField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    Widget? suffix,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: kGrey),
+        prefixIcon: Icon(icon, color: kGrey),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: kBg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
         ),
       ),
     );
