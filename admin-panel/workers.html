@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Worker Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="app-body">
+
+  <aside class="sidebar">
+    <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+    <h2 class="logo">Admin</h2>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="workers.html" class="active">Workers</a>
+      <a href="services.html">Services</a>
+      <a href="bookings.html">Applications</a>
+      <a href="payments.html">Payments</a>
+      <a href="ratings.html">Ratings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="page-header">
+      <h1>Worker Management</h1>
+    </div>
+
+    <!-- ADD WORKER -->
+    <div class="card">
+      <h2>Add Worker</h2>
+
+      <div class="form-grid">
+        <input id="wName" placeholder="Name" />
+        <input id="wEmail" placeholder="Email" />
+        <input id="wPhone" placeholder="Phone" />
+        <input id="wSkill" placeholder="Skill" />
+        <input id="wAddress" placeholder="Address" />
+        <input id="wPassword" type="password" placeholder="Password" />
+      </div>
+
+      <button class="primary-btn" onclick="createWorker()">Add Worker</button>
+    </div>
+
+    <!-- WORKER LIST -->
+    <div class="card">
+      <h2>Workers</h2>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="workerTable"></tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/workers.js"></script>
+</body>
+</html>

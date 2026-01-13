@@ -22,8 +22,8 @@ namespace VendorWorkerAPI.Controllers
             _jwt = jwt;
         }
 
-        // ================= REGISTER =================
-        [AllowAnonymous]
+        // ================= REGISTER (ADMIN ONLY) =================
+        [Authorize(Roles = "Admin")]
         [HttpPost("register")]
         public IActionResult Register([FromBody] VendorRegisterDto dto)
         {
@@ -39,13 +39,14 @@ namespace VendorWorkerAPI.Controllers
                 Name = dto.Name,
                 Email = dto.Email,
 
-                // ✅ BCrypt HASH (FIXED)
+                // ✅ BCrypt HASH
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
 
                 Phone = dto.Phone,
                 ServiceType = dto.ServiceType,
                 Address = dto.Address,
-                Role = "Vendor"
+                Role = "Vendor",
+                IsActive = true   // ✅ important (avoid blocked login issue)
             };
 
             _context.Vendors.Add(vendor);
@@ -69,32 +70,32 @@ namespace VendorWorkerAPI.Controllers
             var vendor = _context.Vendors
                 .FirstOrDefault(v => v.Email == dto.Email);
 
-            // 2️⃣ Verify password using BCrypt
-            if (vendor == null ||
-                !BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
-            {
+            if (vendor == null)
                 return Unauthorized("Invalid email or password");
-            }
 
-            // 3️⃣ Generate JWT
+            // ❌ blocked by admin
+            if (!vendor.IsActive)
+                return Unauthorized("Vendor account is blocked");
+
+            // ❌ wrong password
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
+                return Unauthorized("Invalid email or password");
+
+            // 2️⃣ Generate JWT
             var token = _jwt.GenerateToken(
-    vendor.Id,
-    vendor.Email,
-    vendor.Role
-);
+                vendor.Id,
+                vendor.Email,
+                vendor.Role
+            );
 
             return Ok(new
             {
                 userId = vendor.Id,
-                name = vendor.Name,   // ✅ frontend ke liye
+                name = vendor.Name,
                 email = vendor.Email,
                 role = vendor.Role,
                 token = token
             });
-
-
-
-
         }
 
         // ================= PROFILE =================
@@ -112,7 +113,7 @@ namespace VendorWorkerAPI.Controllers
                 .Select(v => new
                 {
                     v.Id,
-                    name = v.Name,     // ✅ REGISTERED NAME
+                    name = v.Name,
                     email = v.Email,
                     role = v.Role
                 })
@@ -123,7 +124,5 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(vendor);
         }
-
-
     }
 }

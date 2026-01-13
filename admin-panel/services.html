@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Service Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="app-body">
+
+  <aside class="sidebar">
+    <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+    <h2 class="logo">Admin</h2>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="workers.html">Workers</a>
+      <a href="services.html" class="active">Services</a>
+      <a href="bookings.html">Applications</a>
+      <a href="payments.html">Payments</a>
+      <a href="ratings.html">Ratings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="page-header">
+      <h1>Service Management</h1>
+    </div>
+
+    <!-- ADD SERVICE -->
+    <div class="card">
+      <h2>Add Service</h2>
+
+      <div class="form-grid">
+        <input id="sName" placeholder="Service Name" />
+        <input id="sCategory" placeholder="Category" />
+        <input id="sPrice" type="number" placeholder="Price" />
+        <input id="sImage" type="file" accept="image/*" />
+
+      </div>
+
+      <button class="primary-btn" onclick="createService()">Add Service</button>
+    </div>
+
+    <!-- SERVICE LIST -->
+    <div class="card">
+      <h2>Services</h2>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="serviceTable"></tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/services.js"></script>
+</body>
+</html>

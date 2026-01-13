@@ -1,0 +1,375 @@
+/* =========================================================
+   GLOBAL RESET & BASE
+========================================================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #eef2f7, #f9fbfd);
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+h1, h2, h3 {
+  margin: 0;
+}
+
+/* =========================================================
+   APP LAYOUT (SIDEBAR + MAIN)
+========================================================= */
+.app-body {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 220px; /* slightly slimmer */
+  background: linear-gradient(180deg, #1976d2, #0d47a1);
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .logo {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.sidebar nav a {
+  display: block;
+  color: white;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+}
+
+.sidebar-footer button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ================= MAIN CONTENT ================= */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background: linear-gradient(135deg, #eef2f7, #f9fbfd);
+}
+
+/* =========================================================
+   COMMON PAGE LAYOUT
+========================================================= */
+.page-body,
+.dashboard-body {
+  padding: 20px;
+}
+
+.page-header,
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h1,
+.dashboard-header h1 {
+  font-size: 22px;
+  color: #2c3e50;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  color: white;
+}
+
+.back-btn {
+  background: #e3e7ed;
+  color: #333;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #e53935, #ef5350);
+  color: white;
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+.card {
+  background: white;
+  padding: 18px; /* compact */
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #34495e;
+}
+
+/* =========================================================
+   FORMS
+========================================================= */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-grid input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #dcdfe6;
+}
+
+/* =========================================================
+   TABLES
+========================================================= */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.data-table th {
+  background: linear-gradient(135deg, #1976d2, #1e88e5);
+  color: white;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.data-table td {
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.data-table tr:nth-child(even) {
+  background: #f9fbfd;
+}
+
+/* =========================================================
+   DASHBOARD STATS (COMPACT)
+========================================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 16px;
+  border-radius: 14px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card h3 {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stat-card p {
+  font-size: 24px; /* smaller numbers */
+  font-weight: 600;
+}
+
+/* Gradient variants */
+.gradient-blue {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #66bb6a, #2e7d32);
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #ffa726, #ef6c00);
+}
+
+/* =========================================================
+   MODULE CARDS
+========================================================= */
+.section-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.module-card {
+  background: linear-gradient(135deg, #ffffff, #f7faff);
+  padding: 18px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.module-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.15);
+}
+
+.module-card h3 {
+  margin-bottom: 6px;
+  font-size: 15px;
+  color: #1976d2;
+}
+
+.module-card p {
+  color: #666;
+  font-size: 13px;
+}
+
+/* =========================================================
+   STATUS & LABEL COLORS
+========================================================= */
+.status-active { color: #2e7d32; font-weight: bold; }
+.status-blocked { color: #c62828; font-weight: bold; }
+.status-completed { color: #ef6c00; font-weight: bold; }
+.status-pending { color: #f9a825; font-weight: bold; }
+.status-cancelled { color: #b71c1c; font-weight: bold; }
+
+.payment-paid { color: #2e7d32; font-weight: bold; }
+.payment-pending { color: #f57c00; font-weight: bold; }
+
+.rating {
+  font-weight: bold;
+  color: #f39c12;
+}
+
+/* =========================================================
+   CHARTS (COMPACT)
+========================================================= */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+}
+
+.charts-grid canvas {
+  max-height: 220px;
+}
+
+/* =========================================================
+   IMAGES
+========================================================= */
+img {
+  border-radius: 8px;
+}
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+.dark {
+  background: #121212;
+  color: #e0e0e0;
+}
+
+.dark .main-content {
+  background: #121212;
+}
+
+.dark .card,
+.dark .module-card {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+.dark .data-table tr:nth-child(even) {
+  background: #1a1a1a;
+}
+
+.dark .sidebar {
+  background: linear-gradient(180deg, #212121, #000);
+}
+
+.dark h1,
+.dark h2,
+.dark h3 {
+  color: #ffffff;
+}
+
+/* =========================================================
+   COLLAPSIBLE SIDEBAR
+========================================================= */
+.collapse-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.sidebar-collapsed .sidebar {
+  width: 70px;
+  padding: 16px 10px;
+}
+
+.sidebar-collapsed .sidebar .logo {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar nav a {
+  text-align: center;
+  padding: 10px;
+  font-size: 0;
+}
+
+.sidebar-collapsed .sidebar nav a::before {
+  content: "•";
+  font-size: 18px;
+}
+
+.sidebar-collapsed .main-content {
+  padding-left: 20px;
+}

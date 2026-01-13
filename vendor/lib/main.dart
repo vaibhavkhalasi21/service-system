@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Screens/vendor_home.dart';
-import 'Screens/vendor_login.dart';
+import 'vendor/screens/vendor_home.dart';
+import 'auth/vendor_login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

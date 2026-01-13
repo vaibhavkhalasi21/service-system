@@ -1,26 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace VendorWorkerAPI.Models
+﻿public class Admin
 {
-    public class Admin
-    {
-        [Key]
-        public int AdminId { get; set; }
-
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(50, MinimumLength = 3)]
-        public string Name { get; set; }
-
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress]
-        [StringLength(100)]
-        public string Email { get; set; }
-
-        // 🔐 Store HASHED password
-        [Required]
-        public string PasswordHash { get; set; }
-
-        [Required]
-        public string Role { get; set; } = "Admin";
-    }
+    public int Id { get; set; }
+    public string Email { get; set; }
+    public string PasswordHash { get; set; }
+    public string Role { get; set; } = "Admin";
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Applications / Bookings</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="app-body">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+
+    <h2 class="logo">Admin</h2>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="workers.html">Workers</a>
+      <a href="services.html">Services</a>
+      <a href="bookings.html" class="active">Applications</a>
+      <a href="payments.html">Payments</a>
+      <a href="ratings.html">Ratings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-content">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <h1>Applications / Bookings</h1>
+    </div>
+
+    <!-- BOOKINGS LIST -->
+    <div class="card">
+      <h2>Booking Records</h2>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Service</th>
+            <th>Vendor</th>
+            <th>Worker</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="applicationsTable">
+          <!-- Data loads here -->
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script src="js/api.js"></script>
+  <script src="js/bookings.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vendor Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="app-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+    <h2 class="logo">Admin</h2>
+
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="vendors.html" class="active">Vendors</a>
+      <a href="workers.html">Workers</a>
+      <a href="services.html">Services</a>
+      <a href="bookings.html">Applications</a>
+      <a href="payments.html">Payments</a>
+      <a href="ratings.html">Ratings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="toggleDarkMode()">🌙 Dark Mode</button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <h1>Vendor Management</h1>
+    </div>
+
+    <!-- ADD VENDOR -->
+    <div class="card">
+      <h2>Add Vendor</h2>
+
+      <div class="form-grid">
+        <input id="vName" placeholder="Name" />
+        <input id="vEmail" placeholder="Email" />
+        <input id="vPhone" placeholder="Phone" />
+        <input id="vService" placeholder="Service Type" />
+        <input id="vAddress" placeholder="Address" />
+        <input id="vPassword" type="password" placeholder="Password" />
+      </div>
+
+      <button class="primary-btn" onclick="createVendor()">Add Vendor</button>
+    </div>
+
+    <!-- VENDOR LIST -->
+    <div class="card">
+      <h2>Vendors</h2>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="vendorTable"></tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/vendors.js"></script>
+</body>
+</html>
