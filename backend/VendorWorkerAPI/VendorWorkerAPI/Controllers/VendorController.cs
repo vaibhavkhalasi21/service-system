@@ -38,24 +38,18 @@ namespace VendorWorkerAPI.Controllers
             {
                 Name = dto.Name,
                 Email = dto.Email,
-
-                // ✅ BCrypt HASH
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-
                 Phone = dto.Phone,
                 ServiceType = dto.ServiceType,
                 Address = dto.Address,
                 Role = "Vendor",
-                IsActive = true   // ✅ important (avoid blocked login issue)
+                IsActive = true
             };
 
             _context.Vendors.Add(vendor);
             _context.SaveChanges();
 
-            return Ok(new
-            {
-                message = "Vendor registered successfully"
-            });
+            return Ok(new { message = "Vendor registered successfully" });
         }
 
         // ================= LOGIN =================
@@ -66,22 +60,18 @@ namespace VendorWorkerAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // 1️⃣ Find vendor by email
             var vendor = _context.Vendors
                 .FirstOrDefault(v => v.Email == dto.Email);
 
             if (vendor == null)
                 return Unauthorized("Invalid email or password");
 
-            // ❌ blocked by admin
             if (!vendor.IsActive)
                 return Unauthorized("Vendor account is blocked");
 
-            // ❌ wrong password
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, vendor.PasswordHash))
                 return Unauthorized("Invalid email or password");
 
-            // 2️⃣ Generate JWT
             var token = _jwt.GenerateToken(
                 vendor.Id,
                 vendor.Email,
@@ -104,7 +94,6 @@ namespace VendorWorkerAPI.Controllers
         public async Task<IActionResult> Profile()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -123,6 +112,51 @@ namespace VendorWorkerAPI.Controllers
                 return NotFound("Vendor not found");
 
             return Ok(vendor);
+        }
+
+        // =====================================================
+        // 🔥 CREATE SERVICE (WITH LOCATION)
+        // =====================================================
+        [Authorize(Roles = "Vendor")]
+        [HttpPost("service")]
+        public async Task<IActionResult> CreateService(
+            [FromBody] ServiceCreateDto dto
+        )
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
+
+            var service = new Service
+            {
+                ServiceName = dto.ServiceName,
+                Category = dto.Category,
+                Price = dto.Price,
+                ServiceDateTime = dto.ServiceDateTime,
+
+                // 🔥 LOCATION
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                Address = dto.Address,
+
+                VendorId = vendorId,
+                Status = ServiceStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Services.Add(service);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Service created successfully",
+                serviceId = service.Id
+            });
         }
     }
 }

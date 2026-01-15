@@ -32,5 +32,14 @@ namespace VendorWorkerAPI.Models
 
         // ================= TIMESTAMPS =================
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public double ServiceLatitude { get; set; }
+        public double ServiceLongitude { get; set; }
+        public string? ServiceAddress { get; set; }
+
+        public double? WorkerLatitude { get; set; }
+        public double? WorkerLongitude { get; set; }
+
+
     }
 }

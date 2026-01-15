@@ -63,9 +63,14 @@ public class ServiceController : ControllerBase
                 s.Category,
                 s.Price,
                 s.ImageUrl,
-                VendorName = s.Vendor.Name,
+                VendorName = s.Vendor != null ? s.Vendor.Name : "Vendor",
+
                 ServiceDateTime = s.ServiceDateTime,
-                CreatedAt = s.CreatedAt
+                CreatedAt = s.CreatedAt,
+
+                Address = s.Address,
+                Latitude = s.Latitude,
+                Longitude = s.Longitude
             })
             .ToListAsync();
 
@@ -97,12 +102,18 @@ public class ServiceController : ControllerBase
                 Status = s.Status.ToString(),
                 ServiceDateTime = s.ServiceDateTime,
                 CreatedAt = s.CreatedAt,
-                UpdatedAt = s.UpdatedAt
+                UpdatedAt = s.UpdatedAt,
+
+                // ✅ ADD THESE
+                Address = s.Address,
+                Latitude = s.Latitude,
+                Longitude = s.Longitude
             })
             .ToListAsync();
 
         return Ok(services);
     }
+
 
     // =====================================================
     // ➕ VENDOR: CREATE SERVICE
@@ -135,15 +146,21 @@ public class ServiceController : ControllerBase
         var service = new Service
         {
             ServiceName = dto.ServiceName,
-            Category = dto.Category.ToString(),
+            Category = dto.Category,
             Price = dto.Price,
             ImageUrl = imagePath,
             VendorId = vendorId,
             Status = ServiceStatus.Active,
             ServiceDateTime = dto.ServiceDateTime,
-            ExpiresAt = dto.ServiceDateTime.AddHours(2), // ⏱ auto-expiry
-            CreatedAt = DateTime.UtcNow
+            ExpiresAt = dto.ServiceDateTime.AddHours(2),
+            CreatedAt = DateTime.UtcNow,
+
+            // ✅ ADD THESE LINES
+            Address = dto.Address,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude
         };
+
 
         _context.Services.Add(service);
         await _context.SaveChangesAsync();

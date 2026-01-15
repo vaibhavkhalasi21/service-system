@@ -68,20 +68,16 @@ namespace VendorWorkerAPI.Controllers
                 return BadRequest(ModelState);
 
             var worker = await _context.Workers
-    .FirstOrDefaultAsync(w => w.Email == dto.Email);
+                .FirstOrDefaultAsync(w => w.Email == dto.Email);
 
-            // ❌ worker not found
             if (worker == null)
                 return Unauthorized(new { message = "Invalid email or password" });
 
-            // ❌ worker blocked by admin
             if (!worker.IsActive)
                 return Unauthorized(new { message = "Worker account is blocked" });
 
-            // ❌ wrong password
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, worker.PasswordHash))
                 return Unauthorized(new { message = "Invalid email or password" });
-
 
             var token = _jwt.GenerateToken(worker.Id, worker.Email, "Worker");
 
@@ -92,7 +88,6 @@ namespace VendorWorkerAPI.Controllers
                 workerName = worker.Name,
                 role = "Worker"
             });
-
         }
 
         // =============================
@@ -108,6 +103,41 @@ namespace VendorWorkerAPI.Controllers
                 email = User.FindFirstValue(ClaimTypes.Email),
                 role = User.FindFirstValue(ClaimTypes.Role)
             });
+        }
+
+        // =============================
+        // 📍 WORKER: UPDATE LOCATION (NEW)
+        // =============================
+        [Authorize(Roles = "Worker")]
+        [HttpPut("location")]
+        public async Task<IActionResult> UpdateLocation(
+            [FromBody] UpdateWorkerLocationRequest request
+        )
+        {
+            if (request.Latitude < -90 || request.Latitude > 90 ||
+    request.Longitude < -180 || request.Longitude > 180)
+            {
+                return BadRequest("Invalid coordinates");
+            }
+
+
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null) return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
+
+            var worker = await _context.Workers.FindAsync(workerId);
+            if (worker == null)
+                return NotFound("Worker not found");
+
+            worker.Latitude = request.Latitude;
+            worker.Longitude = request.Longitude;
+            worker.LocationUpdatedAt = DateTime.UtcNow;
+
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Worker location updated successfully" });
         }
 
         // =============================
@@ -130,5 +160,70 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(workers);
         }
+
+
+        // =====================================================
+        // WORKER: GET NEARBY JOBS (FIXED & CORRECT)
+        [Authorize(Roles = "Worker")]
+        [HttpGet("nearby-jobs")]
+        public async Task<IActionResult> GetNearbyJobs()
+        {
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (workerIdStr == null) return Unauthorized();
+
+            int workerId = int.Parse(workerIdStr);
+
+            var worker = await _context.Workers.FindAsync(workerId);
+            if (worker == null)
+                return NotFound("Worker not found");
+
+            if (worker.Latitude == null || worker.Longitude == null)
+                return BadRequest("Worker location not set");
+
+            const double maxDistanceKm = 10;
+
+            var services = await _context.Services
+                .Where(s =>
+                    s.Status == ServiceStatus.Active &&
+                    s.Latitude != null &&
+                    s.Longitude != null
+                )
+                .Include(s => s.Vendor)
+                .ToListAsync();
+
+            var nearbyJobs = services
+                .Where(s =>
+                    DistanceService.CalculateDistanceKm(
+                        worker.Latitude,
+                        worker.Longitude,
+                        s.Latitude,
+                        s.Longitude
+                    ) <= maxDistanceKm
+                )
+                .Select(s => new
+                {
+                    s.Id,
+                    ServiceName = s.ServiceName,
+                    Category = s.Category,
+                    Price = s.Price,
+                    ServiceDateTime = s.ServiceDateTime,
+                    CreatedAt = s.CreatedAt,
+                    ImageUrl = s.ImageUrl,
+
+                    VendorName = s.Vendor.Name,
+
+                    ServiceLatitude = s.Latitude,
+                    ServiceLongitude = s.Longitude,
+                    ServiceAddress = s.Address
+                })
+                .ToList();
+
+            return Ok(nearbyJobs);
+        }
+
+
+
+
+
     }
 }

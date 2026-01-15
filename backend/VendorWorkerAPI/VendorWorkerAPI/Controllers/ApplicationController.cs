@@ -19,11 +19,14 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // WORKER: APPLY FOR A SERVICE
+        // WORKER: APPLY FOR A SERVICE (UPDATED WITH LOCATION)
         // =====================================================
         [HttpPost("apply/{serviceId}")]
         [Authorize(Roles = "Worker")]
-        public async Task<IActionResult> ApplyForService(int serviceId)
+        public async Task<IActionResult> ApplyForService(
+     int serviceId,
+     [FromBody] ApplyServiceRequest request
+ )
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (workerIdStr == null) return Unauthorized();
@@ -39,14 +42,31 @@ namespace VendorWorkerAPI.Controllers
             if (alreadyApplied)
                 return BadRequest("You have already applied for this service");
 
+            // 🔒 Validate locations
+            if (request.ServiceLatitude == 0 || request.ServiceLongitude == 0)
+                return BadRequest("Service location is required");
+
+            if (request.WorkerLatitude == 0 || request.WorkerLongitude == 0)
+                return BadRequest("Worker location is required");
+
             var application = new Application
             {
                 ServiceId = serviceId,
                 WorkerId = workerId,
                 VendorId = service.VendorId,
+
                 Status = "Pending",
                 PaymentStatus = "Pending",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+
+                // 📍 SERVICE LOCATION
+                ServiceLatitude = request.ServiceLatitude,
+                ServiceLongitude = request.ServiceLongitude,
+                ServiceAddress = request.ServiceAddress,
+
+                // 📍 WORKER LOCATION (NEW)
+                WorkerLatitude = request.WorkerLatitude,
+                WorkerLongitude = request.WorkerLongitude
             };
 
             _context.Applications.Add(application);
@@ -54,6 +74,7 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(new { message = "Application submitted successfully" });
         }
+
 
         // =====================================================
         // WORKER: VIEW MY APPLICATIONS
@@ -89,7 +110,12 @@ namespace VendorWorkerAPI.Controllers
                     Category = a.Service.Category,
                     Price = a.Service.Price,
                     ServiceDateTime = a.Service.ServiceDateTime,
-                    VendorName = a.Service.Vendor.Name
+                    VendorName = a.Service.Vendor.Name,
+
+                    // 📍 LOCATION
+                    a.ServiceLatitude,
+                    a.ServiceLongitude,
+                    a.ServiceAddress
                 })
                 .ToListAsync();
 
@@ -113,30 +139,38 @@ namespace VendorWorkerAPI.Controllers
                 .Include(a => a.Service)
                 .Include(a => a.Worker)
                 .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Status,
-                    a.CreatedAt,
-                    a.PaymentStatus,
-                    a.PaymentMethod,
+               .Select(a => new
+               {
+                   a.Id,
+                   a.Status,
+                   a.CreatedAt,
 
-                    a.VendorRated,
-                    a.VendorRating,
+                   // 👤 WORKER
+                   WorkerName = a.Worker.Name,
+                   WorkerEmail = a.Worker.Email,
 
-                    WorkerName = a.Worker.Name,
-                    WorkerEmail = a.Worker.Email,
-                    ServiceName = a.Service.ServiceName,
-                    Price = a.Service.Price,
-                    ServiceDateTime = a.Service.ServiceDateTime
-                })
+                   // 🛠 SERVICE (🔥 REQUIRED)
+                   ServiceName = a.Service.ServiceName,
+                   Category = a.Service.Category,
+
+                   // 📍 WORKER LOCATION
+                   a.WorkerLatitude,
+                   a.WorkerLongitude,
+
+                   // 📍 SERVICE LOCATION
+                   a.ServiceLatitude,
+                   a.ServiceLongitude,
+                   a.ServiceAddress
+               })
+
+
                 .ToListAsync();
 
             return Ok(applications);
         }
 
         // =====================================================
-        // 🔥 VENDOR: ACCEPT / REJECT APPLICATION (FIX)
+        // VENDOR: ACCEPT / REJECT APPLICATION
         // =====================================================
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Vendor")]
@@ -160,7 +194,6 @@ namespace VendorWorkerAPI.Controllers
                 return Forbid();
 
             app.Status = status;
-
             await _context.SaveChangesAsync();
 
             return Ok(new { message = $"Application {status} successfully" });
@@ -192,7 +225,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // VENDOR: MARK PAYMENT AS PAID (Cash / Online)
+        // VENDOR: MARK PAYMENT AS PAID
         // =====================================================
         [HttpPut("{id}/pay")]
         [Authorize(Roles = "Vendor")]
@@ -224,7 +257,6 @@ namespace VendorWorkerAPI.Controllers
                 app.Service.Status = ServiceStatus.Completed;
 
             await _context.SaveChangesAsync();
-
             return Ok(new { message = $"Payment marked as paid via {method}" });
         }
 
