@@ -10,7 +10,7 @@ const Color kPurple = Color(0xFF7B4DFF);
 const Color kTextGrey = Color(0xFF9E9E9E);
 
 class ServiceCard extends StatelessWidget {
-  final VendorService service; // ✅ FIXED
+  final VendorService service;
   final VoidCallback onUpdated;
   final bool showActions;
 
@@ -91,8 +91,10 @@ class ServiceCard extends StatelessWidget {
                     ? Image.network(
                   service.imagePath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.broken_image, color: kTextGrey),
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image,
+                    color: kTextGrey,
+                  ),
                 )
                     : Image.asset(
                   service.imagePath,
@@ -184,6 +186,30 @@ class ServiceCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 8),
+
+                // ================= ADDRESS (🔥 NEW) =================
+                if (service.address != null &&
+                    service.address!.trim().isNotEmpty) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 16, color: kTextGrey),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          service.address!,
+                          style: const TextStyle(
+                            color: kTextGrey,
+                            fontSize: 13,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // ================= POSTED INFO =================
                 Row(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../models/vendor_booking_request.dart';
 import '../services/vendor_application_api.dart';
-
 
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
@@ -14,7 +14,8 @@ class VendorPaymentsPage extends StatefulWidget {
   const VendorPaymentsPage({super.key});
 
   @override
-  State<VendorPaymentsPage> createState() => _VendorPaymentsPageState();
+  State<VendorPaymentsPage> createState() =>
+      _VendorPaymentsPageState();
 }
 
 class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
@@ -31,15 +32,20 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   // LOAD PAYMENTS
   // ===============================
   Future<void> loadPayments() async {
+    setState(() => isLoading = true);
+
     try {
-      final all = await VendorApplicationApi.getRequests();
+      final all =
+      await VendorApplicationApi.getApplications();
       if (!mounted) return;
 
       setState(() {
-        payments = all.where((j) => j.status == "Completed").cast<VendorBookingRequest>().toList();
+        payments =
+            all.where((j) => j.status == "Completed").toList();
         isLoading = false;
       });
     } catch (e) {
+      debugPrint("Payments load error: $e");
       if (!mounted) return;
       setState(() => isLoading = false);
     }
@@ -51,7 +57,9 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   Future<void> markPaid(int applicationId, String method) async {
     try {
       await VendorApplicationApi.markPaymentPaidWithMethod(
-          applicationId, method);
+        applicationId,
+        method,
+      );
       await loadPayments();
       _showSnack("Payment marked as paid via $method");
     } catch (e) {
@@ -196,19 +204,22 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
             final p = payments[index];
             final date = DateFormat('dd MMM yyyy')
                 .format(p.serviceDateTime.toLocal());
-            final isPaid = p.paymentStatus == "Paid";
+            final isPaid =
+                p.paymentStatus == "Paid";
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              margin:
+              const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: kCard,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius:
+                BorderRadius.circular(18),
               ),
               padding: const EdgeInsets.all(14),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
                 children: [
-                  /// SERVICE NAME
                   Text(
                     p.serviceName,
                     style: const TextStyle(
@@ -220,78 +231,94 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
 
                   const SizedBox(height: 6),
 
-                  /// WORKER
                   Text(
                     "Worker: ${p.workerName}",
-                    style: const TextStyle(color: kGrey),
+                    style:
+                    const TextStyle(color: kGrey),
                   ),
 
                   const SizedBox(height: 6),
 
-                  /// DATE
                   Text(
                     "Date: $date",
-                    style: const TextStyle(color: kGrey),
+                    style:
+                    const TextStyle(color: kGrey),
                   ),
 
-                  /// PAYMENT METHOD
-                  if (isPaid && p.paymentMethod != null)
+                  if (isPaid &&
+                      p.paymentMethod != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 6),
+                      padding:
+                      const EdgeInsets.only(top: 6),
                       child: Text(
                         "Paid via ${p.paymentMethod}",
                         style: TextStyle(
-                          color: p.paymentMethod == "Cash"
+                          color: p.paymentMethod ==
+                              "Cash"
                               ? Colors.green
                               : Colors.blue,
-                          fontWeight: FontWeight.w600,
+                          fontWeight:
+                          FontWeight.w600,
                         ),
                       ),
                     ),
 
                   const SizedBox(height: 14),
 
-                  /// PRICE + ACTION
                   Row(
                     mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                    MainAxisAlignment
+                        .spaceBetween,
                     children: [
                       Text(
                         "₹${p.price}",
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontWeight:
+                          FontWeight.bold,
                           color: kPurple,
                         ),
                       ),
                       if (!isPaid)
                         ElevatedButton(
                           onPressed: () =>
-                              showPaymentMethodDialog(p.id),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
+                              showPaymentMethodDialog(
+                                  p.id),
+                          style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor:
+                            Colors.green,
+                            shape:
+                            RoundedRectangleBorder(
                               borderRadius:
-                              BorderRadius.circular(12),
+                              BorderRadius.circular(
+                                  12),
                             ),
                           ),
-                          child: const Text("Mark Paid"),
+                          child:
+                          const Text("Mark Paid"),
                         )
                       else if (!p.vendorRated)
                         ElevatedButton(
                           onPressed: () =>
                               showRatingDialog(p.id),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPurple,
-                            shape: RoundedRectangleBorder(
+                          style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor:
+                            kPurple,
+                            shape:
+                            RoundedRectangleBorder(
                               borderRadius:
-                              BorderRadius.circular(12),
+                              BorderRadius.circular(
+                                  12),
                             ),
                           ),
-                          child: const Text("Rate Worker"),
+                          child: const Text(
+                              "Rate Worker"),
                         )
                       else
-                        _ratingStars(p.vendorRating ?? 0),
+                        _ratingStars(
+                            p.vendorRating ?? 0),
                     ],
                   ),
                 ],
@@ -311,7 +338,9 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {
         return Icon(
-          index < rating ? Icons.star : Icons.star_border,
+          index < rating
+              ? Icons.star
+              : Icons.star_border,
           color: Colors.amber,
           size: 18,
         );

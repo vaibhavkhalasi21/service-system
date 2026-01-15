@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../sessions/worker_session.dart';
+
 class WorkerApi {
   static const String baseUrl = "http://10.29.111.37:5244/api/worker";
 
@@ -33,6 +35,26 @@ class WorkerApi {
       return e.toString();
     }
   }
+
+  static Future<void> updateLocation({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final token = await WorkerSession.getToken();
+
+    await http.post(
+      Uri.parse("$baseUrl/worker/update-location"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "latitude": latitude,
+        "longitude": longitude,
+      }),
+    );
+  }
+
 
   // ======== LOGIN ========
   static Future<Map<String, dynamic>?> loginWorkerData({

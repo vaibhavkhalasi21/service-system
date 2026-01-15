@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/service_model.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../models/job_model.dart';
 import '../services/worker_service_api.dart';
+import '../services/location_service.dart';
 import '../widgets/job_card.dart';
 import 'apply_job.dart';
 import '../sessions/worker_session.dart';
@@ -16,8 +19,10 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   final TextEditingController _searchController = TextEditingController();
 
   bool isLoading = true;
+  bool locationUpdated = false;
+
   String selectedCategory = "All";
-  List<ServiceModel> allJobs = [];
+  List<MyJob> allJobs = [];
 
   final List<String> categories = [
     "All",
@@ -31,32 +36,75 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   @override
   void initState() {
     super.initState();
-    fetchJobs();
+    _initDashboard();
   }
 
-  Future<void> fetchJobs() async {
-    setState(() => isLoading = true);
+  // ================= INIT FLOW =================
+  Future<void> _initDashboard() async {
+    await _updateWorkerLocationOnce();
+    await fetchNearbyJobs();
+  }
+
+  // ================= LOCATION =================
+  Future<void> _updateWorkerLocationOnce() async {
+    if (locationUpdated) return;
+
     try {
-      final jobs = await WorkerServiceApi.getServices();
+      final Position? position =
+      await LocationService.getCurrentLocation();
+
+      if (position == null) return;
+
+      await WorkerServiceApi.updateWorkerLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+
+      locationUpdated = true;
+    } catch (_) {
+      // Silent fail: location should never break dashboard
+    }
+  }
+
+  // ================= FETCH NEARBY JOBS =================
+  Future<void> fetchNearbyJobs() async {
+    setState(() => isLoading = true);
+
+    try {
+      final jobs = await WorkerServiceApi.getNearbyJobs();
+
+      if (!mounted) return;
+
       setState(() {
         allJobs = jobs;
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() => isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 
-  List<ServiceModel> get filteredJobs {
+  // ================= FILTER =================
+  List<MyJob> get filteredJobs {
     final query = _searchController.text.toLowerCase();
+
     return allJobs.where((job) {
       final matchesSearch =
           job.title.toLowerCase().contains(query) ||
               job.category.toLowerCase().contains(query) ||
-              job.vendorName.toLowerCase().contains(query);
+              job.vendorName.toLowerCase().contains(query) ||
+              job.address.toLowerCase().contains(query);
 
-      final matchesCategory = selectedCategory == "All" ||
-          job.category.toLowerCase() == selectedCategory.toLowerCase();
+      final matchesCategory =
+          selectedCategory == "All" ||
+              job.category.toLowerCase() ==
+                  selectedCategory.toLowerCase();
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -71,11 +119,11 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
       backgroundColor: const Color(0xff0F0F0F),
       body: Column(
         children: [
-
-          /// 🔥 HEADER
+          // ================= HEADER =================
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
+            padding:
+            EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -114,7 +162,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
             ),
           ),
 
-          /// 🔍 SEARCH BAR
+          // ================= SEARCH =================
           Padding(
             padding: const EdgeInsets.all(16),
             child: Container(
@@ -129,16 +177,17 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                 onChanged: (_) => setState(() {}),
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  hintText: "Search for a professional...",
+                  hintText: "Search service, vendor or location...",
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
-                  icon: Icon(Icons.search, color: Color(0xff7C3AED)),
+                  icon: Icon(Icons.search,
+                      color: Color(0xff7C3AED)),
                 ),
               ),
             ),
           ),
 
-          /// 🏷 CATEGORY FILTER
+          // ================= CATEGORY FILTER =================
           SizedBox(
             height: 48,
             child: ListView.builder(
@@ -150,24 +199,26 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                 final selected = cat == selectedCategory;
 
                 return GestureDetector(
-                  onTap: () => setState(() => selectedCategory = cat),
+                  onTap: () =>
+                      setState(() => selectedCategory = cat),
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       color: selected
                           ? const Color(0xff7C3AED)
                           : const Color(0xff1E1E1E),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: const Color(0xff7C3AED),
-                      ),
+                      border:
+                      Border.all(color: const Color(0xff7C3AED)),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       cat,
                       style: TextStyle(
-                        color: selected ? Colors.white : Colors.white70,
+                        color:
+                        selected ? Colors.white : Colors.white70,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -179,7 +230,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
           const SizedBox(height: 12),
 
-          /// 📋 JOB LIST
+          // ================= JOB LIST =================
           Expanded(
             child: isLoading
                 ? const Center(
@@ -189,11 +240,11 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
             )
                 : RefreshIndicator(
               color: const Color(0xff7C3AED),
-              onRefresh: fetchJobs,
+              onRefresh: fetchNearbyJobs,
               child: filteredJobs.isEmpty
                   ? const Center(
                 child: Text(
-                  "No services found",
+                  "No nearby jobs found",
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white60,
@@ -216,13 +267,19 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                     vendorName: job.vendorName,
                     createdAt: job.createdAt,
                     serviceDateTime: job.serviceDateTime,
+                    address: job.address,
                     onApply: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ApplyJobScreen(serviceId: job.id),
+                          builder: (_) => ApplyJobScreen(
+                            serviceId: job.id,
+                            serviceLatitude: job.serviceLatitude,
+                            serviceLongitude: job.serviceLongitude,
+                            serviceAddress: job.address,
+                          ),
                         ),
+
                       );
                     },
                   );

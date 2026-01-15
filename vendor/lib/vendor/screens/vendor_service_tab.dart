@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../models/vendor_booking_request.dart';
 import '../services/vendor_application_api.dart';
-
 
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
@@ -21,6 +21,8 @@ class _VendorJobsTabState extends State<VendorJobsTab>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool isLoading = true;
+
+  // ✅ CORRECT MODEL FOR THIS SCREEN
   List<VendorBookingRequest> allJobs = [];
 
   @override
@@ -43,10 +45,11 @@ class _VendorJobsTabState extends State<VendorJobsTab>
     setState(() => isLoading = true);
 
     try {
-      final data = await VendorApplicationApi.getRequests();
+      final data = await VendorApplicationApi.getApplications();
       if (!mounted) return;
+
       setState(() {
-        allJobs = data.cast<VendorBookingRequest>();
+        allJobs = data;
         isLoading = false;
       });
     } catch (e) {
@@ -56,7 +59,9 @@ class _VendorJobsTabState extends State<VendorJobsTab>
     }
   }
 
-  /// Status filters (LOGIC UNCHANGED)
+  // ===============================
+  // FILTERS
+  // ===============================
   List<VendorBookingRequest> get pendingJobs =>
       allJobs.where((j) => j.status == "Accepted").toList();
 
@@ -111,7 +116,7 @@ class _VendorJobsTabState extends State<VendorJobsTab>
   }
 
   // ===============================
-  // JOB LIST UI
+  // JOB LIST
   // ===============================
   Widget _jobList(List<VendorBookingRequest> jobs) {
     return RefreshIndicator(
@@ -248,7 +253,6 @@ class _VendorJobsTabState extends State<VendorJobsTab>
       color: kBg,
       child: Column(
         children: [
-          // ================= HEADER =================
           const SizedBox(height: 16),
           const Text(
             "My Services",
@@ -260,29 +264,18 @@ class _VendorJobsTabState extends State<VendorJobsTab>
           ),
           const SizedBox(height: 12),
 
-          // ================= ICON TABS =================
           TabBar(
             controller: _tabController,
             indicatorColor: kPurple,
             labelColor: kPurple,
             unselectedLabelColor: kGrey,
             tabs: const [
-              Tab(
-                icon: Icon(Icons.access_time),
-                text: "Pending",
-              ),
-              Tab(
-                icon: Icon(Icons.check_circle_outline),
-                text: "Completed",
-              ),
-              Tab(
-                icon: Icon(Icons.cancel_outlined),
-                text: "Cancelled",
-              ),
+              Tab(icon: Icon(Icons.access_time), text: "Pending"),
+              Tab(icon: Icon(Icons.check_circle_outline), text: "Completed"),
+              Tab(icon: Icon(Icons.cancel_outlined), text: "Cancelled"),
             ],
           ),
 
-          // ================= TAB VIEWS =================
           Expanded(
             child: isLoading
                 ? const Center(

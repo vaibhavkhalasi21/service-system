@@ -2,19 +2,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/vendor_application_item.dart';
 import '../models/vendor_booking_request.dart';
-
-
-
 
 class VendorApplicationApi {
   static const String baseUrl =
       "http://10.29.111.37:5244/api/application";
 
-  // ===============================
-  // GET VENDOR APPLICATIONS
-  // ===============================
-  static Future<List<VendorBookingRequest>> getRequests() async {
+  // =====================================================
+  // 🔵 VENDOR APPLICATIONS LIST (INCOMING REQUESTS)
+  // Uses VendorApplicationItem
+  // =====================================================
+  static Future<List<VendorApplicationItem>> getApplicationItems() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
 
@@ -26,8 +25,12 @@ class VendorApplicationApi {
       Uri.parse("$baseUrl/vendor"),
       headers: {
         "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
       },
     );
+
+    print("🟣 APPLICATION ITEMS STATUS: ${response.statusCode}");
+    print("🟣 APPLICATION ITEMS BODY: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -36,37 +39,73 @@ class VendorApplicationApi {
     }
 
     final List data = jsonDecode(response.body);
-    return data.map((e) => VendorBookingRequest.fromJson(e)).toList();
+    return data
+        .map((e) => VendorApplicationItem.fromJson(e))
+        .toList();
   }
 
-  // ===============================
+  // =====================================================
+  // 🟢 VENDOR JOBS (ACCEPTED / COMPLETED / CANCELLED)
+  // Uses VendorBookingRequest
+  // =====================================================
+  static Future<List<VendorBookingRequest>> getApplications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("vendor_token");
+
+    if (token == null) {
+      throw Exception("Vendor token missing");
+    }
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/vendor"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    print("🟢 JOBS STATUS: ${response.statusCode}");
+    print("🟢 JOBS BODY: ${response.body}");
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Failed to load jobs (${response.statusCode})",
+      );
+    }
+
+    final List data = jsonDecode(response.body);
+    return data
+        .map((e) => VendorBookingRequest.fromJson(e))
+        .toList();
+  }
+
+  // =====================================================
   // ACCEPT / REJECT APPLICATION
-  // 🔥 UNCHANGED (IMPORTANT)
-  // ===============================
+  // =====================================================
   static Future<void> updateStatus(int id, String status) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
+
+    if (token == null) {
+      throw Exception("Vendor token missing");
+    }
 
     final response = await http.put(
       Uri.parse("$baseUrl/$id/status?status=$status"),
       headers: {
         "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
       },
     );
-
-    print("🟥 UPDATE STATUS CODE: ${response.statusCode}");
-    print("🟥 UPDATE STATUS BODY: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception("Failed to update status");
     }
   }
 
-
-  // ===============================
+  // =====================================================
   // MARK PAYMENT AS PAID
-  // ✅ OLD CALL STILL WORKS
-  // ===============================
+  // =====================================================
   static Future<void> markPaymentPaid(int applicationId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
@@ -79,6 +118,7 @@ class VendorApplicationApi {
       Uri.parse("$baseUrl/$applicationId/pay"),
       headers: {
         "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
       },
     );
 
@@ -87,10 +127,9 @@ class VendorApplicationApi {
     }
   }
 
-  // ===============================
+  // =====================================================
   // MARK PAYMENT WITH METHOD
-  // 🔥 NEW (OPTIONAL)
-  // ===============================
+  // =====================================================
   static Future<void> markPaymentPaidWithMethod(
       int applicationId,
       String method, // Cash | Online
@@ -103,11 +142,10 @@ class VendorApplicationApi {
     }
 
     final response = await http.put(
-      Uri.parse(
-        "$baseUrl/$applicationId/pay?method=$method",
-      ),
+      Uri.parse("$baseUrl/$applicationId/pay?method=$method"),
       headers: {
         "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
       },
     );
 
@@ -116,9 +154,9 @@ class VendorApplicationApi {
     }
   }
 
-  // ===============================
+  // =====================================================
   // RATE WORKER
-  // ===============================
+  // =====================================================
   static Future<void> rateWorker(
       int applicationId,
       int rating,
@@ -131,11 +169,10 @@ class VendorApplicationApi {
     }
 
     final response = await http.post(
-      Uri.parse(
-        "$baseUrl/$applicationId/rate-worker?rating=$rating",
-      ),
+      Uri.parse("$baseUrl/$applicationId/rate-worker?rating=$rating"),
       headers: {
         "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
       },
     );
 

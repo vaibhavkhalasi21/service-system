@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/vendor_service.dart';
 import '../models/vendor_service_request.dart';
 import '../services/service_api.dart';
@@ -65,7 +66,6 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       final List<VendorServiceRequest> apiServices =
       await ServiceApi.getVendorServices();
 
-      // ✅ STRONGLY TYPED LIST (fixes List<dynamic> error)
       final List<VendorService> mappedServices =
       apiServices.map(_mapApiToUi).toList();
 
@@ -82,7 +82,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // API → UI MAPPER
+  // API → UI MAPPER (UPDATED)
   // ===============================
   VendorService _mapApiToUi(VendorServiceRequest api) {
     return VendorService(
@@ -90,13 +90,19 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
       title: api.serviceName,
       category: api.category,
       price: api.price.toInt(),
-      imagePath: api.imageUrl != null
+      rating: api.rating ?? 0.0,
+      imagePath: api.imageUrl != null && api.imageUrl!.isNotEmpty
           ? "$baseUrl${api.imageUrl}"
-          : "assets/images/cleaning.png",
-      vendorName: api.vendorName ?? "Vendor",
+          : "$baseUrl/service-images/default.png",
+      vendorName: api.vendorName ?? vendorName,
       status: api.status,
       createdAt: api.createdAt,
       serviceDateTime: api.serviceDateTime,
+
+      // 🔥 LOCATION
+      address: api.address,
+      latitude: api.latitude ?? 0.0,
+      longitude: api.longitude ?? 0.0,
     );
   }
 
@@ -168,7 +174,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 20),
 
-// ================= CATEGORIES =================
+          // ================= CATEGORIES =================
           const Text(
             "Categories",
             style: TextStyle(
@@ -214,14 +220,11 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 20),
 
-
-
           // ================= SERVICES LIST =================
           Expanded(
             child: isLoading
                 ? const Center(
-              child:
-              CircularProgressIndicator(color: kPurple),
+              child: CircularProgressIndicator(color: kPurple),
             )
                 : RefreshIndicator(
               color: kPurple,

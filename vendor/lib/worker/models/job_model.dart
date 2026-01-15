@@ -9,8 +9,14 @@ class MyJob {
   final double price;
   final double rating;
   final String vendorName;
-  final DateTime createdAt;        // ✅ ADDED
+  final DateTime createdAt;
   final DateTime serviceDateTime;
+  final String address;
+
+
+  // 🔥 ADDED for location-based features
+  final double serviceLatitude;
+  final double serviceLongitude;
 
   MyJob({
     required this.id,
@@ -23,8 +29,11 @@ class MyJob {
     required this.price,
     required this.rating,
     required this.vendorName,
-    required this.createdAt,       // ✅ ADDED
+    required this.createdAt,
+    required this.address,
     required this.serviceDateTime,
+    required this.serviceLatitude,
+    required this.serviceLongitude,
   });
 
   factory MyJob.fromJson(Map<String, dynamic> json) {
@@ -32,33 +41,43 @@ class MyJob {
 
     return MyJob(
       id: json['id'] ?? 0,
+
+      // 🔹 Backend: serviceName
       title: json['serviceName'] ?? json['title'] ?? "",
+
       category: json['category'] ?? "",
-      description: json['description'] ?? "",
 
-      // 🗓 display-friendly date
-      date: json['date'] ??
-          (json['serviceDateTime'] != null
-              ? json['serviceDateTime'].toString()
-              : ""),
+      // 🔹 Nearby jobs don’t have description
+      description: json['description'] ?? "No description",
 
-      location: json['location'] ?? "Not specified",
+      // 🔹 Friendly date
+      date: json['serviceDateTime'] != null
+          ? json['serviceDateTime'].toString()
+          : "",
 
+      address: json['address'] ??
+          json['serviceAddress'] ??
+          "Location not specified",
+
+      // 🔥 MAP serviceAddress → location
+      location: json['serviceAddress'] ?? "Location not specified",
+
+      // 🔹 Nearby jobs don’t return image
       imageUrl: (json['imageUrl'] != null && json['imageUrl'] != "")
           ? "$baseUrl${json['imageUrl']}"
           : "https://via.placeholder.com/150",
 
       price: json['price'] != null
-          ? double.tryParse(json['price'].toString()) ?? 0.0
+          ? (json['price'] as num).toDouble()
           : 0.0,
 
+      // 🔹 Nearby jobs don’t return rating
       rating: json['rating'] != null
-          ? double.tryParse(json['rating'].toString()) ?? 4.0
+          ? (json['rating'] as num).toDouble()
           : 4.0,
 
-      vendorName: json['vendorName'] ?? "Unknown Vendor",
+      vendorName: json['vendorName'] ?? "Vendor",
 
-      // 🔥 CREATED AT (FIX)
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -66,6 +85,15 @@ class MyJob {
       serviceDateTime: json['serviceDateTime'] != null
           ? DateTime.parse(json['serviceDateTime'])
           : DateTime.now(),
+
+      // 🔥 LOCATION COORDINATES
+      serviceLatitude: json['serviceLatitude'] != null
+          ? (json['serviceLatitude'] as num).toDouble()
+          : 0.0,
+
+      serviceLongitude: json['serviceLongitude'] != null
+          ? (json['serviceLongitude'] as num).toDouble()
+          : 0.0,
     );
   }
 }

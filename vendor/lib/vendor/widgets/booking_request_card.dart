@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../models/vendor_booking_request.dart';
-
-
+import '../models/vendor_application_item.dart';
+import '../utils/location_utils.dart';
 
 // ================= UI CONSTANTS =================
 const Color kCard = Color(0xFF1A1A1A);
@@ -11,7 +11,7 @@ const Color kPurple = Color(0xFF7B4DFF);
 const Color kGrey = Color(0xFF9E9E9E);
 
 class BookingRequestCard extends StatelessWidget {
-  final VendorBookingRequest request;
+  final VendorApplicationItem request;
   final VoidCallback? onAccept;
   final VoidCallback? onReject;
 
@@ -22,6 +22,9 @@ class BookingRequestCard extends StatelessWidget {
     this.onReject,
   });
 
+  // ===============================
+  // STATUS COLOR
+  // ===============================
   Color _statusColor() {
     switch (request.status) {
       case "Accepted":
@@ -33,9 +36,65 @@ class BookingRequestCard extends StatelessWidget {
     }
   }
 
+  // ===============================
+  // OPEN GOOGLE MAPS
+  // ===============================
+  Future<void> _openMap(double lat, double lng) async {
+    final uri = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+    );
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  // ===============================
+  // WORKER → SERVICE DISTANCE
+  // ===============================
+  Widget _workerLocation() {
+    if (request.workerLatitude == null ||
+        request.workerLongitude == null ||
+        request.serviceLatitude == null ||
+        request.serviceLongitude == null) {
+      return const SizedBox();
+    }
+
+    final distanceKm = LocationUtils.distanceInKm(
+      lat1: request.workerLatitude!,
+      lon1: request.workerLongitude!,
+      lat2: request.serviceLatitude!,
+      lon2: request.serviceLongitude!,
+    );
+
+    return InkWell(
+      onTap: () => _openMap(
+        request.serviceLatitude!,
+        request.serviceLongitude!,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.directions_walk, size: 14, color: kGrey),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              "📍 ${distanceKm.toStringAsFixed(1)} km from service location",
+              style: const TextStyle(
+                color: kGrey,
+                fontSize: 12,
+                decoration: TextDecoration.underline,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final localTime = request.serviceDateTime.toLocal();
+    final localTime = request.createdAt.toLocal();
     final date = DateFormat("dd MMM yyyy").format(localTime);
     final time = DateFormat("hh:mm a").format(localTime);
 
@@ -43,15 +102,15 @@ class BookingRequestCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: kCard,
         borderRadius: BorderRadius.circular(18),
       ),
-      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// 👤 WORKER INFO
+          /// 👤 WORKER INFO + STATUS
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -66,7 +125,7 @@ class BookingRequestCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// NAME
+                    /// WORKER NAME
                     Text(
                       request.workerName,
                       style: const TextStyle(
@@ -77,7 +136,7 @@ class BookingRequestCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    /// EMAIL
+                    /// WORKER EMAIL
                     Text(
                       request.workerEmail,
                       style: const TextStyle(
@@ -87,24 +146,45 @@ class BookingRequestCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
 
-                    /// SERVICE
+                    /// 🛠 SERVICE NAME
                     Text(
                       request.serviceName,
                       style: const TextStyle(
-                        color: kGrey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    /// 🏷 CATEGORY
+                    Text(
+                      request.category,
+                      style: const TextStyle(
+                        color: kPurple,
                         fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+
+
+                    const SizedBox(height: 6),
+
+                    /// 📍 DISTANCE
+                    _workerLocation(),
                   ],
                 ),
               ),
 
               /// STATUS BADGE
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: _statusColor().withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -121,30 +201,16 @@ class BookingRequestCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
-          /// DATE + PRICE
+          /// DATE
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today,
-                      size: 16, color: kGrey),
-                  const SizedBox(width: 6),
-                  Text(
-                    "$date • $time",
-                    style: const TextStyle(color: kGrey),
-                  ),
-                ],
-              ),
+              const Icon(Icons.calendar_today, size: 16, color: kGrey),
+              const SizedBox(width: 6),
               Text(
-                "₹${request.price}",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: kPurple,
-                ),
+                "$date • $time",
+                style: const TextStyle(color: kGrey),
               ),
             ],
           ),
@@ -163,7 +229,6 @@ class BookingRequestCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child: const Text("Reject"),
                   ),
@@ -177,12 +242,8 @@ class BookingRequestCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: const Text(
-                      "Accept",
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    child: const Text("Accept"),
                   ),
                 ),
               ],

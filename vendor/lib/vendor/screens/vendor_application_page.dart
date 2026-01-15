@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/vendor_booking_request.dart';
+
+import '../models/vendor_application_item.dart';
 import '../services/vendor_application_api.dart';
 import '../widgets/booking_request_card.dart';
 
-
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
-const Color kCard = Color(0xFF1A1A1A);
 const Color kPurple = Color(0xFF7B4DFF);
 const Color kGrey = Color(0xFF9E9E9E);
 
@@ -21,7 +20,9 @@ class VendorApplicationsPage extends StatefulWidget {
 class _VendorApplicationsPageState extends State<VendorApplicationsPage> {
   bool isLoading = true;
   bool hasError = false;
-  List<VendorBookingRequest> requests = [];
+
+  // ✅ CORRECT MODEL
+  List<VendorApplicationItem> requests = [];
 
   @override
   void initState() {
@@ -39,8 +40,9 @@ class _VendorApplicationsPageState extends State<VendorApplicationsPage> {
     });
 
     try {
-      requests = (await VendorApplicationApi.getRequests()).cast<VendorBookingRequest>();
-    } catch (_) {
+      requests = await VendorApplicationApi.getApplicationItems();
+    } catch (e) {
+      debugPrint("Vendor applications error: $e");
       hasError = true;
     }
 
@@ -52,7 +54,7 @@ class _VendorApplicationsPageState extends State<VendorApplicationsPage> {
   // =============================
   Future<void> updateStatus(int id, String status) async {
     await VendorApplicationApi.updateStatus(id, status);
-    fetchRequests(); // refresh
+    fetchRequests();
   }
 
   @override
@@ -60,7 +62,6 @@ class _VendorApplicationsPageState extends State<VendorApplicationsPage> {
     return Scaffold(
       backgroundColor: kBg,
 
-      // ================= APP BAR =================
       appBar: AppBar(
         backgroundColor: kBg,
         elevation: 0,
@@ -71,7 +72,6 @@ class _VendorApplicationsPageState extends State<VendorApplicationsPage> {
         centerTitle: true,
       ),
 
-      // ================= BODY =================
       body: isLoading
           ? const Center(
         child: CircularProgressIndicator(color: kPurple),

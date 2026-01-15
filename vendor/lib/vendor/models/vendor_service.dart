@@ -9,6 +9,9 @@ class VendorService {
   final String status;
   final DateTime createdAt;
   final DateTime serviceDateTime;
+  final String? address;
+  final double latitude;
+  final double longitude;
 
   VendorService({
     required this.id,
@@ -21,5 +24,8 @@ class VendorService {
     required this.status,
     required this.createdAt,
     required this.serviceDateTime,
+    required this.address,
+    required this.latitude,
+    required this.longitude
   });
 }

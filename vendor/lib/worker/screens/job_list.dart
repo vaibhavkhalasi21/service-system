@@ -41,7 +41,7 @@ class JobList extends StatelessWidget {
 
           onApply: () {
             // TODO: Navigate to Apply Job Screen
-          },
+          }, address: '',
         );
       },
     );

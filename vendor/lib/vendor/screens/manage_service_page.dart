@@ -2,14 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../models/vendor_service.dart';
 import '../models/vendor_create_service_request.dart';
-
 import '../constants/service_categories.dart';
 import '../services/service_api.dart';
-
-
 
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
@@ -18,7 +16,6 @@ const Color kPurple = Color(0xFF7B4DFF);
 const Color kGrey = Color(0xFF9E9E9E);
 
 class ManageServicePage extends StatefulWidget {
-  // ✅ FIXED TYPE
   final VendorService service;
 
   const ManageServicePage({
@@ -36,11 +33,18 @@ class _ManageServicePageState extends State<ManageServicePage> {
   late TextEditingController titleController;
   late TextEditingController priceController;
 
+  // 🔥 LOCATION CONTROLLERS
+  late TextEditingController addressController;
+  late TextEditingController latController;
+  late TextEditingController lngController;
+
   String? selectedCategory;
   File? selectedImage;
 
   bool isLoading = false;
   bool isDeleting = false;
+
+  DateTime? selectedServiceDateTime;
 
   final ImagePicker picker = ImagePicker();
 
@@ -52,6 +56,15 @@ class _ManageServicePageState extends State<ManageServicePage> {
     priceController =
         TextEditingController(text: widget.service.price.toString());
 
+    addressController =
+        TextEditingController(text: widget.service.address ?? "");
+    latController =
+        TextEditingController(text: widget.service.latitude.toString());
+    lngController =
+        TextEditingController(text: widget.service.longitude.toString());
+
+    selectedServiceDateTime = widget.service.serviceDateTime;
+
     selectedCategory = serviceCategories.contains(widget.service.category)
         ? widget.service.category
         : null;
@@ -61,6 +74,9 @@ class _ManageServicePageState extends State<ManageServicePage> {
   void dispose() {
     titleController.dispose();
     priceController.dispose();
+    addressController.dispose();
+    latController.dispose();
+    lngController.dispose();
     super.dispose();
   }
 
@@ -75,11 +91,44 @@ class _ManageServicePageState extends State<ManageServicePage> {
   }
 
   // =============================
+  // DATE & TIME PICKER
+  // =============================
+  Future<void> pickServiceDateTime() async {
+    final DateTime? date = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: selectedServiceDateTime ?? DateTime.now(),
+    );
+
+    if (date == null) return;
+
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(
+        selectedServiceDateTime ?? DateTime.now(),
+      ),
+    );
+
+    if (time == null) return;
+
+    setState(() {
+      selectedServiceDateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  // =============================
   // UPDATE SERVICE
   // =============================
   Future<void> updateService() async {
     if (!_formKey.currentState!.validate()) return;
-    if (selectedCategory == null) return;
+    if (selectedCategory == null || selectedServiceDateTime == null) return;
 
     FocusScope.of(context).unfocus();
     setState(() => isLoading = true);
@@ -88,7 +137,10 @@ class _ManageServicePageState extends State<ManageServicePage> {
       serviceName: titleController.text.trim(),
       category: selectedCategory!,
       price: double.parse(priceController.text),
-      serviceDateTime: widget.service.serviceDateTime,
+      serviceDateTime: selectedServiceDateTime!,
+      address: addressController.text.trim(),
+      latitude: double.parse(latController.text),
+      longitude: double.parse(lngController.text),
     );
 
     final success = await ServiceApi.updateService(
@@ -163,9 +215,13 @@ class _ManageServicePageState extends State<ManageServicePage> {
   // =============================
   @override
   Widget build(BuildContext context) {
+    final scheduledText = selectedServiceDateTime == null
+        ? "Select service date & time"
+        : DateFormat('dd MMM yyyy • hh:mm a')
+        .format(selectedServiceDateTime!);
+
     return Scaffold(
       backgroundColor: kBg,
-
       appBar: AppBar(
         backgroundColor: kBg,
         elevation: 0,
@@ -175,7 +231,6 @@ class _ManageServicePageState extends State<ManageServicePage> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -249,6 +304,41 @@ class _ManageServicePageState extends State<ManageServicePage> {
               _darkField(
                 controller: priceController,
                 label: "Price (₹)",
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              OutlinedButton.icon(
+                onPressed: pickServiceDateTime,
+                icon: const Icon(Icons.schedule),
+                label: Text(scheduledText),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 🔥 LOCATION
+              _darkField(
+                controller: addressController,
+                label: "Service Address",
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 14),
+
+              _darkField(
+                controller: latController,
+                label: "Latitude",
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 14),
+
+              _darkField(
+                controller: lngController,
+                label: "Longitude",
                 keyboardType: TextInputType.number,
                 validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),

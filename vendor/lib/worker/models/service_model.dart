@@ -6,8 +6,15 @@ class ServiceModel {
   final String imageUrl;
   final double price;
   final String vendorName;
+
+  // 🔥 TIME
   final DateTime createdAt;
   final DateTime serviceDateTime;
+
+  // 🔥 LOCATION (NEW)
+  final String address;
+  final double latitude;
+  final double longitude;
 
   ServiceModel({
     required this.id,
@@ -19,6 +26,9 @@ class ServiceModel {
     required this.vendorName,
     required this.createdAt,
     required this.serviceDateTime,
+    required this.address,
+    required this.latitude,
+    required this.longitude,
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -26,24 +36,42 @@ class ServiceModel {
 
     return ServiceModel(
       id: json['id'] ?? 0,
-      title: json['serviceName'] ?? "No Title",
+
+      title: json['serviceName'] ?? json['title'] ?? "No Title",
       category: json['category'] ?? "General",
       description: json['description'] ?? "",
+
       price: json['price'] != null
-          ? double.tryParse(json['price'].toString()) ?? 0
-          : 0,
-      imageUrl: (json['imageUrl'] != null && json['imageUrl'] != "")
+          ? double.tryParse(json['price'].toString()) ?? 0.0
+          : 0.0,
+
+      imageUrl: (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty)
           ? "$baseUrl${json['imageUrl']}"
           : "https://via.placeholder.com/150",
 
-      // 🔥 missing fields fixed
-      vendorName: json['VendorName'] ?? json['vendorName'] ?? '',
+      vendorName: json['vendorName'] ?? "Vendor",
+
+      // 🔥 TIME (SAFE PARSE)
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
+
       serviceDateTime: json['serviceDateTime'] != null
-          ? DateTime.parse(json['serviceDateTime'])
+          ? DateTime.parse(json['serviceDateTime']).toLocal()
           : DateTime.now(),
+
+      // 🔥 LOCATION (VERY IMPORTANT)
+      address: json['address'] ??
+          json['serviceAddress'] ??
+          "Location not specified",
+
+      latitude: json['latitude'] != null
+          ? double.tryParse(json['latitude'].toString()) ?? 0.0
+          : 0.0,
+
+      longitude: json['longitude'] != null
+          ? double.tryParse(json['longitude'].toString()) ?? 0.0
+          : 0.0,
     );
   }
 }

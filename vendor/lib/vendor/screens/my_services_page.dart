@@ -5,7 +5,6 @@ import '../models/vendor_service_request.dart';
 import '../services/service_api.dart';
 import '../widgets/service_card.dart';
 
-
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
 const Color kPurple = Color(0xFF7B4DFF);
@@ -36,27 +35,43 @@ class _MyServicesPageState extends State<MyServicesPage> {
   Future<void> fetchMyServices() async {
     setState(() => isLoading = true);
 
-    final List<VendorServiceRequest> apiServices =
-    (await ServiceApi.getVendorServices()).cast<VendorServiceRequest>();
+    try {
+      final List<VendorServiceRequest> apiServices =
+      await ServiceApi.getVendorServices();
 
-    myServices = apiServices
-        .map(
-          (e) => VendorService(
-        id: e.id,
-        title: e.serviceName,
-        category: e.category,
-        price: e.price.toInt(),
-        rating: 4.5,
-        imagePath: "$baseUrl${e.imageUrl}",
-        vendorName: e.vendorName ?? "You",
-        status: e.status,
-        createdAt: e.createdAt,
-        serviceDateTime: e.serviceDateTime,
-      ),
-    )
-        .toList();
+      final List<VendorService> mapped = apiServices.map((e) {
+        return VendorService(
+          id: e.id,
+          title: e.serviceName,
+          category: e.category,
+          price: e.price.toInt(),
+          rating: e.rating ?? 0.0,
+          imagePath: e.imageUrl != null && e.imageUrl!.isNotEmpty
+              ? "$baseUrl${e.imageUrl}"
+              : "$baseUrl/service-images/default.png",
+          vendorName: e.vendorName ?? "You",
+          status: e.status,
+          createdAt: e.createdAt,
+          serviceDateTime: e.serviceDateTime,
 
-    setState(() => isLoading = false);
+          // 🔥 LOCATION
+          address: e.address,
+          latitude: e.latitude ?? 0.0,
+          longitude: e.longitude ?? 0.0,
+        );
+      }).toList();
+
+      if (!mounted) return;
+
+      setState(() {
+        myServices = mapped;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("FETCH MY SERVICES ERROR: $e");
+      if (!mounted) return;
+      setState(() => isLoading = false);
+    }
   }
 
   @override

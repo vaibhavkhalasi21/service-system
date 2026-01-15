@@ -10,6 +10,7 @@ class JobCard extends StatelessWidget {
   final String vendorName;
   final DateTime createdAt;
   final DateTime serviceDateTime;
+  final String address; // 🔥 NEW
   final VoidCallback onApply;
 
   const JobCard({
@@ -22,6 +23,7 @@ class JobCard extends StatelessWidget {
     required this.vendorName,
     required this.createdAt,
     required this.serviceDateTime,
+    required this.address, // 🔥 REQUIRED
     required this.onApply,
   });
 
@@ -64,6 +66,15 @@ class JobCard extends StatelessWidget {
               height: 190,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                height: 190,
+                color: Colors.black12,
+                child: const Icon(
+                  Icons.broken_image,
+                  color: Colors.white54,
+                  size: 40,
+                ),
+              ),
             ),
           ),
 
@@ -87,8 +98,10 @@ class JobCard extends StatelessWidget {
 
                 /// 🔹 CATEGORY
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(.15),
                     borderRadius: BorderRadius.circular(12),
@@ -126,6 +139,29 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
+                /// 📍 ADDRESS (🔥 NEW)
+                if (address.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 16, color: Colors.white54),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          address,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 13,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                ],
+
                 /// 🔹 POSTED TIME
                 Row(
                   children: [
@@ -162,19 +198,14 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                /// 💰 PRICE & ⭐ RATING
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "₹ ${price.toStringAsFixed(0)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                      ),
-                    ),
-                  ],
+                /// 💰 PRICE
+                Text(
+                  "₹ ${price.toStringAsFixed(0)}",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
 
                 const SizedBox(height: 16),

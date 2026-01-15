@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/vendor_create_service_request.dart';
 import '../models/vendor_service_request.dart';
-
 
 class ServiceApi {
   static const String baseUrl = "http://10.29.111.37:5244/api/service";
@@ -30,8 +30,6 @@ class ServiceApi {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
 
-    print("VENDOR TOKEN FROM FLUTTER: $token");
-
     if (token == null) {
       throw Exception("Vendor token not found");
     }
@@ -43,9 +41,6 @@ class ServiceApi {
       },
     );
 
-    print("STATUS CODE: ${response.statusCode}");
-    print("RESPONSE BODY: ${response.body}");
-
     if (response.statusCode != 200) {
       throw Exception("Failed to load vendor services");
     }
@@ -55,7 +50,7 @@ class ServiceApi {
   }
 
   // =========================================
-  // VENDOR: ADD SERVICE
+  // VENDOR: ADD SERVICE (🔥 LOCATION ADDED)
   // =========================================
   static Future<bool> addService(
       VendorCreateServiceRequest service,
@@ -63,8 +58,6 @@ class ServiceApi {
       ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
-
-    print("POST SERVICE TOKEN: $token");
 
     if (token == null) {
       throw Exception("Vendor token not found. Please login again.");
@@ -75,14 +68,24 @@ class ServiceApi {
 
     request.headers["Authorization"] = "Bearer $token";
 
+    // BASIC FIELDS
     request.fields["serviceName"] = service.serviceName;
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
-
-    // ✅ IMPORTANT FIX (NO toUtc)
     request.fields["serviceDateTime"] =
         service.serviceDateTime.toIso8601String();
 
+    // 🔥 LOCATION FIELDS
+    request.fields["address"] = service.address;
+    request.fields["latitude"] = service.latitude.toString();
+    request.fields["longitude"] = service.longitude.toString();
+
+    // OPTIONAL DESCRIPTION
+    if (service.description != null) {
+      request.fields["description"] = service.description!;
+    }
+
+    // IMAGE
     if (image != null) {
       request.files.add(
         await http.MultipartFile.fromPath("image", image.path),
@@ -99,7 +102,7 @@ class ServiceApi {
   }
 
   // =========================================
-  // VENDOR: UPDATE SERVICE
+  // VENDOR: UPDATE SERVICE (🔥 LOCATION ADDED)
   // =========================================
   static Future<bool> updateService(
       int serviceId,
@@ -118,13 +121,17 @@ class ServiceApi {
 
     request.headers["Authorization"] = "Bearer $token";
 
+    // BASIC FIELDS
     request.fields["serviceName"] = service.serviceName;
     request.fields["category"] = service.category;
     request.fields["price"] = service.price.toString();
-
-    // ✅ IMPORTANT FIX (NO toUtc)
     request.fields["serviceDateTime"] =
         service.serviceDateTime.toIso8601String();
+
+    // 🔥 LOCATION FIELDS
+    request.fields["address"] = service.address;
+    request.fields["latitude"] = service.latitude.toString();
+    request.fields["longitude"] = service.longitude.toString();
 
     if (service.description != null) {
       request.fields["description"] = service.description!;

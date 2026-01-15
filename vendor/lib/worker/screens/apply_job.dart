@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import '../services/location_service.dart';
 import '../services/worker_service_api.dart';
 import '../sessions/worker_session.dart';
 
 class ApplyJobScreen extends StatefulWidget {
   final int serviceId;
+  final double serviceLatitude;
+  final double serviceLongitude;
+  final String serviceAddress;
 
-  const ApplyJobScreen({super.key, required this.serviceId});
+  const ApplyJobScreen({
+    super.key,
+    required this.serviceId,
+    required this.serviceLatitude,
+    required this.serviceLongitude,
+    required this.serviceAddress,
+  });
 
   @override
   State<ApplyJobScreen> createState() => _ApplyJobScreenState();
@@ -27,7 +37,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
   void initState() {
     super.initState();
 
-    /// ✅ AUTO FILL FROM WORKER SESSION
+    // ✅ AUTO FILL FROM WORKER SESSION
     final worker = WorkerSession.currentWorker;
     if (worker != null) {
       nameCtrl.text = worker.name;
@@ -36,12 +46,43 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    emailCtrl.dispose();
+    phoneCtrl.dispose();
+    experienceCtrl.dispose();
+    super.dispose();
+  }
+
+  // ===============================
+  // 🔥 SUBMIT APPLICATION (LOCATION BASED)
+  // ===============================
   Future<void> submitApplication() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => isLoading = true);
 
     try {
+      // 🔥 1. Get CURRENT worker location
+      final position = await LocationService.getCurrentLocation();
+
+      if (position == null) {
+        throw Exception("Location permission required to apply");
+      }
+
+      // 🔥 2. Send location with application
       final success =
-      await WorkerServiceApi.applyForService(widget.serviceId);
+      await WorkerServiceApi.applyForServiceWithLocation(
+        serviceId: widget.serviceId,
+        serviceLatitude: widget.serviceLatitude,
+        serviceLongitude: widget.serviceLongitude,
+        serviceAddress: widget.serviceAddress,
+
+        // 🔥 NEW (IMPORTANT)
+        workerLatitude: position.latitude,
+        workerLongitude: position.longitude,
+      );
 
       if (!mounted) return;
 
@@ -58,12 +99,16 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
       if (success) Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -86,8 +131,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              /// 🔥 TITLE
+              // 🔥 TITLE
               const Text(
                 "Job Application",
                 style: TextStyle(
@@ -104,7 +148,7 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 label: "Full Name",
                 icon: Icons.person,
                 validator: (v) =>
-                v!.isEmpty ? "Name is required" : null,
+                v == null || v.isEmpty ? "Name is required" : null,
               ),
 
               _inputField(
@@ -113,7 +157,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 icon: Icons.email,
                 keyboard: TextInputType.emailAddress,
                 validator: (v) =>
-                v!.contains("@") ? null : "Enter valid email",
+                v != null && v.contains("@")
+                    ? null
+                    : "Enter valid email",
               ),
 
               _inputField(
@@ -122,26 +168,20 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
                 icon: Icons.phone,
                 keyboard: TextInputType.phone,
                 validator: (v) =>
-                v!.length < 10 ? "Enter valid phone" : null,
+                v != null && v.length >= 10
+                    ? null
+                    : "Enter valid phone number",
               ),
 
-              if (errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    errorMessage!,
-                    style: const TextStyle(color: Colors.redAccent),
-                  ),
-                ),
+              _inputField(
+                controller: experienceCtrl,
+                label: "Experience (optional)",
+                icon: Icons.work,
+              ),
 
               const SizedBox(height: 30),
 
-              /// 🔘 SUBMIT BUTTON
+              // 🔘 SUBMIT BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -174,7 +214,9 @@ class _ApplyJobScreenState extends State<ApplyJobScreen> {
     );
   }
 
-  /// 🔹 INPUT FIELD (DARK STYLE)
+  // ===============================
+  // 🔹 INPUT FIELD (DARK THEME)
+  // ===============================
   Widget _inputField({
     required TextEditingController controller,
     required String label,

@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../models/vendor_create_service_request.dart';
 import '../services/service_api.dart';
 
-
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
 const Color kCard = Color(0xFF1A1A1A);
@@ -26,6 +25,11 @@ class _PostServicePageState extends State<PostServicePage> {
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  // 🔥 LOCATION CONTROLLERS
+  final _addressController = TextEditingController();
+  final _latController = TextEditingController();
+  final _lngController = TextEditingController();
 
   String? selectedCategory;
   bool isLoading = false;
@@ -110,6 +114,11 @@ class _PostServicePageState extends State<PostServicePage> {
       description: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
+
+      // 🔥 LOCATION
+      address: _addressController.text.trim(),
+      latitude: double.parse(_latController.text),
+      longitude: double.parse(_lngController.text),
     );
 
     final success = await ServiceApi.addService(service, selectedImage);
@@ -139,8 +148,6 @@ class _PostServicePageState extends State<PostServicePage> {
 
     return Scaffold(
       backgroundColor: kBg,
-
-      // ================= APP BAR =================
       appBar: AppBar(
         backgroundColor: kBg,
         elevation: 0,
@@ -150,8 +157,6 @@ class _PostServicePageState extends State<PostServicePage> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-
-      // ================= BODY =================
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -226,6 +231,33 @@ class _PostServicePageState extends State<PostServicePage> {
                 controller: _descriptionController,
                 label: "Description (optional)",
                 maxLines: 3,
+              ),
+
+              const SizedBox(height: 20),
+
+              // 🔥 LOCATION FIELDS
+              _darkField(
+                controller: _addressController,
+                label: "Service Address",
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              _darkField(
+                controller: _latController,
+                label: "Latitude",
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              _darkField(
+                controller: _lngController,
+                label: "Longitude",
+                keyboardType: TextInputType.number,
+                validator: (v) => v == null || v.isEmpty ? "Required" : null,
               ),
 
               const SizedBox(height: 20),
