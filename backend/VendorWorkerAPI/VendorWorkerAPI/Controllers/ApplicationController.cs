@@ -109,6 +109,7 @@ namespace VendorWorkerAPI.Controllers
                     ServiceName = a.Service.ServiceName,
                     Category = a.Service.Category,
                     Price = a.Service.Price,
+                   
                     ServiceDateTime = a.Service.ServiceDateTime,
                     VendorName = a.Service.Vendor.Name,
 
@@ -123,7 +124,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // VENDOR: VIEW APPLICATIONS
+        // VENDOR: VIEW APPLICATIONS / JOBS (WITH LOCATION + ADDRESS)
         // =====================================================
         [HttpGet("vendor")]
         [Authorize(Roles = "Vendor")]
@@ -139,35 +140,85 @@ namespace VendorWorkerAPI.Controllers
                 .Include(a => a.Service)
                 .Include(a => a.Worker)
                 .OrderByDescending(a => a.CreatedAt)
-               .Select(a => new
-               {
-                   a.Id,
-                   a.Status,
-                   a.CreatedAt,
+                .Select(a => new
+                {
+                    // 🔑 IDs
+                    a.Id,
 
-                   // 👤 WORKER
-                   WorkerName = a.Worker.Name,
-                   WorkerEmail = a.Worker.Email,
+                    // 🔄 STATUS
+                    a.Status,
+                    a.PaymentStatus,
+                    a.PaymentMethod,
 
-                   // 🛠 SERVICE (🔥 REQUIRED)
-                   ServiceName = a.Service.ServiceName,
-                   Category = a.Service.Category,
+                    // 👤 WORKER
+                    WorkerName = a.Worker.Name,
+                    WorkerEmail = a.Worker.Email,
 
-                   // 📍 WORKER LOCATION
-                   a.WorkerLatitude,
-                   a.WorkerLongitude,
+                    // 🛠 SERVICE (🔥 REQUIRED BY VENDOR JOB TAB)
+                    ServiceName = a.Service.ServiceName,
+                    Price = a.Service.Price,
+                    ServiceDateTime = a.Service.ServiceDateTime,
 
-                   // 📍 SERVICE LOCATION
-                   a.ServiceLatitude,
-                   a.ServiceLongitude,
-                   a.ServiceAddress
-               })
+                    // 📍 SERVICE LOCATION
+                    a.ServiceLatitude,
+                    a.ServiceLongitude,
+                    a.ServiceAddress,
 
+                    // 📍 WORKER LOCATION
+                    a.WorkerLatitude,
+                    a.WorkerLongitude,
 
+                    // ⭐ RATINGS
+                    a.VendorRated,
+                    a.VendorRating
+                })
                 .ToListAsync();
 
             return Ok(applications);
         }
+        // =====================================================
+        // VENDOR: VIEW PENDING APPLICATIONS ONLY
+        // =====================================================
+        [HttpGet("vendor/applications")]
+        [Authorize(Roles = "Vendor")]
+        public async Task<IActionResult> GetVendorApplicationRequests()
+        {
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null) return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
+
+            var applications = await _context.Applications
+                .Where(a => a.VendorId == vendorId && a.Status == "Pending")
+                .Include(a => a.Service)
+                .Include(a => a.Worker)
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Status,
+                    a.CreatedAt,
+
+                    // 👤 WORKER
+                    WorkerName = a.Worker.Name,
+                    WorkerEmail = a.Worker.Email,
+
+                    // 🛠 SERVICE
+                    ServiceName = a.Service.ServiceName,
+                    Category = a.Service.Category,
+
+                    // 📍 LOCATIONS
+                    a.WorkerLatitude,
+                    a.WorkerLongitude,
+                    a.ServiceLatitude,
+                    a.ServiceLongitude,
+                    a.ServiceAddress
+                })
+                .ToListAsync();
+
+            return Ok(applications);
+        }
+
 
         // =====================================================
         // VENDOR: ACCEPT / REJECT APPLICATION
