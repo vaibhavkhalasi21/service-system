@@ -37,14 +37,15 @@ class BookingRequestCard extends StatelessWidget {
   }
 
   // ===============================
-  // OPEN GOOGLE MAPS
+  // OPEN MAP (SAFE FOR ANDROID 11+)
   // ===============================
   Future<void> _openMap(double lat, double lng) async {
-    final uri = Uri.parse(
-      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
-    );
+    final uri = Uri.parse("geo:$lat,$lng?q=$lat,$lng");
 
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
   }
 
   // ===============================
@@ -77,7 +78,7 @@ class BookingRequestCard extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              "📍 ${distanceKm.toStringAsFixed(1)} km from service location",
+              "📍 ~${distanceKm.toStringAsFixed(1)} km from service location",
               style: const TextStyle(
                 color: kGrey,
                 fontSize: 12,
@@ -172,10 +173,9 @@ class BookingRequestCard extends StatelessWidget {
                       ),
                     ),
 
-
                     const SizedBox(height: 6),
 
-                    /// 📍 DISTANCE
+                    /// 📍 DISTANCE + MAP
                     _workerLocation(),
                   ],
                 ),
@@ -184,7 +184,9 @@ class BookingRequestCard extends StatelessWidget {
               /// STATUS BADGE
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: _statusColor().withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -203,7 +205,7 @@ class BookingRequestCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          /// DATE
+          /// 📅 DATE & TIME
           Row(
             children: [
               const Icon(Icons.calendar_today, size: 16, color: kGrey),
@@ -215,7 +217,7 @@ class BookingRequestCard extends StatelessWidget {
             ],
           ),
 
-          /// ACTIONS
+          /// ACTION BUTTONS
           if (isPending) ...[
             const SizedBox(height: 16),
             Row(

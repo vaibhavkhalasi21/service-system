@@ -19,9 +19,8 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   final TextEditingController _searchController = TextEditingController();
 
   bool isLoading = true;
-  bool locationUpdated = false;
-
   String selectedCategory = "All";
+
   List<MyJob> allJobs = [];
 
   final List<String> categories = [
@@ -39,19 +38,19 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
     _initDashboard();
   }
 
-  // ================= INIT FLOW =================
-  Future<void> _initDashboard() async {
-    await _updateWorkerLocationOnce();
-    await fetchNearbyJobs();
+  // ================= INIT =================
+  void _initDashboard() {
+    fetchNearbyJobs();          // FAST: do not await
+    _updateWorkerLocation();    // background task
   }
 
-  // ================= LOCATION =================
-  Future<void> _updateWorkerLocationOnce() async {
-    if (locationUpdated) return;
+  // ================= LOCATION (BACKGROUND) =================
+  Future<void> _updateWorkerLocation() async {
+    if (WorkerSession.locationSynced) return;
 
     try {
       final Position? position =
-      await LocationService.getCurrentLocation();
+      await LocationService.getFastLocation();
 
       if (position == null) return;
 
@@ -60,13 +59,13 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
         longitude: position.longitude,
       );
 
-      locationUpdated = true;
+      WorkerSession.locationSynced = true;
     } catch (_) {
-      // Silent fail: location should never break dashboard
+      // NEVER block UI for location
     }
   }
 
-  // ================= FETCH NEARBY JOBS =================
+  // ================= FETCH JOBS =================
   Future<void> fetchNearbyJobs() async {
     setState(() => isLoading = true);
 
@@ -122,16 +121,10 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
           // ================= HEADER =================
           Container(
             width: double.infinity,
-            padding:
-            EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
+            padding: EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xff0F0F0F),
-                  Color(0xff1C1C1C),
-                ],
+                colors: [Color(0xff0F0F0F), Color(0xff1C1C1C)],
               ),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(30),
@@ -143,11 +136,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
               children: [
                 const Text(
                   "WELCOME BACK",
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                  ),
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -180,45 +169,40 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                   hintText: "Search service, vendor or location...",
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
-                  icon: Icon(Icons.search,
-                      color: Color(0xff7C3AED)),
+                  icon: Icon(Icons.search, color: Color(0xff7C3AED)),
                 ),
               ),
             ),
           ),
 
-          // ================= CATEGORY FILTER =================
+          // ================= CATEGORY =================
           SizedBox(
             height: 48,
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final cat = categories[index];
+              itemBuilder: (_, i) {
+                final cat = categories[i];
                 final selected = cat == selectedCategory;
 
                 return GestureDetector(
-                  onTap: () =>
-                      setState(() => selectedCategory = cat),
+                  onTap: () => setState(() => selectedCategory = cat),
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
                       color: selected
                           ? const Color(0xff7C3AED)
                           : const Color(0xff1E1E1E),
                       borderRadius: BorderRadius.circular(30),
-                      border:
-                      Border.all(color: const Color(0xff7C3AED)),
+                      border: Border.all(color: const Color(0xff7C3AED)),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       cat,
                       style: TextStyle(
-                        color:
-                        selected ? Colors.white : Colors.white70,
+                        color: selected ? Colors.white : Colors.white70,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -245,17 +229,14 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                   ? const Center(
                 child: Text(
                   "No nearby jobs found",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white60,
-                  ),
+                  style: TextStyle(color: Colors.white60),
                 ),
               )
                   : ListView.builder(
                 padding:
                 const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: filteredJobs.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (_, index) {
                   final job = filteredJobs[index];
 
                   return JobCard(
@@ -274,12 +255,13 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                         MaterialPageRoute(
                           builder: (_) => ApplyJobScreen(
                             serviceId: job.id,
-                            serviceLatitude: job.serviceLatitude,
-                            serviceLongitude: job.serviceLongitude,
+                            serviceLatitude:
+                            job.serviceLatitude,
+                            serviceLongitude:
+                            job.serviceLongitude,
                             serviceAddress: job.address,
                           ),
                         ),
-
                       );
                     },
                   );

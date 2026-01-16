@@ -62,6 +62,7 @@ class _VendorJobsTabState extends State<VendorJobsTab>
   // ===============================
   // FILTERS
   // ===============================
+  // Vendor has ACCEPTED but job not completed yet
   List<VendorBookingRequest> get pendingJobs =>
       allJobs.where((j) => j.status == "Accepted").toList();
 
@@ -69,7 +70,10 @@ class _VendorJobsTabState extends State<VendorJobsTab>
       allJobs.where((j) => j.status == "Completed").toList();
 
   List<VendorBookingRequest> get cancelledJobs =>
-      allJobs.where((j) => j.status == "Cancelled").toList();
+      allJobs.where((j) => j.status == "Rejected").toList();
+
+
+
 
   // ===============================
   // EMPTY STATE

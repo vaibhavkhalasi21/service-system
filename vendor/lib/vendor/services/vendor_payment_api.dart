@@ -5,7 +5,7 @@ import '../models/vendor_payment.dart';
 
 class VendorPaymentApi {
   static const String baseUrl =
-      "http://10.29.111.37:5244/api/application";
+      "http://172.20.253.37:5244/api/application";
 
   // ===============================
   // VENDOR: GET COMPLETED PAYMENTS

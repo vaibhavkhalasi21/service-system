@@ -5,7 +5,7 @@ class VendorBookingRequest {
   final String workerName;
   final String workerEmail;
 
-  // 📍 WORKER LOCATION (NEW)
+  // 📍 WORKER LOCATION
   final double? workerLatitude;
   final double? workerLongitude;
 
@@ -32,34 +32,20 @@ class VendorBookingRequest {
 
   VendorBookingRequest({
     required this.id,
-
-    // 👤 WORKER
     required this.workerName,
     required this.workerEmail,
-
-    // 📍 WORKER LOCATION
     this.workerLatitude,
     this.workerLongitude,
-
-    // 🛠 SERVICE
     required this.serviceName,
     required this.price,
     required this.serviceDateTime,
-
-    // 📍 SERVICE LOCATION
     this.serviceAddress,
     this.serviceLatitude,
     this.serviceLongitude,
-
-    // 🔄 STATUS
     required this.status,
     required this.paymentStatus,
-
-    // ⭐ RATINGS
     required this.vendorRated,
     this.vendorRating,
-
-    // 💳 PAYMENT
     this.paymentMethod,
   });
 
@@ -71,27 +57,24 @@ class VendorBookingRequest {
       workerName: json['workerName'] ?? "",
       workerEmail: json['workerEmail'] ?? "",
 
-      // 📍 WORKER LOCATION (NEW)
-      workerLatitude: json['workerLatitude'] != null
-          ? (json['workerLatitude'] as num).toDouble()
-          : null,
-      workerLongitude: json['workerLongitude'] != null
-          ? (json['workerLongitude'] as num).toDouble()
-          : null,
+      // 📍 WORKER LOCATION
+      workerLatitude: (json['workerLatitude'] as num?)?.toDouble(),
+      workerLongitude: (json['workerLongitude'] as num?)?.toDouble(),
 
       // 🛠 SERVICE
       serviceName: json['serviceName'] ?? "",
-      price: (json['price'] as num).toInt(),
-      serviceDateTime: DateTime.parse(json['serviceDateTime']),
+      price: json['price'] != null
+          ? (json['price'] as num).toInt()
+          : 0, // ✅ fallback
+
+      serviceDateTime: json['serviceDateTime'] != null
+          ? DateTime.parse(json['serviceDateTime'])
+          : DateTime.now(), // ✅ fallback
 
       // 📍 SERVICE LOCATION
       serviceAddress: json['serviceAddress'],
-      serviceLatitude: json['serviceLatitude'] != null
-          ? (json['serviceLatitude'] as num).toDouble()
-          : null,
-      serviceLongitude: json['serviceLongitude'] != null
-          ? (json['serviceLongitude'] as num).toDouble()
-          : null,
+      serviceLatitude: (json['serviceLatitude'] as num?)?.toDouble(),
+      serviceLongitude: (json['serviceLongitude'] as num?)?.toDouble(),
 
       // 🔄 STATUS
       status: json['status'] ?? "Pending",

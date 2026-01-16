@@ -203,43 +203,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       ),
                       const Spacer(),
 
-                      // ================= RATING =================
-                      if (b.status.toLowerCase() == "completed")
-                        b.vendorRated
-                            ? Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              b.vendorRating
-                                  ?.toString() ??
-                                  "-",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight:
-                                FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        )
-                            : TextButton(
-                          onPressed: () {
-                            // 🔥 NEXT STEP: rating dialog
-                          },
-                          child: const Text(
-                            "Rate Vendor",
-                            style: TextStyle(
-                              color: Color(0xff7C3AED),
-                              fontWeight:
-                              FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
+
+            ],
                   ),
                 ],
               ),

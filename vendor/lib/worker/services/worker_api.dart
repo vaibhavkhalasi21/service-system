@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../sessions/worker_session.dart';
 
 class WorkerApi {
-  static const String baseUrl = "http://10.29.111.37:5244/api/worker";
+  static const String baseUrl = "http://172.20.253.37:5244/api/worker";
 
   // ======== REGISTER ========
   static Future<String?> signupWorker({
