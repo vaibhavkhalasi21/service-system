@@ -1,3 +1,5 @@
+import '../constants/service_categories.dart';
+
 class VendorApplicationItem {
   final int id;
 
@@ -7,7 +9,7 @@ class VendorApplicationItem {
 
   // 🛠 SERVICE
   final String serviceName;
-  final String category;
+  final int category;
 
   // 📍 WORKER LOCATION
   final double? workerLatitude;
@@ -40,16 +42,36 @@ class VendorApplicationItem {
   factory VendorApplicationItem.fromJson(Map<String, dynamic> json) {
     return VendorApplicationItem(
       id: json['id'],
+
       workerName: json['workerName'] ?? "",
       workerEmail: json['workerEmail'] ?? "",
+
       serviceName: json['serviceName'] ?? "",
-      category: json['category'] ?? "",
+
+      /// 🔥 FIXED CATEGORY (STRING OR INT SAFE)
+      category: json['category'] is int
+          ? json['category']
+          : mapCategoryToEnum(json['category']),
+
       status: json['status'] ?? "Pending",
-      createdAt: DateTime.parse(json['createdAt']),
-      workerLatitude: (json['workerLatitude'] as num?)?.toDouble(),
-      workerLongitude: (json['workerLongitude'] as num?)?.toDouble(),
-      serviceLatitude: (json['serviceLatitude'] as num?)?.toDouble(),
-      serviceLongitude: (json['serviceLongitude'] as num?)?.toDouble(),
+      createdAt: DateTime.parse(json['createdAt']).toLocal(),
+
+      workerLatitude: json['workerLatitude'] != null
+          ? double.tryParse(json['workerLatitude'].toString())
+          : null,
+
+      workerLongitude: json['workerLongitude'] != null
+          ? double.tryParse(json['workerLongitude'].toString())
+          : null,
+
+      serviceLatitude: json['serviceLatitude'] != null
+          ? double.tryParse(json['serviceLatitude'].toString())
+          : null,
+
+      serviceLongitude: json['serviceLongitude'] != null
+          ? double.tryParse(json['serviceLongitude'].toString())
+          : null,
+
       serviceAddress: json['serviceAddress'],
     );
   }

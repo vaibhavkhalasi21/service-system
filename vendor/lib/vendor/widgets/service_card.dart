@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../constants/service_categories.dart';
 import '../models/vendor_service.dart';
 import '../screens/manage_service_page.dart';
 
@@ -26,8 +27,7 @@ class ServiceCard extends StatelessWidget {
   // ===============================
   String timeAgo(DateTime date) {
     final now = DateTime.now().toLocal();
-    final localDate = date.toLocal();
-    final diff = now.difference(localDate);
+    final diff = now.difference(date.toLocal());
 
     if (diff.inSeconds < 60) return "Just now";
     if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
@@ -158,9 +158,9 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // ================= CATEGORY =================
+                // ================= CATEGORY (✅ FIXED) =================
                 Text(
-                  service.category,
+                  mapEnumToCategory(service.category),
                   style: const TextStyle(
                     color: kTextGrey,
                     fontSize: 13,
@@ -187,7 +187,7 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 8),
 
-                // ================= ADDRESS (🔥 NEW) =================
+                // ================= ADDRESS =================
                 if (service.address != null &&
                     service.address!.trim().isNotEmpty) ...[
                   Row(
@@ -241,8 +241,6 @@ class ServiceCard extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          padding:
-                          const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: () async {
                           final updated = await Navigator.push(
@@ -254,13 +252,7 @@ class ServiceCard extends StatelessWidget {
                           );
                           if (updated == true) onUpdated();
                         },
-                        child: const Text(
-                          "Edit Service",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: const Text("Edit Service"),
                       ),
                     )
                   else

@@ -27,7 +27,7 @@ class WorkerSession {
 
     await prefs.setString(
       'worker_data',
-      jsonEncode(worker.toJson()),
+      jsonEncode(worker.toJson()), // 👈 category included here
     );
     await prefs.setString(
       'worker_token',
@@ -46,7 +46,7 @@ class WorkerSession {
 
     if (workerJson != null && storedToken != null) {
       currentWorker = Worker.fromJson(
-        jsonDecode(workerJson),
+        jsonDecode(workerJson), // 👈 category restored here
       );
       token = storedToken;
     }

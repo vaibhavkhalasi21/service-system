@@ -50,7 +50,7 @@ class ServiceApi {
   }
 
   // =========================================
-  // VENDOR: ADD SERVICE (🔥 LOCATION ADDED)
+  // VENDOR: ADD SERVICE (🔥 FIXED)
   // =========================================
   static Future<bool> addService(
       VendorCreateServiceRequest service,
@@ -68,20 +68,21 @@ class ServiceApi {
 
     request.headers["Authorization"] = "Bearer $token";
 
-    // BASIC FIELDS
+    // ✅ BASIC FIELDS (ALL STRINGS)
     request.fields["serviceName"] = service.serviceName;
-    request.fields["category"] = service.category;
+    request.fields["category"] = service.category.toString(); // 🔥 FIX
     request.fields["price"] = service.price.toString();
     request.fields["serviceDateTime"] =
         service.serviceDateTime.toIso8601String();
 
-    // 🔥 LOCATION FIELDS
+    // 🔥 LOCATION
     request.fields["address"] = service.address;
     request.fields["latitude"] = service.latitude.toString();
     request.fields["longitude"] = service.longitude.toString();
 
     // OPTIONAL DESCRIPTION
-    if (service.description != null) {
+    if (service.description != null &&
+        service.description!.isNotEmpty) {
       request.fields["description"] = service.description!;
     }
 
@@ -98,11 +99,12 @@ class ServiceApi {
     print("POST STATUS: ${response.statusCode}");
     print("POST BODY: $body");
 
-    return response.statusCode == 200 || response.statusCode == 201;
+    return response.statusCode == 200 ||
+        response.statusCode == 201;
   }
 
   // =========================================
-  // VENDOR: UPDATE SERVICE (🔥 LOCATION ADDED)
+  // VENDOR: UPDATE SERVICE (🔥 FIXED)
   // =========================================
   static Future<bool> updateService(
       int serviceId,
@@ -121,19 +123,20 @@ class ServiceApi {
 
     request.headers["Authorization"] = "Bearer $token";
 
-    // BASIC FIELDS
+    // ✅ BASIC FIELDS (ALL STRINGS)
     request.fields["serviceName"] = service.serviceName;
-    request.fields["category"] = service.category;
+    request.fields["category"] = service.category.toString(); // 🔥 FIX
     request.fields["price"] = service.price.toString();
     request.fields["serviceDateTime"] =
         service.serviceDateTime.toIso8601String();
 
-    // 🔥 LOCATION FIELDS
+    // 🔥 LOCATION
     request.fields["address"] = service.address;
     request.fields["latitude"] = service.latitude.toString();
     request.fields["longitude"] = service.longitude.toString();
 
-    if (service.description != null) {
+    if (service.description != null &&
+        service.description!.isNotEmpty) {
       request.fields["description"] = service.description!;
     }
 
@@ -158,6 +161,7 @@ class ServiceApi {
   static Future<bool> deleteService(int serviceId) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
+
     if (token == null) return false;
 
     final response = await http.delete(

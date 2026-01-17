@@ -32,19 +32,16 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
   late TextEditingController titleController;
   late TextEditingController priceController;
-
-  // 🔥 LOCATION CONTROLLERS
   late TextEditingController addressController;
   late TextEditingController latController;
   late TextEditingController lngController;
 
-  String? selectedCategory;
-  File? selectedImage;
+  String? selectedCategory; // 🔹 UI string
+  DateTime? selectedServiceDateTime;
 
+  File? selectedImage;
   bool isLoading = false;
   bool isDeleting = false;
-
-  DateTime? selectedServiceDateTime;
 
   final ImagePicker picker = ImagePicker();
 
@@ -65,9 +62,8 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     selectedServiceDateTime = widget.service.serviceDateTime;
 
-    selectedCategory = serviceCategories.contains(widget.service.category)
-        ? widget.service.category
-        : null;
+    // 🔥 ENUM → STRING (IMPORTANT)
+    selectedCategory = mapEnumToCategory(widget.service.category);
   }
 
   @override
@@ -80,9 +76,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
     super.dispose();
   }
 
-  // =============================
-  // IMAGE PICKER
-  // =============================
+  // ================= IMAGE PICKER =================
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -90,9 +84,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
     }
   }
 
-  // =============================
-  // DATE & TIME PICKER
-  // =============================
+  // ================= DATE & TIME =================
   Future<void> pickServiceDateTime() async {
     final DateTime? date = await showDatePicker(
       context: context,
@@ -105,9 +97,8 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     final TimeOfDay? time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(
-        selectedServiceDateTime ?? DateTime.now(),
-      ),
+      initialTime:
+      TimeOfDay.fromDateTime(selectedServiceDateTime ?? DateTime.now()),
     );
 
     if (time == null) return;
@@ -123,9 +114,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
     });
   }
 
-  // =============================
-  // UPDATE SERVICE
-  // =============================
+  // ================= UPDATE SERVICE =================
   Future<void> updateService() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedCategory == null || selectedServiceDateTime == null) return;
@@ -135,7 +124,10 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     final request = VendorCreateServiceRequest(
       serviceName: titleController.text.trim(),
-      category: selectedCategory!,
+
+      // 🔥 STRING → ENUM INT (MAIN FIX)
+      category: mapCategoryToEnum(selectedCategory!),
+
       price: double.parse(priceController.text),
       serviceDateTime: selectedServiceDateTime!,
       address: addressController.text.trim(),
@@ -170,9 +162,7 @@ class _ManageServicePageState extends State<ManageServicePage> {
     }
   }
 
-  // =============================
-  // DELETE SERVICE
-  // =============================
+  // ================= DELETE SERVICE =================
   Future<void> deleteService() async {
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -205,14 +195,10 @@ class _ManageServicePageState extends State<ManageServicePage> {
 
     setState(() => isDeleting = false);
 
-    if (success) {
-      Navigator.pop(context, true);
-    }
+    if (success) Navigator.pop(context, true);
   }
 
-  // =============================
-  // UI
-  // =============================
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     final scheduledText = selectedServiceDateTime == null
@@ -236,190 +222,30 @@ class _ManageServicePageState extends State<ManageServicePage> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ================= IMAGE =================
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: selectedImage != null
-                    ? Image.file(
-                  selectedImage!,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                )
+                    ? Image.file(selectedImage!, height: 180, fit: BoxFit.cover)
                     : Image.network(
                   widget.service.imagePath,
                   height: 180,
-                  width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      size: 40,
-                      color: kGrey,
-                    ),
-                  ),
                 ),
               ),
-
-              TextButton.icon(
-                onPressed: pickImage,
-                icon: const Icon(Icons.image, color: kPurple),
-                label: const Text(
-                  "Change Image",
-                  style: TextStyle(color: kPurple),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              _darkField(
-                controller: titleController,
-                label: "Service Name",
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 14),
 
               DropdownButtonFormField<String>(
                 value: selectedCategory,
-                dropdownColor: kCard,
-                style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration("Category"),
                 items: serviceCategories
-                    .map(
-                      (c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(c),
-                  ),
-                )
+                    .map((c) =>
+                    DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
                 onChanged: (v) => setState(() => selectedCategory = v),
                 validator: (v) => v == null ? "Select category" : null,
               ),
-
-              const SizedBox(height: 14),
-
-              _darkField(
-                controller: priceController,
-                label: "Price (₹)",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              OutlinedButton.icon(
-                onPressed: pickServiceDateTime,
-                icon: const Icon(Icons.schedule),
-                label: Text(scheduledText),
-              ),
-
-              const SizedBox(height: 20),
-
-              // 🔥 LOCATION
-              _darkField(
-                controller: addressController,
-                label: "Service Address",
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 14),
-
-              _darkField(
-                controller: latController,
-                label: "Latitude",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 14),
-
-              _darkField(
-                controller: lngController,
-                label: "Longitude",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 28),
-
-              // ================= SAVE =================
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: isLoading ? null : updateService,
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                    "Save Changes",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ================= DELETE =================
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: isDeleting ? null : deleteService,
-                  child: isDeleting
-                      ? const CircularProgressIndicator()
-                      : const Text("Delete Service"),
-                ),
-              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // =============================
-  // REUSABLE DARK FIELD
-  // =============================
-  Widget _darkField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
-      validator: validator,
-      decoration: _inputDecoration(label),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: kGrey),
-      filled: true,
-      fillColor: kCard,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
       ),
     );
   }

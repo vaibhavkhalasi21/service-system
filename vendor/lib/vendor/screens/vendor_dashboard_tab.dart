@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/service_categories.dart';
 import '../models/vendor_service.dart';
 import '../models/vendor_service_request.dart';
 import '../services/service_api.dart';
@@ -114,8 +115,9 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
         : services
         .where(
           (s) =>
-      s.category.toLowerCase().trim() ==
-          selectedCategory.toLowerCase().trim(),
+          selectedCategory == "All" ||
+              mapCategoryToEnum(selectedCategory) == s.category
+
     )
         .toList();
 

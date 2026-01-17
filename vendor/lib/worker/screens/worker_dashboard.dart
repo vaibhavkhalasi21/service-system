@@ -23,7 +23,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
   List<MyJob> allJobs = [];
 
-  final List<String> categories = [
+  final List<String> categories = const [
     "All",
     "Plumber",
     "Electrician",
@@ -38,13 +38,19 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
     _initDashboard();
   }
 
-  // ================= INIT =================
-  void _initDashboard() {
-    fetchNearbyJobs();          // FAST: do not await
-    _updateWorkerLocation();    // background task
+  @override
+  void dispose() {
+    _searchController.dispose(); // ✅ FIX
+    super.dispose();
   }
 
-  // ================= LOCATION (BACKGROUND) =================
+  // ================= INIT =================
+  void _initDashboard() {
+    fetchNearbyJobs();        // do not await → fast UI
+    _updateWorkerLocation();  // background task
+  }
+
+  // ================= LOCATION =================
   Future<void> _updateWorkerLocation() async {
     if (WorkerSession.locationSynced) return;
 
@@ -61,7 +67,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
       WorkerSession.locationSynced = true;
     } catch (_) {
-      // NEVER block UI for location
+      // silently fail – never block UI
     }
   }
 
@@ -112,7 +118,8 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
-    final workerName = WorkerSession.currentWorker?.name ?? "Worker";
+    final workerName =
+        WorkerSession.currentWorker?.name ?? "Worker";
 
     return Scaffold(
       backgroundColor: const Color(0xff0F0F0F),
@@ -233,8 +240,8 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                 ),
               )
                   : ListView.builder(
-                padding:
-                const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                padding: const EdgeInsets.fromLTRB(
+                    16, 16, 16, 80),
                 itemCount: filteredJobs.length,
                 itemBuilder: (_, index) {
                   final job = filteredJobs[index];

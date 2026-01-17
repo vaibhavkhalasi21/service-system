@@ -1,7 +1,7 @@
 class MyJob {
   final int id;
   final String title;
-  final String category;
+  final String category; // ✅ STRING for UI
   final String description;
   final String date;
   final String location;
@@ -13,8 +13,7 @@ class MyJob {
   final DateTime serviceDateTime;
   final String address;
 
-
-  // 🔥 ADDED for location-based features
+  // 📍 LOCATION (MAP / DISTANCE)
   final double serviceLatitude;
   final double serviceLongitude;
 
@@ -36,42 +35,70 @@ class MyJob {
     required this.serviceLongitude,
   });
 
+  // =============================
+  // 🔥 CATEGORY ENUM → STRING
+  // =============================
+  static String _categoryFromInt(int value) {
+    switch (value) {
+      case 1:
+        return "Cleaning";
+      case 2:
+        return "Plumber";
+      case 3:
+        return "Electrician";
+      case 4:
+        return "AC Repair";
+      case 5:
+        return "Painter";
+      default:
+        return "Unknown";
+    }
+  }
+
   factory MyJob.fromJson(Map<String, dynamic> json) {
     const baseUrl = "http://172.20.253.37:5244";
+
+    // 🔥 backend sends category as int
+    final int rawCategory =
+    json['category'] is int ? json['category'] : 0;
 
     return MyJob(
       id: json['id'] ?? 0,
 
       // 🔹 Backend: serviceName
-      title: json['serviceName'] ?? json['title'] ?? "",
+      title: json['serviceName'] ?? "",
 
-      category: json['category'] ?? "",
+      // ✅ ENUM → STRING
+      category: _categoryFromInt(rawCategory),
 
       // 🔹 Nearby jobs don’t have description
       description: json['description'] ?? "No description",
 
-      // 🔹 Friendly date
+      // 🔹 Friendly date (string used elsewhere)
       date: json['serviceDateTime'] != null
           ? json['serviceDateTime'].toString()
           : "",
 
-      address: json['address'] ??
-          json['serviceAddress'] ??
+      // 🔹 Address
+      address: json['serviceAddress'] ??
+          json['address'] ??
           "Location not specified",
 
-      // 🔥 MAP serviceAddress → location
+      // 🔹 Location label
       location: json['serviceAddress'] ?? "Location not specified",
 
-      // 🔹 Nearby jobs don’t return image
-      imageUrl: (json['imageUrl'] != null && json['imageUrl'] != "")
+      // 🔹 Image
+      imageUrl: (json['imageUrl'] != null &&
+          json['imageUrl'].toString().isNotEmpty)
           ? "$baseUrl${json['imageUrl']}"
           : "https://via.placeholder.com/150",
 
+      // 🔹 Price
       price: json['price'] != null
           ? (json['price'] as num).toDouble()
           : 0.0,
 
-      // 🔹 Nearby jobs don’t return rating
+      // 🔹 Rating (not returned by nearby API)
       rating: json['rating'] != null
           ? (json['rating'] as num).toDouble()
           : 4.0,
@@ -86,7 +113,7 @@ class MyJob {
           ? DateTime.parse(json['serviceDateTime'])
           : DateTime.now(),
 
-      // 🔥 LOCATION COORDINATES
+      // 📍 COORDINATES
       serviceLatitude: json['serviceLatitude'] != null
           ? (json['serviceLatitude'] as num).toDouble()
           : 0.0,

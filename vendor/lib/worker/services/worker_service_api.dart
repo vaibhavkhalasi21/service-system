@@ -8,12 +8,12 @@ import '../models/job_model.dart';
 
 class WorkerServiceApi {
   // ===============================
-  // 🔥 SERVER CONFIG (SAFE)
+  // 🔥 SERVER CONFIG
   // ===============================
   static const String _host = "172.20.253.37:5244";
   static const String _basePath = "/api";
 
-  static String? _token; // 🔥 cached token
+  static String? _token;
 
   // ===============================
   // 🔥 COMMON HEADERS
@@ -24,25 +24,22 @@ class WorkerServiceApi {
   };
 
   // ===============================
-  // 🔥 LOAD TOKEN ONCE
+  // 🔥 ALWAYS LOAD TOKEN (SAFE)
   // ===============================
   static Future<void> _loadToken() async {
-    if (_token != null) return;
-
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("worker_token");
 
-    if (_token == null) {
+    if (_token == null || _token!.isEmpty) {
       throw Exception("Worker not logged in");
     }
   }
 
   // ===============================
-  // PUBLIC SERVICES
+  // 🔓 PUBLIC SERVICES
   // ===============================
   static Future<List<ServiceModel>> getServices() async {
     final uri = Uri.http(_host, "$_basePath/service/public");
-
     final response = await http.get(uri);
 
     if (response.statusCode != 200) {
@@ -54,7 +51,7 @@ class WorkerServiceApi {
   }
 
   // ===============================
-  // APPLY FOR SERVICE (OLD)
+  // 🔥 APPLY FOR SERVICE (NO LOCATION)
   // ===============================
   static Future<bool> applyForService(int serviceId) async {
     await _loadToken();
@@ -63,7 +60,6 @@ class WorkerServiceApi {
     Uri.http(_host, "$_basePath/application/apply/$serviceId");
 
     final response = await http.post(uri, headers: _headers);
-
     return response.statusCode == 200;
   }
 
@@ -99,7 +95,7 @@ class WorkerServiceApi {
   }
 
   // ===============================
-  // 🔥 UPDATE WORKER LOCATION
+  // 📍 UPDATE WORKER LOCATION
   // ===============================
   static Future<void> updateWorkerLocation({
     required double latitude,
@@ -124,46 +120,53 @@ class WorkerServiceApi {
   }
 
   // ===============================
-  // 🔥 NEARBY JOBS
+  // 🔥 NEARBY JOBS (SAFE & FIXED)
   // ===============================
   static Future<List<MyJob>> getNearbyJobs() async {
     await _loadToken();
 
     final uri = Uri.http(_host, "$_basePath/worker/nearby-jobs");
-
     final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode != 200) {
       throw Exception("Failed to load nearby jobs");
     }
 
+    if (response.body.isEmpty) {
+      return [];
+    }
+
     final List data = jsonDecode(response.body);
+
+    if (data.isEmpty) {
+      return [];
+    }
+
     return data.map((e) => MyJob.fromJson(e)).toList();
   }
 
   // ===============================
-  // MARK JOB COMPLETED
+  // ✅ MARK JOB COMPLETED
   // ===============================
   static Future<bool> markJobCompleted(int applicationId) async {
     await _loadToken();
 
     final uri = Uri.http(
-        _host, "$_basePath/application/$applicationId/complete");
+      _host,
+      "$_basePath/application/$applicationId/complete",
+    );
 
     final response = await http.put(uri, headers: _headers);
-
     return response.statusCode == 200;
   }
 
   // ===============================
-  // MY BOOKINGS
+  // 📦 MY BOOKINGS
   // ===============================
   static Future<List<Booking>> getMyBookings() async {
     await _loadToken();
 
-    final uri =
-    Uri.http(_host, "$_basePath/application/worker");
-
+    final uri = Uri.http(_host, "$_basePath/application/worker");
     final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode != 200) {
@@ -175,7 +178,7 @@ class WorkerServiceApi {
   }
 
   // ===============================
-  // LOGOUT (OPTIONAL BUT GOOD)
+  // 🔒 LOGOUT / CLEAR SESSION
   // ===============================
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();

@@ -1,6 +1,14 @@
 class VendorCreateServiceRequest {
   final String serviceName;
-  final String category;
+
+  /// 🔥 MUST BE INT (matches backend enum)
+  /// Cleaning = 1
+  /// Plumber = 2
+  /// Electrician = 3
+  /// ACRepair = 4
+  /// Painter = 5
+  final int category;
+
   final double price;
 
   // 🔴 REQUIRED
@@ -15,12 +23,10 @@ class VendorCreateServiceRequest {
 
   VendorCreateServiceRequest({
     required this.serviceName,
-    required this.category,
+    required this.category, // ✅ int
     required this.price,
     required this.serviceDateTime,
     this.description,
-
-    // 🔥 LOCATION
     required this.latitude,
     required this.longitude,
     required this.address,
@@ -30,7 +36,7 @@ class VendorCreateServiceRequest {
   Map<String, dynamic> toJson() {
     return {
       "serviceName": serviceName,
-      "category": category,
+      "category": category, // ✅ INT SENT TO BACKEND
       "price": price,
       "serviceDateTime": serviceDateTime.toIso8601String(),
       "description": description,

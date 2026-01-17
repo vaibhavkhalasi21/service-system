@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/worker_model.dart';
 import '../sessions/worker_session.dart';
@@ -17,6 +19,10 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
   late TextEditingController emailController;
 
   Worker? worker;
+  bool isSaving = false;
+
+  static const String _host = "172.20.253.37:5244";
+  static const String _basePath = "/api";
 
   @override
   void initState() {
@@ -48,10 +54,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "Edit Profile",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("Edit Profile"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -60,8 +63,6 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              /// 🔥 TITLE
               const Text(
                 "Update Your Profile",
                 style: TextStyle(
@@ -73,7 +74,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
 
               const SizedBox(height: 24),
 
-              /// 👤 NAME
+              /// 👤 NAME (EDITABLE)
               _inputField(
                 controller: nameController,
                 label: "Full Name",
@@ -82,38 +83,30 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
                 v == null || v.isEmpty ? "Enter name" : null,
               ),
 
-              /// 📧 EMAIL
+              /// 📧 EMAIL (READ ONLY)
               _inputField(
                 controller: emailController,
                 label: "Email Address",
                 icon: Icons.email,
-                keyboard: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.isEmpty) {
-                    return "Enter email";
-                  }
-                  if (!v.contains('@')) {
-                    return "Enter valid email";
-                  }
-                  return null;
-                },
+                enabled: false,
               ),
 
               const Spacer(),
 
-              /// 🔘 SAVE BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _saveProfile,
+                  onPressed: isSaving ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff7C3AED),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: isSaving
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
                     "SAVE PROFILE",
                     style: TextStyle(
                       fontSize: 16,
@@ -129,11 +122,11 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
     );
   }
 
-  /// 🔹 DARK INPUT FIELD
   Widget _inputField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    bool enabled = true,
     TextInputType keyboard = TextInputType.text,
     String? Function(String?)? validator,
   }) {
@@ -143,6 +136,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
         controller: controller,
         keyboardType: keyboard,
         validator: validator,
+        enabled: enabled,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
@@ -159,32 +153,50 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
     );
   }
 
-  void _saveProfile() async {
+  Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    String? token = await WorkerSession.getToken();
-    if (token == null) {
+    setState(() => isSaving = true);
+
+    try {
+      final token = await WorkerSession.getToken();
+      if (token == null) throw Exception("Token missing");
+
+      final uri = Uri.http(_host, "$_basePath/worker/profile");
+
+      final response = await http.put(
+        uri,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "name": nameController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Update failed");
+      }
+
+      /// ✅ UPDATE LOCAL SESSION
+      Worker updatedWorker = worker!.copyWith(
+        name: nameController.text.trim(),
+      );
+
+      await WorkerSession.saveWorker(updatedWorker, token);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Error: Token not found"),
+        SnackBar(
+          content: Text(e.toString()),
           backgroundColor: Colors.red,
         ),
       );
-      return;
+    } finally {
+      if (mounted) setState(() => isSaving = false);
     }
-
-    /// 🔥 UPDATED WORKER (NAME + EMAIL)
-    Worker updatedWorker = Worker(
-      id: worker!.id,
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      phone: worker!.phone,
-      skill: worker!.skill,
-      address: worker!.address,
-    );
-
-    await WorkerSession.saveWorker(updatedWorker, token);
-
-    Navigator.pop(context); // back to profile
   }
 }

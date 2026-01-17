@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../constants/service_categories.dart';
+
 
 import '../models/vendor_application_item.dart';
 import '../utils/location_utils.dart';
@@ -165,13 +167,14 @@ class BookingRequestCard extends StatelessWidget {
 
                     /// 🏷 CATEGORY
                     Text(
-                      request.category,
+                      mapEnumToCategory(request.category),
                       style: const TextStyle(
                         color: kPurple,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+
 
                     const SizedBox(height: 6),
 

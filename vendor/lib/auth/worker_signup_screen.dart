@@ -24,17 +24,18 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
   final passwordCtrl = TextEditingController();
   final addressCtrl = TextEditingController();
 
-  String? selectedCategory;
+  int? selectedCategory; // 🔥 ENUM NUMBER
   bool isPasswordHidden = true;
   bool isLoading = false;
 
-  final categories = [
-    "Plumber",
-    "Electrician",
-    "AC Repairer",
-    "Cleaning",
-    "Painter",
-  ];
+  // 🔐 Backend enum mapping
+  final Map<int, String> categories = {
+    1: "Cleaning",
+    2: "Plumber",
+    3: "Electrician",
+    4: "AC Repair",
+    5: "Painter",
+  };
 
   @override
   void dispose() {
@@ -73,7 +74,7 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
       email: emailCtrl.text.trim(),
       password: passwordCtrl.text.trim(),
       phone: phoneCtrl.text.trim(),
-      skill: selectedCategory!,
+      category: selectedCategory!, // ✅ ENUM NUMBER
       address: addressCtrl.text.trim(),
     );
 
@@ -222,20 +223,23 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
 
                     const SizedBox(height: 14),
 
-                    DropdownButtonFormField<String>(
+                    // ================= CATEGORY DROPDOWN =================
+                    DropdownButtonFormField<int>(
                       value: selectedCategory,
                       dropdownColor: kCard,
                       style: const TextStyle(color: Colors.white),
-                      decoration: _inputDecoration("Category", Icons.work),
-                      items: categories
+                      decoration:
+                      _inputDecoration("Category", Icons.work),
+                      items: categories.entries
                           .map(
-                            (c) => DropdownMenuItem(
-                          value: c,
-                          child: Text(c),
+                            (e) => DropdownMenuItem<int>(
+                          value: e.key,
+                          child: Text(e.value),
                         ),
                       )
                           .toList(),
-                      onChanged: (v) => setState(() => selectedCategory = v),
+                      onChanged: (v) =>
+                          setState(() => selectedCategory = v),
                       validator: (v) =>
                       v == null ? "Select category" : null,
                     ),

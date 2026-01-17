@@ -47,9 +47,29 @@ class _PostServicePageState extends State<PostServicePage> {
     "Painter",
   ];
 
-  // =====================
+  // =======================
+  // CATEGORY → ENUM MAPPER
+  // =======================
+  int mapCategoryToEnum(String category) {
+    switch (category) {
+      case "Cleaning":
+        return 1;
+      case "Plumber":
+        return 2;
+      case "Electrician":
+        return 3;
+      case "AC Repair":
+        return 4;
+      case "Painter":
+        return 5;
+      default:
+        throw Exception("Invalid category");
+    }
+  }
+
+  // =======================
   // IMAGE PICKER
-  // =====================
+  // =======================
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -57,11 +77,11 @@ class _PostServicePageState extends State<PostServicePage> {
     }
   }
 
-  // =====================
+  // =======================
   // DATE & TIME PICKER
-  // =====================
+  // =======================
   Future<void> pickServiceDateTime() async {
-    final DateTime? date = await showDatePicker(
+    final date = await showDatePicker(
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
@@ -70,7 +90,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
     if (date == null) return;
 
-    final TimeOfDay? time = await showTimePicker(
+    final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
@@ -88,9 +108,9 @@ class _PostServicePageState extends State<PostServicePage> {
     });
   }
 
-  // =====================
+  // =======================
   // SUBMIT SERVICE
-  // =====================
+  // =======================
   Future<void> publishService() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -108,7 +128,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
     final service = VendorCreateServiceRequest(
       serviceName: _titleController.text.trim(),
-      category: selectedCategory!,
+      category: mapCategoryToEnum(selectedCategory!), // 🔥 FIX
       price: double.parse(_priceController.text),
       serviceDateTime: selectedServiceDateTime!,
       description: _descriptionController.text.trim().isEmpty
@@ -141,7 +161,7 @@ class _PostServicePageState extends State<PostServicePage> {
 
   @override
   Widget build(BuildContext context) {
-    final String scheduledText = selectedServiceDateTime == null
+    final scheduledText = selectedServiceDateTime == null
         ? "Select service date & time"
         : DateFormat('dd MMM yyyy • hh:mm a')
         .format(selectedServiceDateTime!);
@@ -172,7 +192,6 @@ class _PostServicePageState extends State<PostServicePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 20),
 
               _darkField(
@@ -186,15 +205,9 @@ class _PostServicePageState extends State<PostServicePage> {
               DropdownButtonFormField<String>(
                 value: selectedCategory,
                 dropdownColor: kCard,
-                style: const TextStyle(color: Colors.white),
                 decoration: _inputDecoration("Category"),
                 items: categories
-                    .map(
-                      (c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(c),
-                  ),
-                )
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
                 onChanged: (v) => setState(() => selectedCategory = v),
                 validator: (v) => v == null ? "Required" : null,
@@ -212,110 +225,28 @@ class _PostServicePageState extends State<PostServicePage> {
               const SizedBox(height: 16),
 
               OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: kPurple,
-                  side: const BorderSide(color: kPurple),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
                 onPressed: pickServiceDateTime,
                 icon: const Icon(Icons.schedule),
                 label: Text(scheduledText),
-              ),
-
-              const SizedBox(height: 16),
-
-              _darkField(
-                controller: _descriptionController,
-                label: "Description (optional)",
-                maxLines: 3,
-              ),
-
-              const SizedBox(height: 20),
-
-              // 🔥 LOCATION FIELDS
-              _darkField(
-                controller: _addressController,
-                label: "Service Address",
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              _darkField(
-                controller: _latController,
-                label: "Latitude",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              _darkField(
-                controller: _lngController,
-                label: "Longitude",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPurple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: pickImage,
-                    icon: const Icon(Icons.image),
-                    label: const Text("Select Image"),
-                  ),
-                  const SizedBox(width: 12),
-                  if (selectedImage != null)
-                    const Text(
-                      "Image selected",
-                      style: TextStyle(color: Colors.green),
-                    ),
-                ],
-              ),
-
-              if (selectedImage != null) ...[
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.file(
-                    selectedImage!,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: kPurple,
+                  side: const BorderSide(color: kPurple),
                 ),
-              ],
+              ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
 
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
+                  onPressed: isLoading ? null : publishService,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
                   ),
-                  onPressed: isLoading ? null : publishService,
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                    "Publish Service",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                      : const Text("Publish Service"),
                 ),
               ),
             ],
@@ -325,15 +256,12 @@ class _PostServicePageState extends State<PostServicePage> {
     );
   }
 
-  // ===============================
-  // REUSABLE DARK FIELD
-  // ===============================
   Widget _darkField({
     required TextEditingController controller,
     required String label,
-    int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    int maxLines = 1,
   }) {
     return TextFormField(
       controller: controller,

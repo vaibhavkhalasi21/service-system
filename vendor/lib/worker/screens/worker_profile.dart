@@ -39,7 +39,27 @@ class _WorkerProfileState extends State<WorkerProfile> {
   }
 
   // =============================
-  // LOGOUT (UPDATED)
+  // 🔐 CATEGORY HELPER
+  // =============================
+  String categoryName(int category) {
+    switch (category) {
+      case 1:
+        return "Cleaning";
+      case 2:
+        return "Plumber";
+      case 3:
+        return "Electrician";
+      case 4:
+        return "AC Repair";
+      case 5:
+        return "Painter";
+      default:
+        return "Unknown";
+    }
+  }
+
+  // =============================
+  // LOGOUT
   // =============================
   Future<void> _logout(BuildContext context) async {
     await WorkerSession.logout();
@@ -91,7 +111,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
             // 🔥 HEADER
             Container(
               width: double.infinity,
-              height: 260,
+              height: 280,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -118,6 +138,8 @@ class _WorkerProfileState extends State<WorkerProfile> {
                     ),
                   ),
                   const SizedBox(height: 14),
+
+                  // NAME
                   Text(
                     worker!.name,
                     style: const TextStyle(
@@ -126,12 +148,37 @@ class _WorkerProfileState extends State<WorkerProfile> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
+                  // EMAIL
                   Text(
                     worker!.email,
                     style: const TextStyle(
                       color: Colors.white60,
                       fontSize: 15,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // 🔥 CATEGORY BADGE
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff7C3AED).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border:
+                      Border.all(color: const Color(0xff7C3AED), width: 1),
+                    ),
+                    child: Text(
+                      categoryName(worker!.category),
+                      style: const TextStyle(
+                        color: Color(0xff7C3AED),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -194,7 +241,6 @@ class _WorkerProfileState extends State<WorkerProfile> {
 
                   const SizedBox(height: 16),
 
-                  // 🔥 UPDATED LOGOUT
                   _ProfileButton(
                     icon: Icons.logout,
                     text: "Logout",

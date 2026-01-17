@@ -1,11 +1,15 @@
 class VendorServiceRequest {
   final int id;
   final String serviceName;
-  final String category;
+
+  // 🔥 CATEGORY ENUM (INT ONLY)
+  final int category;
+
   final double price;
 
+  // 🔹 OPTIONAL DISPLAY DATA
   final String? imageUrl;
-  final String? vendorName;
+  final String vendorName;
 
   // 🔥 SERVICE STATUS
   final String status;
@@ -40,33 +44,46 @@ class VendorServiceRequest {
 
   factory VendorServiceRequest.fromJson(Map<String, dynamic> json) {
     return VendorServiceRequest(
-      id: json['id'],
-      serviceName: json['serviceName'],
-      category: json['category'],
+      id: json['id'] as int,
+
+      serviceName: json['serviceName'] ?? "",
+
+      // ✅ MUST BE INT (ENUM)
+      category: json['category'] is int
+          ? json['category']
+          : int.tryParse(json['category'].toString()) ?? 0,
+
+
       price: (json['price'] as num).toDouble(),
 
       imageUrl: json['imageUrl'],
       vendorName: json['vendorName'] ?? "You",
 
-      // 🔥 STATUS
       status: json['status'] ?? "Active",
 
-      // ⏰ TIME (KEEP YOUR LOGIC)
-      createdAt: DateTime.parse(json['createdAt'] + 'Z').toLocal(),
-      serviceDateTime: DateTime.parse(json['serviceDateTime']).toUtc(),
+      // ✅ SAFE TIME PARSING
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt']).toLocal()
+          : DateTime.now(),
 
-      // 🔥 LOCATION (SAFE)
+      serviceDateTime: json['serviceDateTime'] != null
+          ? DateTime.parse(json['serviceDateTime']).toLocal()
+          : DateTime.now(),
+
+      // ✅ LOCATION SAFE PARSE
       address: json['address'],
+
       latitude: json['latitude'] != null
-          ? double.tryParse(json['latitude'].toString())
-          : null,
-      longitude: json['longitude'] != null
-          ? double.tryParse(json['longitude'].toString())
+          ? (json['latitude'] as num).toDouble()
           : null,
 
-      // 🔥 RATING
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
+
+      // ✅ OPTIONAL RATING
       rating: json['rating'] != null
-          ? double.tryParse(json['rating'].toString())
+          ? (json['rating'] as num).toDouble()
           : null,
     );
   }
