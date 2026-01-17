@@ -8,9 +8,9 @@ class WorkerPaymentApi {
       "http://172.20.253.37:5244/api/application";
 
   // ===============================
-  // GET WORKER PAYMENTS
+  // AUTH HEADER
   // ===============================
-  static Future<List<WorkerPayment>> getPayments() async {
+  static Future<Map<String, String>> _authHeader() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("worker_token");
 
@@ -18,12 +18,22 @@ class WorkerPaymentApi {
       throw Exception("Worker token not found");
     }
 
+    return {
+      "Authorization": "Bearer $token",
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    };
+  }
+
+  // ===============================
+  // GET WORKER PAYMENTS
+  // ===============================
+  static Future<List<WorkerPayment>> getPayments() async {
+    final headers = await _authHeader();
+
     final response = await http.get(
       Uri.parse("$baseUrl/worker"),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Accept": "application/json",
-      },
+      headers: headers,
     );
 
     if (response.statusCode != 200) {
@@ -32,7 +42,7 @@ class WorkerPaymentApi {
       );
     }
 
-    final List data = jsonDecode(response.body);
+    final List<dynamic> data = jsonDecode(response.body);
 
     // 🔥 Worker sees ONLY completed jobs
     return data
@@ -48,20 +58,13 @@ class WorkerPaymentApi {
       int applicationId,
       int rating,
       ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("worker_token");
-
-    if (token == null) {
-      throw Exception("Worker not logged in");
-    }
+    final headers = await _authHeader();
 
     final response = await http.post(
       Uri.parse(
         "$baseUrl/$applicationId/rate-vendor?rating=$rating",
       ),
-      headers: {
-        "Authorization": "Bearer $token",
-      },
+      headers: headers,
     );
 
     if (response.statusCode != 200) {

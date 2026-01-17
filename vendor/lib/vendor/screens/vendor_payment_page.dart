@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/vendor_booking_request.dart';
 import '../services/vendor_application_api.dart';
+import '../services/vendor_payment_api.dart';
 
 // ================= UI CONSTANTS =================
 const Color kBg = Color(0xFF0F0F0F);
@@ -14,8 +15,7 @@ class VendorPaymentsPage extends StatefulWidget {
   const VendorPaymentsPage({super.key});
 
   @override
-  State<VendorPaymentsPage> createState() =>
-      _VendorPaymentsPageState();
+  State<VendorPaymentsPage> createState() => _VendorPaymentsPageState();
 }
 
 class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
@@ -35,13 +35,11 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     setState(() => isLoading = true);
 
     try {
-      final all =
-      await VendorApplicationApi.getApplications();
+      final all = await VendorApplicationApi.getApplications();
       if (!mounted) return;
 
       setState(() {
-        payments =
-            all.where((j) => j.status == "Completed").toList();
+        payments = all.where((j) => j.status == "Completed").toList();
         isLoading = false;
       });
     } catch (e) {
@@ -52,18 +50,28 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   }
 
   // ===============================
-  // MARK PAYMENT
+  // CASH PAYMENT
   // ===============================
-  Future<void> markPaid(int applicationId, String method) async {
+  Future<void> markCashPaid(int applicationId) async {
     try {
-      await VendorApplicationApi.markPaymentPaidWithMethod(
-        applicationId,
-        method,
-      );
+      await VendorPaymentApi.markPaidCash(applicationId);
       await loadPayments();
-      _showSnack("Payment marked as paid via $method");
-    } catch (e) {
-      _showSnack("Failed to mark payment");
+      _showSnack("Cash payment marked successfully");
+    } catch (_) {
+      _showSnack("Failed to mark cash payment");
+    }
+  }
+
+  // ===============================
+  // ONLINE PAYMENT (DEMO)
+  // ===============================
+  Future<void> markOnlinePaid(int applicationId) async {
+    try {
+      await VendorPaymentApi.markPaidOnline(applicationId);
+      await loadPayments();
+      _showSnack("Online payment successful (Demo)");
+    } catch (_) {
+      _showSnack("Failed to mark online payment");
     }
   }
 
@@ -83,15 +91,16 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
               title: const Text("Cash"),
               onTap: () {
                 Navigator.pop(context);
-                markPaid(applicationId, "Cash");
+                markCashPaid(applicationId);
               },
             ),
             ListTile(
               leading: const Icon(Icons.payment),
               title: const Text("Online"),
+              subtitle: const Text("Demo payment"),
               onTap: () {
                 Navigator.pop(context);
-                markPaid(applicationId, "Online");
+                markOnlinePaid(applicationId);
               },
             ),
           ],
@@ -107,10 +116,9 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     try {
       await VendorApplicationApi.rateWorker(applicationId, rating);
       await loadPayments();
-      _showSnack("Rating submitted successfully");
+      _showSnack("Rating submitted");
     } catch (_) {
       _showSnack("You have already rated this worker");
-      await loadPayments();
     }
   }
 
@@ -170,8 +178,6 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-
-      // ================= APP BAR =================
       appBar: AppBar(
         backgroundColor: kBg,
         elevation: 0,
@@ -181,8 +187,6 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-
-      // ================= BODY =================
       body: isLoading
           ? const Center(
         child: CircularProgressIndicator(color: kPurple),
@@ -204,21 +208,17 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
             final p = payments[index];
             final date = DateFormat('dd MMM yyyy')
                 .format(p.serviceDateTime.toLocal());
-            final isPaid =
-                p.paymentStatus == "Paid";
+            final isPaid = p.paymentStatus == "Paid";
 
             return Container(
-              margin:
-              const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
                 color: kCard,
-                borderRadius:
-                BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(18),
               ),
               padding: const EdgeInsets.all(14),
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     p.serviceName,
@@ -228,23 +228,18 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 6),
-
                   Text(
                     "Worker: ${p.workerName}",
                     style:
                     const TextStyle(color: kGrey),
                   ),
-
                   const SizedBox(height: 6),
-
                   Text(
                     "Date: $date",
                     style:
                     const TextStyle(color: kGrey),
                   ),
-
                   if (isPaid &&
                       p.paymentMethod != null)
                     Padding(
@@ -252,19 +247,14 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                       const EdgeInsets.only(top: 6),
                       child: Text(
                         "Paid via ${p.paymentMethod}",
-                        style: TextStyle(
-                          color: p.paymentMethod ==
-                              "Cash"
-                              ? Colors.green
-                              : Colors.blue,
+                        style: const TextStyle(
+                          color: Colors.green,
                           fontWeight:
                           FontWeight.w600,
                         ),
                       ),
                     ),
-
                   const SizedBox(height: 14),
-
                   Row(
                     mainAxisAlignment:
                     MainAxisAlignment
@@ -284,32 +274,35 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                           onPressed: () =>
                               showPaymentMethodDialog(
                                   p.id),
-                          style:
-                          ElevatedButton.styleFrom(
+                          style: ElevatedButton
+                              .styleFrom(
                             backgroundColor:
                             Colors.green,
                             shape:
                             RoundedRectangleBorder(
                               borderRadius:
-                              BorderRadius.circular(
+                              BorderRadius
+                                  .circular(
                                   12),
                             ),
                           ),
                           child:
-                          const Text("Mark Paid"),
+                          const Text("Pay"),
                         )
                       else if (!p.vendorRated)
                         ElevatedButton(
                           onPressed: () =>
-                              showRatingDialog(p.id),
-                          style:
-                          ElevatedButton.styleFrom(
+                              showRatingDialog(
+                                  p.id),
+                          style: ElevatedButton
+                              .styleFrom(
                             backgroundColor:
                             kPurple,
                             shape:
                             RoundedRectangleBorder(
                               borderRadius:
-                              BorderRadius.circular(
+                              BorderRadius
+                                  .circular(
                                   12),
                             ),
                           ),
@@ -330,17 +323,12 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
     );
   }
 
-  // ===============================
-  // RATING STARS
-  // ===============================
   Widget _ratingStars(int rating) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {
         return Icon(
-          index < rating
-              ? Icons.star
-              : Icons.star_border,
+          index < rating ? Icons.star : Icons.star_border,
           color: Colors.amber,
           size: 18,
         );

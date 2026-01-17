@@ -34,6 +34,9 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
     }
   }
 
+  // ===============================
+  // RATE VENDOR
+  // ===============================
   void showRatingDialog(int appId) {
     int rating = 5;
 
@@ -82,6 +85,9 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
     );
   }
 
+  // ===============================
+  // UI HELPERS
+  // ===============================
   Widget _statusChip(String t, Color c) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
@@ -115,7 +121,7 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
       backgroundColor: const Color(0xff0F0F0F),
       body: Column(
         children: [
-          /// 🔥 HEADER (same as dashboard)
+          // ================= HEADER =================
           Container(
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(20, topPadding + 30, 20, 30),
@@ -133,24 +139,19 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
                 bottomRight: Radius.circular(30),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "MY PAYMENTS",
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
+            child: const Text(
+              "MY PAYMENTS",
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
 
           const SizedBox(height: 12),
 
-          /// 📋 PAYMENTS LIST
+          // ================= PAYMENTS LIST =================
           Expanded(
             child: isLoading
                 ? const Center(
@@ -177,17 +178,21 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
                 ],
               )
                   : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                padding:
+                const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: payments.length,
                 itemBuilder: (_, i) {
                   final p = payments[i];
-                  final isPaid = p.paymentStatus == "Paid";
+                  final isPaid =
+                      p.paymentStatus == "Paid";
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin:
+                    const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
                       color: const Color(0xff1E1E1E),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius:
+                      BorderRadius.circular(16),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -195,7 +200,6 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
                         crossAxisAlignment:
                         CrossAxisAlignment.start,
                         children: [
-                          // SERVICE
                           Text(
                             p.serviceName,
                             style: const TextStyle(
@@ -205,75 +209,71 @@ class _WorkerPaymentsPageState extends State<WorkerPaymentsPage> {
                             ),
                           ),
                           const SizedBox(height: 6),
-
-                          // VENDOR
                           Text(
                             "Vendor: ${p.vendorName}",
                             style: const TextStyle(
                                 color: Colors.white70),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
 
-                          // PAYMENT METHOD
-                          if (isPaid && p.paymentMethod != null)
-                            Row(
-                              children: [
-                                Icon(
-                                  p.paymentMethod == "Cash"
-                                      ? Icons.money
-                                      : Icons.payment,
-                                  size: 18,
-                                  color: Colors.green,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  "Paid via ${p.paymentMethod}",
-                                  style: const TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              _statusChip(
+                                isPaid ? "PAID" : "UNPAID",
+                                isPaid
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                            ],
+                          ),
 
-                          // PRICE + ACTION
+                          const SizedBox(height: 14),
+
                           Row(
                             mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                            MainAxisAlignment
+                                .spaceBetween,
                             children: [
                               Text(
                                 "₹${p.price}",
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight:
+                                  FontWeight.bold,
                                   fontSize: 16,
                                   color: Colors.white,
                                 ),
                               ),
-                              if (isPaid && !p.workerRated)
+                              if (isPaid &&
+                                  !p.workerRated)
                                 ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
+                                  style:
+                                  ElevatedButton.styleFrom(
                                     backgroundColor:
-                                    const Color(0xff7C3AED),
-                                    shape: RoundedRectangleBorder(
+                                    const Color(
+                                        0xff7C3AED),
+                                    shape:
+                                    RoundedRectangleBorder(
                                       borderRadius:
-                                      BorderRadius.circular(12),
+                                      BorderRadius
+                                          .circular(12),
                                     ),
                                   ),
                                   onPressed: () =>
-                                      showRatingDialog(p.id),
-                                  child:
-                                  const Text("Rate Vendor"),
+                                      showRatingDialog(
+                                          p.id),
+                                  child: const Text(
+                                      "Rate Vendor"),
                                 )
                               else if (p.workerRated)
-                                _ratingStars(p.workerRating ?? 0)
+                                _ratingStars(
+                                    p.workerRating ?? 0)
                               else
                                 _statusChip(
-                                  "Pending",
-                                  Colors.orange,
+                                  "WAITING",
+                                  Colors.grey,
                                 ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),

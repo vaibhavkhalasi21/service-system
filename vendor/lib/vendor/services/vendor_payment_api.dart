@@ -8,9 +8,9 @@ class VendorPaymentApi {
       "http://172.20.253.37:5244/api/application";
 
   // ===============================
-  // VENDOR: GET COMPLETED PAYMENTS
+  // AUTH HEADER
   // ===============================
-  static Future<List<VendorPayment>> getPayments() async {
+  static Future<Map<String, String>> _authHeader() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("vendor_token");
 
@@ -18,12 +18,21 @@ class VendorPaymentApi {
       throw Exception("Vendor token not found");
     }
 
+    return {
+      "Authorization": "Bearer $token",
+      "Accept": "application/json",
+    };
+  }
+
+  // ===============================
+  // VENDOR: GET COMPLETED JOBS
+  // ===============================
+  static Future<List<VendorPayment>> getPayments() async {
+    final headers = await _authHeader();
+
     final response = await http.get(
       Uri.parse("$baseUrl/vendor"),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Accept": "application/json",
-      },
+      headers: headers,
     );
 
     if (response.statusCode != 200) {
@@ -42,37 +51,37 @@ class VendorPaymentApi {
   }
 
   // ===============================
-  // VENDOR: MARK PAYMENT PAID
-  // method = "Cash" | "Online"
+  // DEMO ONLINE PAYMENT
   // ===============================
-  static Future<void> markPaid(
-      int applicationId,
-      String method,
-      ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("vendor_token");
-
-    if (token == null || token.isEmpty) {
-      throw Exception("Vendor token not found");
-    }
-
-    if (method != "Cash" && method != "Online") {
-      throw Exception("Invalid payment method");
-    }
+  static Future<void> markPaidOnline(int applicationId) async {
+    final headers = await _authHeader();
 
     final response = await http.put(
-      Uri.parse(
-        "$baseUrl/$applicationId/pay?method=$method",
-      ),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Accept": "application/json",
-      },
+      Uri.parse("$baseUrl/$applicationId/pay?method=Online"),
+      headers: headers,
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to mark payment as paid (${response.statusCode})",
+        "Failed to mark online payment (${response.statusCode})",
+      );
+    }
+  }
+
+  // ===============================
+  // CASH PAYMENT
+  // ===============================
+  static Future<void> markPaidCash(int applicationId) async {
+    final headers = await _authHeader();
+
+    final response = await http.put(
+      Uri.parse("$baseUrl/$applicationId/pay?method=Cash"),
+      headers: headers,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Failed to mark cash payment (${response.statusCode})",
       );
     }
   }
