@@ -17,6 +17,8 @@ namespace VendorWorkerAPI.Models
         public int? VendorId { get; set; }
         public Vendor? Vendor { get; set; } = null!;
 
+        public ServiceCategory Category { get; set; }
+
         // ================= STATUS =================
         public string Status { get; set; } = "Pending";
 

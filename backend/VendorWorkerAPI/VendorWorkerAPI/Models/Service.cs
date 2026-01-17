@@ -11,7 +11,7 @@ public class Service
     public string ServiceName { get; set; } = null!;
 
     [Required]
-    public string Category { get; set; } = null!;
+    public ServiceCategory Category { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
@@ -42,5 +42,8 @@ public class Service
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? Address { get; set; }
+
+    
+
 
 }

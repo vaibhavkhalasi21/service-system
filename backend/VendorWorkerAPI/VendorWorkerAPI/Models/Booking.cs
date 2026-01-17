@@ -22,6 +22,8 @@ namespace VendorWorkerAPI.Models
 
         public decimal AgreedPrice { get; set; }
 
+        public ServiceCategory Category { get; set; }
+
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

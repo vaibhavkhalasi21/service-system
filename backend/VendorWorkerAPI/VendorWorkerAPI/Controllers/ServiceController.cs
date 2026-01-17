@@ -204,7 +204,7 @@ public class ServiceController : ControllerBase
         }
 
         service.ServiceName = dto.ServiceName;
-        service.Category = dto.Category.ToString();
+        service.Category = dto.Category;
         service.Price = dto.Price;
         service.ServiceDateTime = dto.ServiceDateTime;
         service.UpdatedAt = DateTime.UtcNow;

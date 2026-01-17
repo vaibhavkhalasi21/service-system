@@ -176,7 +176,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
                 Name = dto.Name,
                 Email = dto.Email,
                 Phone = dto.Phone,
-                Skill = dto.Skill,
+                Category = dto.Category,
                 Address = dto.Address,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "Worker",
@@ -199,7 +199,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
 
             worker.Name = dto.Name;
             worker.Phone = dto.Phone;
-            worker.Skill = dto.Skill;
+            worker.Category = dto.Category;
             worker.Address = dto.Address;
 
             await _context.SaveChangesAsync();
@@ -292,6 +292,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
                 ServiceName = dto.ServiceName,
                 Category = dto.Category,
                 Price = dto.Price,
+                VendorId = dto.VendorId,
                 ServiceDateTime = dto.ServiceDateTime,
 
                 Latitude = dto.Latitude,
@@ -302,6 +303,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
                 Status = ServiceStatus.Active,
                 CreatedAt = DateTime.UtcNow
             };
+
 
             _context.Services.Add(service);
             await _context.SaveChangesAsync();
@@ -314,7 +316,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
 
         [Authorize(Roles = "Admin")]
         [HttpPut("services/{id}")]
-        public async Task<IActionResult> UpdateService(int id, [FromBody] Service dto)
+        public async Task<IActionResult> UpdateService(int id, [FromBody] ServiceUpdateDto dto)
         {
             var service = await _context.Services.FindAsync(id);
             if (service == null)
@@ -329,6 +331,7 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
             await _context.SaveChangesAsync();
             return Ok("Service updated");
         }
+
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("services/{id}")]

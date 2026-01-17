@@ -24,9 +24,9 @@ namespace VendorWorkerAPI.Controllers
         [HttpPost("apply/{serviceId}")]
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> ApplyForService(
-            int serviceId,
-            [FromBody] ApplyServiceRequest request
-        )
+     int serviceId,
+     [FromBody] ApplyServiceRequest request
+ )
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (workerIdStr == null) return Unauthorized();
@@ -35,6 +35,15 @@ namespace VendorWorkerAPI.Controllers
 
             var service = await _context.Services.FindAsync(serviceId);
             if (service == null) return NotFound("Service not found");
+
+            var worker = await _context.Workers.FindAsync(workerId);
+            if (worker == null) return Unauthorized("Worker not found");
+
+            // 🔥 CATEGORY RESTRICTION (MAIN RULE)
+            if (worker.Category != service.Category)
+            {
+                return Forbid("You can apply only to services in your category");
+            }
 
             bool alreadyApplied = await _context.Applications.AnyAsync(a =>
                 a.ServiceId == serviceId && a.WorkerId == workerId);
@@ -72,6 +81,7 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(new { message = "Application submitted successfully" });
         }
+
 
         // =====================================================
         // WORKER: VIEW MY APPLICATIONS

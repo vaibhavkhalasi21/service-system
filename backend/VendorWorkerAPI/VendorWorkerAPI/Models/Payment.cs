@@ -12,6 +12,8 @@ namespace VendorWorkerAPI.Models
 
         public decimal Amount { get; set; }
 
+        public ServiceCategory Category { get; set; }
+
         // ================= PAYMENT STATUS =================
         public string Status { get; set; } = "PENDING"; // PENDING / SUCCESS / FAILED
         public string PaymentMethod { get; set; } = "Online (Demo)"; // Cash / Online (Demo)

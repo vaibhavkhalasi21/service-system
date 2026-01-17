@@ -41,7 +41,7 @@ namespace VendorWorkerAPI.Controllers
                 Name = dto.Name,
                 Email = dto.Email,
                 Phone = dto.Phone,
-                Skill = dto.Skill,
+                Category = dto.Category,
                 Address = dto.Address,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "Worker"
@@ -154,8 +154,9 @@ namespace VendorWorkerAPI.Controllers
                     w.Name,
                     w.Email,
                     w.Phone,
-                    w.Skill
+                    Category = w.Category
                 })
+
                 .ToListAsync();
 
             return Ok(workers);
@@ -183,13 +184,15 @@ namespace VendorWorkerAPI.Controllers
             const double maxDistanceKm = 10;
 
             var services = await _context.Services
-                .Where(s =>
-                    s.Status == ServiceStatus.Active &&
-                    s.Latitude != null &&
-                    s.Longitude != null
-                )
-                .Include(s => s.Vendor)
-                .ToListAsync();
+    .Where(s =>
+        s.Status == ServiceStatus.Active &&
+        s.Category == worker.Category &&   // 🔥 CATEGORY FILTER
+        s.Latitude != null &&
+        s.Longitude != null
+    )
+    .Include(s => s.Vendor)
+    .ToListAsync();
+
 
             var nearbyJobs = services
                 .Where(s =>
