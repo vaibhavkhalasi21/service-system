@@ -10,10 +10,14 @@ namespace VendorWorkerAPI.Data
         {
         }
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<Service> Services { get; set; } // ✅
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Payment> Payments { get; set; }
+
+
+        public DbSet<User> Users { get; set; }
+        public DbSet<Service> Services { get; set; } // ✅
+        
+
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<Application> Applications { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
@@ -22,11 +26,21 @@ namespace VendorWorkerAPI.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // ===== MONEY PRECISION (IMPORTANT) =====
+            modelBuilder.Entity<Booking>()
+                .Property(b => b.AgreedPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
+                .HasPrecision(18, 2);
+
+            // ===== APPLICATION RELATIONS =====
             modelBuilder.Entity<Application>()
-       .HasOne(a => a.Worker)
-       .WithMany()
-       .HasForeignKey(a => a.WorkerId)
-       .OnDelete(DeleteBehavior.NoAction);
+                .HasOne(a => a.Worker)
+                .WithMany()
+                .HasForeignKey(a => a.WorkerId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Application>()
                 .HasOne(a => a.Vendor)
@@ -34,13 +48,13 @@ namespace VendorWorkerAPI.Data
                 .HasForeignKey(a => a.VendorId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            // ===== BOOKING RELATIONS =====
             modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Vendor)
                 .WithMany()
                 .HasForeignKey(b => b.VendorId)
                 .OnDelete(DeleteBehavior.NoAction);
-
-
         }
+
     }
 }

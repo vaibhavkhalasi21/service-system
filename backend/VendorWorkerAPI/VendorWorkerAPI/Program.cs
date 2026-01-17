@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -13,7 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+        ?? throw new Exception("DefaultConnection not found")
+    )
+);
 
 // ================= JWT AUTH =================
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -30,42 +32,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-            ),
-
-            ClockSkew = TimeSpan.Zero
+                Encoding.UTF8.GetBytes(
+                    builder.Configuration["Jwt:Key"]
+                    ?? throw new Exception("Jwt:Key missing")
+                )
+            )
         };
     });
 
+// ================= CORS =================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
 });
 
-
-
-
-// ================= AUTHORIZATION =================
+// ================= CORE SERVICES =================
 builder.Services.AddAuthorization();
 
-// ================= SERVICES =================
+// ✅ REGISTER ONLY REQUIRED SERVICES
 builder.Services.AddScoped<JwtTokenService>();
 
-// ================= CONTROLLERS (?? FIX HERE ??) =================
+// ================= CONTROLLERS =================
 builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // ? THIS LINE FIXES SWAGGER ENUM DROPDOWN
-        options.JsonSerializerOptions.Converters.Add(
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter()
-        );
-    });
+        )
+    );
 
 // ================= SWAGGER =================
 builder.Services.AddEndpointsApiExplorer();
@@ -77,7 +73,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
-    // ?? JWT IN SWAGGER
+    // 🔐 JWT SUPPORT IN SWAGGER
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -85,7 +81,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter: Bearer {JWT token}"
+        Description = "Enter: Bearer {your JWT token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -106,22 +102,26 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ================= SWAGGER =================
+// ================= MIDDLEWARE =================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "VendorWorker API v1"
+        );
+    });
 }
 
-// ================= MIDDLEWARE =================
-
 app.UseCors("AllowAll");
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 app.Run();

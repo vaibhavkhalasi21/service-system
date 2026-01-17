@@ -13,12 +13,15 @@ namespace VendorWorkerAPI.Models
         public int ServiceId { get; set; }
 
         [Required]
-        public int VendorId { get; set; }
+        public int? VendorId { get; set; }
 
         [Required]
         public int WorkerId { get; set; }
 
         public string Status { get; set; } = "Pending";
+
+        public decimal AgreedPrice { get; set; }
+
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -27,7 +30,7 @@ namespace VendorWorkerAPI.Models
         public Service Service { get; set; } = null!;
 
         [ForeignKey(nameof(VendorId))]
-        public Vendor Vendor { get; set; } = null!;
+        public Vendor? Vendor { get; set; } = null!;
 
         [ForeignKey(nameof(WorkerId))]
         public User Worker { get; set; } = null!;

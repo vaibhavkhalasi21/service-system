@@ -23,28 +23,35 @@ namespace VendorWorkerAPI.Controllers
 
         // ===================== ADMIN AUTH =====================
 
+   
+
+
 
         [AllowAnonymous]
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
-        {
-            var admin = await _context.Admins
-                .FirstOrDefaultAsync(a => a.Email == dto.Email);
+[HttpPost("login")]
+public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
+{
+    var email = dto.Email.Trim().ToLower();
 
-            if (admin == null ||
-                !PasswordService.Verify(dto.Password, admin.PasswordHash))
-                return Unauthorized("Invalid email or password");
+    var admin = await _context.Admins
+        .FirstOrDefaultAsync(a => a.Email.ToLower() == email);
 
-            var token = _jwt.GenerateToken(admin.Id, admin.Email, "Admin");
+    if (admin == null)
+        return Unauthorized("Invalid email or password");
 
-            return Ok(new
-            {
-                adminId = admin.Id,
-                admin.Email,
-                role = "Admin",
-                token
-            });
-        }
+    if (!PasswordService.Verify(dto.Password, admin.PasswordHash))
+        return Unauthorized("Invalid email or password");
+
+    var token = _jwt.GenerateToken(admin.Id, admin.Email, "Admin");
+
+    return Ok(new
+    {
+        adminId = admin.Id,
+        admin.Email,
+        role = "Admin",
+        token
+    });
+}
 
         // ===================== VENDOR CRUD =====================
 
@@ -75,7 +82,9 @@ namespace VendorWorkerAPI.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("vendors/{id}")]
-        public async Task<IActionResult> UpdateVendor(int id, [FromBody] VendorRegisterDto dto)
+        public async Task<IActionResult> UpdateVendor(
+    int id,
+    [FromBody] VendorUpdateDto dto)
         {
             var vendor = await _context.Vendors.FindAsync(id);
             if (vendor == null)
@@ -87,8 +96,17 @@ namespace VendorWorkerAPI.Controllers
             vendor.Address = dto.Address;
 
             await _context.SaveChangesAsync();
-            return Ok("Vendor updated");
+
+            return Ok(new
+            {
+                vendor.Id,
+                vendor.Name,
+                vendor.Phone,
+                vendor.ServiceType,
+                vendor.Address
+            });
         }
+
 
         // ===================== BLOCK / UNBLOCK VENDOR =====================
         [Authorize(Roles = "Admin")]
@@ -246,14 +264,53 @@ namespace VendorWorkerAPI.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost("services")]
-        public async Task<IActionResult> CreateService([FromBody] Service service)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateService(
+    [FromForm] ServiceCreateDto dto)
         {
-            service.Status = ServiceStatus.Active;
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            string? imageUrl = null;
+
+            if (dto.Image != null)
+            {
+                var uploads = Path.Combine("wwwroot", "images");
+                Directory.CreateDirectory(uploads);
+
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Image.FileName)}";
+                var filePath = Path.Combine(uploads, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await dto.Image.CopyToAsync(stream);
+
+                imageUrl = $"/images/{fileName}";
+            }
+
+            var service = new Service
+            {
+                ServiceName = dto.ServiceName,
+                Category = dto.Category,
+                Price = dto.Price,
+                ServiceDateTime = dto.ServiceDateTime,
+
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                Address = dto.Address,
+
+                ImageUrl = imageUrl,
+                Status = ServiceStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
             _context.Services.Add(service);
             await _context.SaveChangesAsync();
 
-            return Ok(service.Id);
+            return Ok(new { service.Id });
         }
+
+
+
 
         [Authorize(Roles = "Admin")]
         [HttpPut("services/{id}")]

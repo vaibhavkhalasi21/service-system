@@ -114,9 +114,7 @@ namespace VendorWorkerAPI.Controllers
             return Ok(vendor);
         }
 
-        // =====================================================
-        // 🔥 CREATE SERVICE (WITH LOCATION)
-        // =====================================================
+        // ================= CREATE SERVICE =================
         [Authorize(Roles = "Vendor")]
         [HttpPost("service")]
         public async Task<IActionResult> CreateService(
@@ -139,7 +137,6 @@ namespace VendorWorkerAPI.Controllers
                 Price = dto.Price,
                 ServiceDateTime = dto.ServiceDateTime,
 
-                // 🔥 LOCATION
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
                 Address = dto.Address,
@@ -156,6 +153,48 @@ namespace VendorWorkerAPI.Controllers
             {
                 message = "Service created successfully",
                 serviceId = service.Id
+            });
+        }
+
+        // =====================================================
+        // ✅ DEMO: RELEASE PAYMENT (ESCROW → WORKER)
+        // =====================================================
+        [Authorize(Roles = "Vendor")]
+        [HttpPut("{applicationId}/release-payment")]
+        public async Task<IActionResult> ReleasePayment(int applicationId)
+        {
+            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (vendorIdStr == null)
+                return Unauthorized();
+
+            int vendorId = int.Parse(vendorIdStr);
+
+            // 🔹 Payment is linked to ApplicationId (Demo model)
+            var payment = await _context.Payments
+                .FirstOrDefaultAsync(p => p.BookingId == applicationId);
+
+            if (payment == null)
+                return NotFound("Payment not found");
+
+            if (payment.VendorId != vendorId)
+                return Forbid();
+
+            if (payment.Status != "SUCCESS")
+                return BadRequest("Payment not completed");
+
+            if (payment.EscrowStatus != "HELD")
+                return BadRequest("Escrow already released");
+
+            // ✅ RELEASE ESCROW
+            payment.EscrowStatus = "RELEASED";
+            payment.ReleasedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Payment released to worker (Demo)",
+                escrowStatus = payment.EscrowStatus
             });
         }
     }

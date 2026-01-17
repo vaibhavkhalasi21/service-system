@@ -20,9 +20,9 @@ public class Service
 
     // 🔗 Vendor Relation
     [Required]
-    public int VendorId { get; set; }
+    public int? VendorId { get; set; }
 
-    public Vendor Vendor { get; set; } = null!;
+    public Vendor? Vendor { get; set; } = null!;
 
     // 🔥 SERVICE LIFECYCLE (NEW)
     [Required]

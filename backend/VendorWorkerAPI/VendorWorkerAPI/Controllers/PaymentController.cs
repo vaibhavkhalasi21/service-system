@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using VendorWorkerAPI.Data;
 using VendorWorkerAPI.Models;
 
 namespace VendorWorkerAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/payments")]
     public class PaymentController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -16,93 +18,119 @@ namespace VendorWorkerAPI.Controllers
             _context = context;
         }
 
-        // ===============================
-        // GET: api/payment
-        // ===============================
-        [HttpGet]
-        public async Task<IActionResult> GetPayments()
+        // =====================================================
+        // DEMO: CREATE ONLINE PAYMENT (NO GATEWAY)
+        // =====================================================
+        [Authorize(Roles = "Vendor")]
+        [HttpPost("create-demo-payment/{bookingId}")]
+        public async Task<IActionResult> CreateDemoPayment(int bookingId)
         {
-            var payments = await _context.Payments.ToListAsync();
-            return Ok(payments);
-        }
+            var vendorId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
 
-        // ===============================
-        // GET: api/payment/1
-        // ===============================
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPayment(int id)
-        {
-            var payment = await _context.Payments.FindAsync(id);
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(b =>
+                    b.Id == bookingId &&
+                    b.VendorId == vendorId &&
+                    b.Status == "CONFIRMED");
 
-            if (payment == null)
-                return NotFound("Payment not found");
+            if (booking == null)
+                return BadRequest("Invalid booking");
 
-            return Ok(payment);
-        }
-
-        // ===============================
-        // POST: api/payment
-        // ===============================
-        [HttpPost]
-        public async Task<IActionResult> AddPayment([FromBody] Payment payment)
-        {
-            // 🔐 Model validation
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // 🔹 Create DEMO payment record
+            var payment = new Payment
+            {
+                BookingId = booking.Id,
+                VendorId = booking.VendorId,
+                WorkerId = booking.WorkerId,
+                Amount = booking.AgreedPrice,
+                Status = "SUCCESS",
+                EscrowStatus = "HELD",
+                PaymentMethod = "Online (Demo)",
+                CreatedAt = DateTime.UtcNow
+            };
 
             _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetPayment),
-                new { id = payment.PaymentId },
-                payment
-            );
-        }
-
-        // ===============================
-        // PUT: api/payment/1
-        // ===============================
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePayment(int id, [FromBody] Payment payment)
-        {
-            if (id != payment.PaymentId)
-                return BadRequest("Payment ID mismatch");
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var existingPayment = await _context.Payments.FindAsync(id);
-            if (existingPayment == null)
-                return NotFound("Payment not found");
-
-            // Update fields safely
-            existingPayment.UserName = payment.UserName;
-            existingPayment.Amount = payment.Amount;
-            existingPayment.PaymentMethod = payment.PaymentMethod;
-            existingPayment.Status = payment.Status;
-            existingPayment.PaymentDate = payment.PaymentDate;
+            // 🔹 Update booking status
+            booking.Status = "PAID";
 
             await _context.SaveChangesAsync();
 
-            return Ok("Payment updated successfully");
+            return Ok(new
+            {
+                message = "Online payment successful (Demo)",
+                paymentStatus = payment.Status,
+                escrowStatus = payment.EscrowStatus
+            });
         }
 
-        // ===============================
-        // DELETE: api/payment/1
-        // ===============================
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePayment(int id)
+        // =====================================================
+        // ADMIN: RELEASE ESCROW (DEMO)
+        // =====================================================
+        [Authorize(Roles = "Admin")]
+        [HttpPut("release-escrow/{paymentId}")]
+        public async Task<IActionResult> ReleaseEscrow(int paymentId)
         {
-            var payment = await _context.Payments.FindAsync(id);
-
+            var payment = await _context.Payments.FindAsync(paymentId);
             if (payment == null)
                 return NotFound("Payment not found");
 
-            _context.Payments.Remove(payment);
+            if (payment.Status != "SUCCESS")
+                return BadRequest("Payment not successful");
+
+            if (payment.EscrowStatus == "RELEASED")
+                return BadRequest("Escrow already released");
+
+            payment.EscrowStatus = "RELEASED";
+            payment.ReleasedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
-            return Ok("Payment deleted successfully");
+            return Ok(new
+            {
+                message = "Escrow released to worker (Demo)",
+                escrowStatus = payment.EscrowStatus
+            });
+        }
+
+        // =====================================================
+        // VENDOR / WORKER: VIEW PAYMENTS
+        // =====================================================
+        [Authorize]
+        [HttpGet("my-payments")]
+        public async Task<IActionResult> GetMyPayments()
+        {
+            var userId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
+            var role = User.FindFirstValue(ClaimTypes.Role);
+
+            IQueryable<Payment> query = _context.Payments;
+
+            if (role == "Vendor")
+                query = query.Where(p => p.VendorId == userId);
+            else if (role == "Worker")
+                query = query.Where(p => p.WorkerId == userId);
+            else
+                return Forbid();
+
+            var payments = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Amount,
+                    p.Status,
+                    p.PaymentMethod,
+                    p.EscrowStatus,
+                    p.CreatedAt,
+                    p.ReleasedAt
+                })
+                .ToListAsync();
+
+            return Ok(payments);
         }
     }
 }

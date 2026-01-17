@@ -19,14 +19,14 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // WORKER: APPLY FOR A SERVICE (UPDATED WITH LOCATION)
+        // WORKER: APPLY FOR A SERVICE
         // =====================================================
         [HttpPost("apply/{serviceId}")]
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> ApplyForService(
-     int serviceId,
-     [FromBody] ApplyServiceRequest request
- )
+            int serviceId,
+            [FromBody] ApplyServiceRequest request
+        )
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (workerIdStr == null) return Unauthorized();
@@ -42,12 +42,11 @@ namespace VendorWorkerAPI.Controllers
             if (alreadyApplied)
                 return BadRequest("You have already applied for this service");
 
-            // 🔒 Validate locations
             if (request.ServiceLatitude == 0 || request.ServiceLongitude == 0)
-                return BadRequest("Service location is required");
+                return BadRequest("Service location required");
 
             if (request.WorkerLatitude == 0 || request.WorkerLongitude == 0)
-                return BadRequest("Worker location is required");
+                return BadRequest("Worker location required");
 
             var application = new Application
             {
@@ -57,14 +56,13 @@ namespace VendorWorkerAPI.Controllers
 
                 Status = "Pending",
                 PaymentStatus = "Pending",
+                EscrowStatus = "NONE",
                 CreatedAt = DateTime.UtcNow,
 
-                // 📍 SERVICE LOCATION
                 ServiceLatitude = request.ServiceLatitude,
                 ServiceLongitude = request.ServiceLongitude,
                 ServiceAddress = request.ServiceAddress,
 
-                // 📍 WORKER LOCATION (NEW)
                 WorkerLatitude = request.WorkerLatitude,
                 WorkerLongitude = request.WorkerLongitude
             };
@@ -74,7 +72,6 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(new { message = "Application submitted successfully" });
         }
-
 
         // =====================================================
         // WORKER: VIEW MY APPLICATIONS
@@ -97,9 +94,9 @@ namespace VendorWorkerAPI.Controllers
                 {
                     a.Id,
                     a.Status,
-                    a.CreatedAt,
                     a.PaymentStatus,
                     a.PaymentMethod,
+                    a.EscrowStatus,
 
                     a.WorkerRated,
                     a.WorkerRating,
@@ -109,14 +106,8 @@ namespace VendorWorkerAPI.Controllers
                     ServiceName = a.Service.ServiceName,
                     Category = a.Service.Category,
                     Price = a.Service.Price,
-                   
                     ServiceDateTime = a.Service.ServiceDateTime,
-                    VendorName = a.Service.Vendor.Name,
-
-                    // 📍 LOCATION
-                    a.ServiceLatitude,
-                    a.ServiceLongitude,
-                    a.ServiceAddress
+                    VendorName = a.Service.Vendor.Name
                 })
                 .ToListAsync();
 
@@ -124,7 +115,7 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // VENDOR: VIEW APPLICATIONS / JOBS (WITH LOCATION + ADDRESS)
+        // VENDOR: VIEW APPLICATIONS / JOBS
         // =====================================================
         [HttpGet("vendor")]
         [Authorize(Roles = "Vendor")]
@@ -142,33 +133,17 @@ namespace VendorWorkerAPI.Controllers
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new
                 {
-                    // 🔑 IDs
                     a.Id,
-
-                    // 🔄 STATUS
                     a.Status,
                     a.PaymentStatus,
                     a.PaymentMethod,
+                    a.EscrowStatus,
 
-                    // 👤 WORKER
                     WorkerName = a.Worker.Name,
-                    WorkerEmail = a.Worker.Email,
-
-                    // 🛠 SERVICE (🔥 REQUIRED BY VENDOR JOB TAB)
                     ServiceName = a.Service.ServiceName,
                     Price = a.Service.Price,
                     ServiceDateTime = a.Service.ServiceDateTime,
 
-                    // 📍 SERVICE LOCATION
-                    a.ServiceLatitude,
-                    a.ServiceLongitude,
-                    a.ServiceAddress,
-
-                    // 📍 WORKER LOCATION
-                    a.WorkerLatitude,
-                    a.WorkerLongitude,
-
-                    // ⭐ RATINGS
                     a.VendorRated,
                     a.VendorRating
                 })
@@ -176,49 +151,6 @@ namespace VendorWorkerAPI.Controllers
 
             return Ok(applications);
         }
-        // =====================================================
-        // VENDOR: VIEW PENDING APPLICATIONS ONLY
-        // =====================================================
-        [HttpGet("vendor/applications")]
-        [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> GetVendorApplicationRequests()
-        {
-            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorIdStr == null) return Unauthorized();
-
-            int vendorId = int.Parse(vendorIdStr);
-
-            var applications = await _context.Applications
-                .Where(a => a.VendorId == vendorId && a.Status == "Pending")
-                .Include(a => a.Service)
-                .Include(a => a.Worker)
-                .OrderByDescending(a => a.CreatedAt)
-                .Select(a => new
-                {
-                    a.Id,
-                    a.Status,
-                    a.CreatedAt,
-
-                    // 👤 WORKER
-                    WorkerName = a.Worker.Name,
-                    WorkerEmail = a.Worker.Email,
-
-                    // 🛠 SERVICE
-                    ServiceName = a.Service.ServiceName,
-                    Category = a.Service.Category,
-
-                    // 📍 LOCATIONS
-                    a.WorkerLatitude,
-                    a.WorkerLongitude,
-                    a.ServiceLatitude,
-                    a.ServiceLongitude,
-                    a.ServiceAddress
-                })
-                .ToListAsync();
-
-            return Ok(applications);
-        }
-
 
         // =====================================================
         // VENDOR: ACCEPT / REJECT APPLICATION
@@ -231,7 +163,7 @@ namespace VendorWorkerAPI.Controllers
         )
         {
             if (status != "Accepted" && status != "Rejected")
-                return BadRequest("Status must be Accepted or Rejected");
+                return BadRequest("Invalid status");
 
             var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (vendorIdStr == null) return Unauthorized();
@@ -239,15 +171,13 @@ namespace VendorWorkerAPI.Controllers
             int vendorId = int.Parse(vendorIdStr);
 
             var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound("Application not found");
-
-            if (app.VendorId != vendorId)
-                return Forbid();
+            if (app == null) return NotFound();
+            if (app.VendorId != vendorId) return Forbid();
 
             app.Status = status;
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = $"Application {status} successfully" });
+            return Ok(new { message = $"Application {status}" });
         }
 
         // =====================================================
@@ -264,19 +194,19 @@ namespace VendorWorkerAPI.Controllers
 
             var app = await _context.Applications.FindAsync(id);
             if (app == null) return NotFound();
-
             if (app.WorkerId != workerId) return Forbid();
-            if (app.Status != "Accepted") return BadRequest("Job not active");
+            if (app.Status != "Accepted")
+                return BadRequest("Job not active");
 
             app.Status = "Completed";
             app.PaymentStatus = "Pending";
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Job marked as completed" });
+            return Ok(new { message = "Job completed" });
         }
 
         // =====================================================
-        // VENDOR: MARK PAYMENT AS PAID
+        // VENDOR: PAY (CASH / ONLINE DEMO)
         // =====================================================
         [HttpPut("{id}/pay")]
         [Authorize(Roles = "Vendor")]
@@ -299,16 +229,55 @@ namespace VendorWorkerAPI.Controllers
 
             if (app == null) return NotFound();
             if (app.VendorId != vendorId) return Forbid();
-            if (app.Status != "Completed") return BadRequest("Job not completed");
+            if (app.Status != "Completed")
+                return BadRequest("Job not completed");
 
             app.PaymentStatus = "Paid";
-            app.PaymentMethod = method;
+
+            if (method == "Online")
+            {
+                app.PaymentMethod = "Online (Demo)";
+                app.EscrowStatus = "HELD";
+            }
+            else
+            {
+                app.PaymentMethod = "Cash";
+                app.EscrowStatus = "RELEASED";
+            }
 
             if (app.Service != null)
                 app.Service.Status = ServiceStatus.Completed;
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = $"Payment marked as paid via {method}" });
+
+            return Ok(new
+            {
+                message = $"Payment marked as {app.PaymentMethod}",
+                escrow = app.EscrowStatus
+            });
+        }
+
+        // =====================================================
+        // ADMIN: RELEASE ESCROW
+        // =====================================================
+        [HttpPut("{id}/release-escrow")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ReleaseEscrow(int id)
+        {
+            var app = await _context.Applications.FindAsync(id);
+            if (app == null) return NotFound();
+
+            if (app.PaymentStatus != "Paid")
+                return BadRequest("Payment not completed");
+
+            if (app.EscrowStatus == "RELEASED")
+                return BadRequest("Already released");
+
+            app.EscrowStatus = "RELEASED";
+            app.Status = "Closed";
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Escrow released" });
         }
 
         // =====================================================
@@ -322,22 +291,20 @@ namespace VendorWorkerAPI.Controllers
         )
         {
             if (rating < 1 || rating > 5)
-                return BadRequest("Rating must be between 1 and 5");
+                return BadRequest("Invalid rating");
 
             var app = await _context.Applications.FindAsync(id);
             if (app == null) return NotFound();
-
             if (app.PaymentStatus != "Paid")
                 return BadRequest("Payment not completed");
-
             if (app.VendorRated)
-                return BadRequest("Worker already rated");
+                return BadRequest("Already rated");
 
             app.VendorRating = rating;
             app.VendorRated = true;
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Worker rated successfully" });
+            return Ok(new { message = "Worker rated" });
         }
 
         // =====================================================
@@ -351,22 +318,20 @@ namespace VendorWorkerAPI.Controllers
         )
         {
             if (rating < 1 || rating > 5)
-                return BadRequest("Rating must be between 1 and 5");
+                return BadRequest("Invalid rating");
 
             var app = await _context.Applications.FindAsync(id);
             if (app == null) return NotFound();
-
             if (app.PaymentStatus != "Paid")
                 return BadRequest("Payment not completed");
-
             if (app.WorkerRated)
-                return BadRequest("Vendor already rated");
+                return BadRequest("Already rated");
 
             app.WorkerRating = rating;
             app.WorkerRated = true;
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Vendor rated successfully" });
+            return Ok(new { message = "Vendor rated" });
         }
     }
 }

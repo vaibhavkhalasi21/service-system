@@ -14,8 +14,8 @@ namespace VendorWorkerAPI.Models
         public int WorkerId { get; set; }
         public Worker Worker { get; set; } = null!;
 
-        public int VendorId { get; set; }
-        public Vendor Vendor { get; set; } = null!;
+        public int? VendorId { get; set; }
+        public Vendor? Vendor { get; set; } = null!;
 
         // ================= STATUS =================
         public string Status { get; set; } = "Pending";
@@ -39,6 +39,8 @@ namespace VendorWorkerAPI.Models
 
         public double? WorkerLatitude { get; set; }
         public double? WorkerLongitude { get; set; }
+
+        public string EscrowStatus { get; set; } = "HELD";
 
 
     }
