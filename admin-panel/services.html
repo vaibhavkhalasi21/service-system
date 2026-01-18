@@ -8,6 +8,7 @@
 
 <body class="app-body">
 
+  <!-- ===================== SIDEBAR ===================== -->
   <aside class="sidebar">
     <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
     <h2 class="logo">Admin</h2>
@@ -28,28 +29,34 @@
     </div>
   </aside>
 
+  <!-- ===================== MAIN ===================== -->
   <main class="main-content">
 
     <div class="page-header">
       <h1>Service Management</h1>
     </div>
 
-    <!-- ADD SERVICE -->
+    <!-- ===================== ADD SERVICE ===================== -->
     <div class="card">
       <h2>Add Service</h2>
 
       <div class="form-grid">
-        <input id="sName" placeholder="Service Name" />
-        <input id="sCategory" placeholder="Category" />
-        <input id="sPrice" type="number" placeholder="Price" />
-        <input id="sImage" type="file" accept="image/*" />
+        <input id="sName" placeholder="Service Name" required />
+        <input id="sCategory" placeholder="Category" required />
+        <input id="sPrice" type="number" placeholder="Price" required />
 
+        <!-- OPTIONAL FIELDS (DTO SUPPORT) -->
+        <input id="sAddress" placeholder="Address (optional)" />
+        <input id="sLatitude" type="number" step="any" placeholder="Latitude (optional)" />
+        <input id="sLongitude" type="number" step="any" placeholder="Longitude (optional)" />
+
+        <input id="sImage" type="file" accept="image/*" />
       </div>
 
       <button class="primary-btn" onclick="createService()">Add Service</button>
     </div>
 
-    <!-- SERVICE LIST -->
+    <!-- ===================== SERVICE LIST ===================== -->
     <div class="card">
       <h2>Services</h2>
 
@@ -69,7 +76,129 @@
 
   </main>
 
+  <!-- ===================== SCRIPTS ===================== -->
   <script src="js/api.js"></script>
-  <script src="js/services.js"></script>
+
+  <script>
+    // ===================== AUTH GUARD =====================
+    if (!getToken()) {
+      window.location.href = "index.html";
+    }
+
+    // ===================== LOAD SERVICES =====================
+    async function loadServices() {
+      try {
+        const res = await fetch(`${BASE_URL}/admin/services`, {
+          headers: {
+            Authorization: `Bearer ${getToken()}`
+          }
+        });
+
+        if (!res.ok) {
+          alert("Failed to fetch services");
+          return;
+        }
+
+        const services = await res.json();
+        const table = document.getElementById("serviceTable");
+        table.innerHTML = "";
+
+        services.forEach(s => {
+          const statusClass = s.status === "Active"
+            ? "status-active"
+            : "status-blocked";
+
+          table.innerHTML += `
+            <tr>
+              <td>${s.id}</td>
+              <td>
+                <strong>${s.serviceName}</strong><br/>
+                ${s.imageUrl
+                  ? `<img src="http://localhost:5244${s.imageUrl}"
+                         width="60"
+                         style="margin-top:6px;border-radius:6px;">`
+                  : ""
+                }
+              </td>
+              <td>${s.category}</td>
+              <td>₹${s.price}</td>
+              <td class="${statusClass}">${s.status}</td>
+            </tr>
+          `;
+        });
+
+      } catch (err) {
+        console.error(err);
+        alert("Server error while loading services");
+      }
+    }
+
+    // ===================== CREATE SERVICE (MATCHES DTO) =====================
+    async function createService() {
+      const name = document.getElementById("sName").value;
+      const category = document.getElementById("sCategory").value;
+      const price = document.getElementById("sPrice").value;
+      const image = document.getElementById("sImage").files[0];
+
+      if (!name || !category || !price) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("serviceName", name);
+      formData.append("category", category);
+      formData.append("price", price);
+      formData.append("serviceDateTime", new Date().toISOString());
+
+      const address = document.getElementById("sAddress").value;
+      const latitude = document.getElementById("sLatitude").value;
+      const longitude = document.getElementById("sLongitude").value;
+
+      if (address) formData.append("address", address);
+      if (latitude) formData.append("latitude", latitude);
+      if (longitude) formData.append("longitude", longitude);
+
+      if (image) {
+        formData.append("image", image);
+      }
+
+      try {
+        const res = await fetch(`${BASE_URL}/admin/services`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${getToken()}`
+          },
+          body: formData
+        });
+
+        if (res.ok) {
+          alert("Service added successfully");
+          clearForm();
+          loadServices();
+        } else {
+          alert("Failed to add service");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Server error while adding service");
+      }
+    }
+
+    // ===================== HELPERS =====================
+    function clearForm() {
+      document.getElementById("sName").value = "";
+      document.getElementById("sCategory").value = "";
+      document.getElementById("sPrice").value = "";
+      document.getElementById("sImage").value = "";
+      document.getElementById("sAddress").value = "";
+      document.getElementById("sLatitude").value = "";
+      document.getElementById("sLongitude").value = "";
+    }
+
+    // ===================== INIT =====================
+    loadServices();
+  </script>
+
 </body>
 </html>

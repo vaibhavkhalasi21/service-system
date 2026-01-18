@@ -26,9 +26,8 @@ async function loadServices() {
     table.innerHTML = "";
 
     services.forEach(s => {
-      let statusClass = "status-blocked";
-      if (s.status === "Active") statusClass = "status-active";
-      if (s.status === "Completed") statusClass = "status-completed";
+      const statusClass =
+        s.status === "Active" ? "status-active" : "status-blocked";
 
       table.innerHTML += `
         <tr>
@@ -36,11 +35,12 @@ async function loadServices() {
 
           <td>
             <strong>${s.serviceName}</strong><br/>
-            ${s.imageUrl
-              ? `<img src="http://localhost:5244${s.imageUrl}"
-                     width="60"
-                     style="margin-top:6px;border-radius:6px;">`
-              : ""
+            ${
+              s.imageUrl
+                ? `<img src="http://localhost:5244${s.imageUrl}"
+                       width="60"
+                       style="margin-top:6px;border-radius:6px;">`
+                : ""
             }
           </td>
 
@@ -58,7 +58,6 @@ async function loadServices() {
         </tr>
       `;
     });
-
   } catch (err) {
     console.error(err);
     alert("Server error while loading services");
@@ -66,16 +65,16 @@ async function loadServices() {
 }
 
 // =============================================
-// ➕ CREATE SERVICE (FILE UPLOAD)
+// ➕ CREATE SERVICE (MATCHES ServiceCreateDto)
 // =============================================
 async function createService() {
   const name = document.getElementById("sName").value;
   const category = document.getElementById("sCategory").value;
   const price = document.getElementById("sPrice").value;
-  const imageFile = document.getElementById("sImage").files[0];
+  const image = document.getElementById("sImage").files[0];
 
-  if (!name || !price || !imageFile) {
-    alert("Please fill all fields and select an image");
+  if (!name || !category || !price) {
+    alert("Please fill all required fields");
     return;
   }
 
@@ -83,7 +82,25 @@ async function createService() {
   formData.append("serviceName", name);
   formData.append("category", category);
   formData.append("price", price);
-  formData.append("image", imageFile);
+  formData.append("serviceDateTime", new Date().toISOString());
+
+  // Optional fields (DTO supported)
+  const addressEl = document.getElementById("sAddress");
+  const latEl = document.getElementById("sLatitude");
+  const lngEl = document.getElementById("sLongitude");
+
+  if (addressEl && addressEl.value)
+    formData.append("address", addressEl.value);
+
+  if (latEl && latEl.value)
+    formData.append("latitude", latEl.value);
+
+  if (lngEl && lngEl.value)
+    formData.append("longitude", lngEl.value);
+
+  if (image) {
+    formData.append("image", image);
+  }
 
   try {
     const res = await fetch(`${BASE_URL}/admin/services`, {
@@ -95,7 +112,7 @@ async function createService() {
     });
 
     if (res.ok) {
-      alert("Service added");
+      alert("Service added successfully");
       clearForm();
       loadServices();
     } else {
@@ -110,7 +127,6 @@ async function createService() {
 // =============================================
 // ✏️ UPDATE SERVICE (TEXT ONLY)
 // =============================================
-// NOTE: Image update should be a separate flow
 async function editService(id) {
   const serviceName = prompt("Service name:");
   const category = prompt("Category:");
@@ -176,6 +192,14 @@ function clearForm() {
   document.getElementById("sCategory").value = "";
   document.getElementById("sPrice").value = "";
   document.getElementById("sImage").value = "";
+
+  const addressEl = document.getElementById("sAddress");
+  const latEl = document.getElementById("sLatitude");
+  const lngEl = document.getElementById("sLongitude");
+
+  if (addressEl) addressEl.value = "";
+  if (latEl) latEl.value = "";
+  if (lngEl) lngEl.value = "";
 }
 
 // =============================================
