@@ -42,7 +42,14 @@
 
       <div class="form-grid">
         <input id="sName" placeholder="Service Name" required />
-        <input id="sCategory" placeholder="Category" required />
+        <select id="sCategory">
+          <option value="">Select Category</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Plumber">Plumber</option>
+          <option value="Electrician">Electrician</option>
+          <option value="AC Repair">AC Repair</option>
+          <option value="Painter">Painter</option>
+        </select>
         <input id="sPrice" type="number" placeholder="Price" required />
 
         <!-- OPTIONAL FIELDS (DTO SUPPORT) -->

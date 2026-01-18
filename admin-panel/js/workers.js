@@ -58,7 +58,7 @@ async function createWorker() {
     name: wName.value,
     email: wEmail.value,
     phone: wPhone.value,
-    skill: wSkill.value,
+    Category: wCategory.value,
     address: wAddress.value,
     password: wPassword.value
   };
@@ -85,7 +85,7 @@ async function createWorker() {
 async function editWorker(id) {
   const name = prompt("Enter name:");
   const phone = prompt("Enter phone:");
-  const skill = prompt("Enter skill:");
+  const Category = prompt("Enter Category:");
   const address = prompt("Enter address:");
 
   if (!name || !phone) return;
@@ -151,7 +151,7 @@ function clearForm() {
   wName.value = "";
   wEmail.value = "";
   wPhone.value = "";
-  wSkill.value = "";
+  wCategory.value = "";
   wAddress.value = "";
   wPassword.value = "";
 }

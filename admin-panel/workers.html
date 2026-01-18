@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Worker Management</title>
@@ -42,7 +43,14 @@
         <input id="wName" placeholder="Name" />
         <input id="wEmail" placeholder="Email" />
         <input id="wPhone" placeholder="Phone" />
-        <input id="wSkill" placeholder="Skill" />
+        <select id="wCategory">
+          <option value="">Select Category</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Plumber">Plumber</option>
+          <option value="Electrician">Electrician</option>
+          <option value="AC Repair">AC Repair</option>
+          <option value="Painter">Painter</option>
+        </select>
         <input id="wAddress" placeholder="Address" />
         <input id="wPassword" type="password" placeholder="Password" />
       </div>
@@ -73,4 +81,5 @@
   <script src="js/api.js"></script>
   <script src="js/workers.js"></script>
 </body>
+
 </html>
