@@ -14,8 +14,8 @@ namespace VendorWorkerAPI.Models
         public int WorkerId { get; set; }
         public Worker Worker { get; set; } = null!;
 
-        public int? VendorId { get; set; }
-        public Vendor? Vendor { get; set; } = null!;
+        public int VendorId { get; set; }
+        public Vendor Vendor { get; set; } 
 
         public ServiceCategory Category { get; set; }
 

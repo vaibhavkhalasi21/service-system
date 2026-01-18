@@ -7,7 +7,10 @@ namespace VendorWorkerAPI.Models
         public int Id { get; set; }
 
         public int BookingId { get; set; }
-        public int? VendorId { get; set; }
+
+        public int ApplicationId { get; set; }
+
+        public int VendorId { get; set; }
         public int WorkerId { get; set; }
 
         public decimal Amount { get; set; }

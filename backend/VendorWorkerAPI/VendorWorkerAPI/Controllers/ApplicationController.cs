@@ -24,37 +24,34 @@ namespace VendorWorkerAPI.Controllers
         [HttpPost("apply/{serviceId}")]
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> ApplyForService(
-     int serviceId,
-     [FromBody] ApplyServiceRequest request
- )
+            int serviceId,
+            [FromBody] ApplyServiceRequest request)
         {
-            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerIdStr == null) return Unauthorized();
+            if (request == null)
+                return BadRequest("Request body missing");
 
-            int workerId = int.Parse(workerIdStr);
+            var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(workerIdStr, out int workerId))
+                return Unauthorized();
 
             var service = await _context.Services.FindAsync(serviceId);
-            if (service == null) return NotFound("Service not found");
+            if (service == null)
+                return NotFound("Service not found");
 
             var worker = await _context.Workers.FindAsync(workerId);
-            if (worker == null) return Unauthorized("Worker not found");
+            if (worker == null)
+                return Unauthorized("Worker not found");
 
-            // 🔥 CATEGORY RESTRICTION (MAIN RULE)
             if (worker.Category != service.Category)
-            {
                 return Forbid("You can apply only to services in your category");
-            }
 
             bool alreadyApplied = await _context.Applications.AnyAsync(a =>
                 a.ServiceId == serviceId && a.WorkerId == workerId);
 
             if (alreadyApplied)
-                return BadRequest("You have already applied for this service");
+                return Conflict("You have already applied");
 
-            if (request.ServiceLatitude == 0 || request.ServiceLongitude == 0)
-                return BadRequest("Service location required");
-
-            if (request.WorkerLatitude == 0 || request.WorkerLongitude == 0)
+            if (!request.WorkerLatitude.HasValue || !request.WorkerLongitude.HasValue)
                 return BadRequest("Worker location required");
 
             var application = new Application
@@ -63,17 +60,23 @@ namespace VendorWorkerAPI.Controllers
                 WorkerId = workerId,
                 VendorId = service.VendorId,
 
+
+
                 Status = "Pending",
                 PaymentStatus = "Pending",
                 EscrowStatus = "NONE",
                 CreatedAt = DateTime.UtcNow,
 
-                ServiceLatitude = request.ServiceLatitude,
-                ServiceLongitude = request.ServiceLongitude,
-                ServiceAddress = request.ServiceAddress,
 
-                WorkerLatitude = request.WorkerLatitude,
-                WorkerLongitude = request.WorkerLongitude
+
+                // Service location from DB
+                ServiceLatitude = service.Latitude,
+                ServiceLongitude = service.Longitude,
+                ServiceAddress = service.Address,
+
+                // Worker location from request
+                WorkerLatitude = request.WorkerLatitude.Value,
+                WorkerLongitude = request.WorkerLongitude.Value
             };
 
             _context.Applications.Add(application);
@@ -82,18 +85,16 @@ namespace VendorWorkerAPI.Controllers
             return Ok(new { message = "Application submitted successfully" });
         }
 
-
         // =====================================================
-        // WORKER: VIEW MY APPLICATIONS
+        // WORKER: MY BOOKINGS (FIXED)
         // =====================================================
         [HttpGet("worker")]
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> GetWorkerApplications()
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerIdStr == null) return Unauthorized();
-
-            int workerId = int.Parse(workerIdStr);
+            if (!int.TryParse(workerIdStr, out int workerId))
+                return Unauthorized();
 
             var applications = await _context.Applications
                 .Where(a => a.WorkerId == workerId)
@@ -102,22 +103,23 @@ namespace VendorWorkerAPI.Controllers
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new
                 {
-                    a.Id,
-                    a.Status,
-                    a.PaymentStatus,
-                    a.PaymentMethod,
-                    a.EscrowStatus,
+                    id = a.Id,
+                    status = a.Status,
+                    paymentStatus = a.PaymentStatus,
 
-                    a.WorkerRated,
-                    a.WorkerRating,
-                    a.VendorRated,
-                    a.VendorRating,
+                    serviceName = a.Service.ServiceName,
+                    category = a.Service.Category,
+                    price = a.Service.Price,
+                    serviceDateTime = a.Service.ServiceDateTime,
+                    vendorName = a.Service.Vendor.Name,
 
-                    ServiceName = a.Service.ServiceName,
-                    Category = a.Service.Category,
-                    Price = a.Service.Price,
-                    ServiceDateTime = a.Service.ServiceDateTime,
-                    VendorName = a.Service.Vendor.Name
+                    // 🔥 LOCATION FIELDS (CRITICAL)
+                    serviceLatitude = a.ServiceLatitude,
+                    serviceLongitude = a.ServiceLongitude,
+                    serviceAddress = a.ServiceAddress,
+
+                    vendorRated = a.VendorRated,
+                    vendorRating = a.VendorRating
                 })
                 .ToListAsync();
 
@@ -125,16 +127,15 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // VENDOR: VIEW APPLICATIONS / JOBS
+        // VENDOR: VIEW APPLICATIONS
         // =====================================================
         [HttpGet("vendor")]
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> GetVendorApplications()
         {
             var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorIdStr == null) return Unauthorized();
-
-            int vendorId = int.Parse(vendorIdStr);
+            if (!int.TryParse(vendorIdStr, out int vendorId))
+                return Unauthorized();
 
             var applications = await _context.Applications
                 .Where(a => a.VendorId == vendorId)
@@ -143,46 +144,64 @@ namespace VendorWorkerAPI.Controllers
                 .OrderByDescending(a => a.CreatedAt)
                 .Select(a => new
                 {
-                    a.Id,
-                    a.Status,
-                    a.PaymentStatus,
-                    a.PaymentMethod,
-                    a.EscrowStatus,
+                    id = a.Id,
 
                     WorkerName = a.Worker.Name,
-                    ServiceName = a.Service.ServiceName,
-                    Price = a.Service.Price,
-                    ServiceDateTime = a.Service.ServiceDateTime,
+                    WorkerEmail = a.Worker.Email,
 
-                    a.VendorRated,
-                    a.VendorRating
+                    serviceName = a.Service.ServiceName,
+                    category = a.Service.Category,
+
+                    price = a.Service.Price,                     // ✅ FIX
+                    serviceDateTime = a.Service.ServiceDateTime, // ✅ FIX
+
+                    workerLatitude = a.WorkerLatitude,
+                    workerLongitude = a.WorkerLongitude,
+
+                    serviceLatitude = a.ServiceLatitude,
+                    serviceLongitude = a.ServiceLongitude,
+                    serviceAddress = a.ServiceAddress,
+
+                    status = a.Status,
+                    paymentStatus = a.PaymentStatus,
+                    paymentMethod = a.PaymentMethod,
+
+                    vendorRated = a.VendorRated,
+                    vendorRating = a.VendorRating,
+
+                    createdAt = a.CreatedAt
                 })
+
                 .ToListAsync();
 
             return Ok(applications);
         }
 
         // =====================================================
-        // VENDOR: ACCEPT / REJECT APPLICATION
+        // VENDOR: ACCEPT / REJECT
         // =====================================================
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Vendor")]
         public async Task<IActionResult> UpdateStatus(
             int id,
-            [FromQuery] string status
-        )
+            [FromQuery] string status)
         {
             if (status != "Accepted" && status != "Rejected")
                 return BadRequest("Invalid status");
 
             var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorIdStr == null) return Unauthorized();
-
-            int vendorId = int.Parse(vendorIdStr);
+            if (!int.TryParse(vendorIdStr, out int vendorId))
+                return Unauthorized();
 
             var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound();
-            if (app.VendorId != vendorId) return Forbid();
+            if (app == null)
+                return NotFound();
+
+            if (app.VendorId != vendorId)
+                return Forbid();
+
+            if (app.Status != "Pending")
+                return Conflict("Already processed");
 
             app.Status = status;
             await _context.SaveChangesAsync();
@@ -191,20 +210,23 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // WORKER: MARK JOB COMPLETED
+        // WORKER: MARK COMPLETED
         // =====================================================
         [HttpPut("{id}/complete")]
         [Authorize(Roles = "Worker")]
         public async Task<IActionResult> MarkCompleted(int id)
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerIdStr == null) return Unauthorized();
-
-            int workerId = int.Parse(workerIdStr);
+            if (!int.TryParse(workerIdStr, out int workerId))
+                return Unauthorized();
 
             var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound();
-            if (app.WorkerId != workerId) return Forbid();
+            if (app == null)
+                return NotFound();
+
+            if (app.WorkerId != workerId)
+                return Forbid();
+
             if (app.Status != "Accepted")
                 return BadRequest("Job not active");
 
@@ -213,135 +235,6 @@ namespace VendorWorkerAPI.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Job completed" });
-        }
-
-        // =====================================================
-        // VENDOR: PAY (CASH / ONLINE DEMO)
-        // =====================================================
-        [HttpPut("{id}/pay")]
-        [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> MarkPaid(
-            int id,
-            [FromQuery] string method
-        )
-        {
-            if (method != "Cash" && method != "Online")
-                return BadRequest("Invalid payment method");
-
-            var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (vendorIdStr == null) return Unauthorized();
-
-            int vendorId = int.Parse(vendorIdStr);
-
-            var app = await _context.Applications
-                .Include(a => a.Service)
-                .FirstOrDefaultAsync(a => a.Id == id);
-
-            if (app == null) return NotFound();
-            if (app.VendorId != vendorId) return Forbid();
-            if (app.Status != "Completed")
-                return BadRequest("Job not completed");
-
-            app.PaymentStatus = "Paid";
-
-            if (method == "Online")
-            {
-                app.PaymentMethod = "Online (Demo)";
-                app.EscrowStatus = "HELD";
-            }
-            else
-            {
-                app.PaymentMethod = "Cash";
-                app.EscrowStatus = "RELEASED";
-            }
-
-            if (app.Service != null)
-                app.Service.Status = ServiceStatus.Completed;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = $"Payment marked as {app.PaymentMethod}",
-                escrow = app.EscrowStatus
-            });
-        }
-
-        // =====================================================
-        // ADMIN: RELEASE ESCROW
-        // =====================================================
-        [HttpPut("{id}/release-escrow")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ReleaseEscrow(int id)
-        {
-            var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound();
-
-            if (app.PaymentStatus != "Paid")
-                return BadRequest("Payment not completed");
-
-            if (app.EscrowStatus == "RELEASED")
-                return BadRequest("Already released");
-
-            app.EscrowStatus = "RELEASED";
-            app.Status = "Closed";
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Escrow released" });
-        }
-
-        // =====================================================
-        // VENDOR: RATE WORKER
-        // =====================================================
-        [HttpPost("{id}/rate-worker")]
-        [Authorize(Roles = "Vendor")]
-        public async Task<IActionResult> RateWorker(
-            int id,
-            [FromQuery] int rating
-        )
-        {
-            if (rating < 1 || rating > 5)
-                return BadRequest("Invalid rating");
-
-            var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound();
-            if (app.PaymentStatus != "Paid")
-                return BadRequest("Payment not completed");
-            if (app.VendorRated)
-                return BadRequest("Already rated");
-
-            app.VendorRating = rating;
-            app.VendorRated = true;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Worker rated" });
-        }
-
-        // =====================================================
-        // WORKER: RATE VENDOR
-        // =====================================================
-        [HttpPost("{id}/rate-vendor")]
-        [Authorize(Roles = "Worker")]
-        public async Task<IActionResult> RateVendor(
-            int id,
-            [FromQuery] int rating
-        )
-        {
-            if (rating < 1 || rating > 5)
-                return BadRequest("Invalid rating");
-
-            var app = await _context.Applications.FindAsync(id);
-            if (app == null) return NotFound();
-            if (app.PaymentStatus != "Paid")
-                return BadRequest("Payment not completed");
-            if (app.WorkerRated)
-                return BadRequest("Already rated");
-
-            app.WorkerRating = rating;
-            app.WorkerRated = true;
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Vendor rated" });
         }
     }
 }

@@ -20,11 +20,10 @@ public class Service
 
     // 🔗 Vendor Relation
     [Required]
-    public int? VendorId { get; set; }
+    public int VendorId { get; set; }          // ✅ FIXED
+    public Vendor Vendor { get; set; } = null!;
 
-    public Vendor? Vendor { get; set; } = null!;
-
-    // 🔥 SERVICE LIFECYCLE (NEW)
+    // 🔥 SERVICE LIFECYCLE
     [Required]
     public ServiceStatus Status { get; set; } = ServiceStatus.Active;
 
@@ -39,11 +38,8 @@ public class Service
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    // 📍 LOCATION
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? Address { get; set; }
-
-    
-
-
 }

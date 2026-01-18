@@ -13,7 +13,7 @@ namespace VendorWorkerAPI.Models
         public int ServiceId { get; set; }
 
         [Required]
-        public int? VendorId { get; set; }
+        public int VendorId { get; set; }
 
         [Required]
         public int WorkerId { get; set; }
@@ -36,5 +36,9 @@ namespace VendorWorkerAPI.Models
 
         [ForeignKey(nameof(WorkerId))]
         public User Worker { get; set; } = null!;
+
+        public string PaymentStatus { get; set; } = "Pending"; // Pending / Paid
+        public string? PaymentMethod { get; set; }             // Cash / Online (Demo)
+
     }
 }

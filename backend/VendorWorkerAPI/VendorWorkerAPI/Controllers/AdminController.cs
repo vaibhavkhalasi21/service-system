@@ -290,9 +290,8 @@ public async Task<IActionResult> LoginAdmin([FromBody] LoginAdminDto dto)
             var service = new Service
             {
                 ServiceName = dto.ServiceName,
-                Category = dto.Category,
+                Category = (ServiceCategory)dto.Category,
                 Price = dto.Price,
-                VendorId = dto.VendorId,
                 ServiceDateTime = dto.ServiceDateTime,
 
                 Latitude = dto.Latitude,

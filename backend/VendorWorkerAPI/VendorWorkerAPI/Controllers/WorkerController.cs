@@ -86,6 +86,7 @@ namespace VendorWorkerAPI.Controllers
                 token,
                 workerId = worker.Id,
                 workerName = worker.Name,
+                category = (int)worker.Category,
                 role = "Worker"
             });
         }
@@ -164,13 +165,15 @@ namespace VendorWorkerAPI.Controllers
 
 
         // =====================================================
-        // WORKER: GET NEARBY JOBS (FIXED & CORRECT)
+        // WORKER: GET NEARBY JOBS (FINAL FIXED VERSION)
+        // =====================================================
         [Authorize(Roles = "Worker")]
         [HttpGet("nearby-jobs")]
         public async Task<IActionResult> GetNearbyJobs()
         {
             var workerIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (workerIdStr == null) return Unauthorized();
+            if (workerIdStr == null)
+                return Unauthorized();
 
             int workerId = int.Parse(workerIdStr);
 
@@ -183,17 +186,18 @@ namespace VendorWorkerAPI.Controllers
 
             const double maxDistanceKm = 10;
 
+            // 1️⃣ Fetch active services of same category
             var services = await _context.Services
-    .Where(s =>
-        s.Status == ServiceStatus.Active &&
-        s.Category == worker.Category &&   // 🔥 CATEGORY FILTER
-        s.Latitude != null &&
-        s.Longitude != null
-    )
-    .Include(s => s.Vendor)
-    .ToListAsync();
+                .Where(s =>
+                    s.Status == ServiceStatus.Active &&
+                    s.Category == worker.Category &&   // 🔥 CATEGORY FILTER
+                    s.Latitude != null &&
+                    s.Longitude != null
+                )
+                .Include(s => s.Vendor)
+                .ToListAsync();
 
-
+            // 2️⃣ Distance filter + SAFE RESPONSE SHAPE
             var nearbyJobs = services
                 .Where(s =>
                     DistanceService.CalculateDistanceKm(
@@ -205,15 +209,19 @@ namespace VendorWorkerAPI.Controllers
                 )
                 .Select(s => new
                 {
-                    s.Id,
+                    Id = s.Id,
                     ServiceName = s.ServiceName,
-                    Category = s.Category,
+
+                    Category = (int)s.Category,          // ✅ enum → int
+                    Status = s.Status.ToString(),         // ✅ enum → string (FIX)
+
                     Price = s.Price,
                     ServiceDateTime = s.ServiceDateTime,
                     CreatedAt = s.CreatedAt,
+
                     ImageUrl = s.ImageUrl,
 
-                    VendorName = s.Vendor.Name,
+                    VendorName = s.Vendor != null ? s.Vendor.Name : "Vendor",
 
                     ServiceLatitude = s.Latitude,
                     ServiceLongitude = s.Longitude,

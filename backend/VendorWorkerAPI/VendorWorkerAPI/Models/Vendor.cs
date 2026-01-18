@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using VendorWorkerAPI.Models;
 
 public class Vendor
 {
@@ -13,4 +14,6 @@ public class Vendor
     public string Address { get; set; } = null!;
     public string Role { get; set; } = "Vendor";
     public bool IsActive { get; set; } = true;
+
+    
 }

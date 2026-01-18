@@ -133,7 +133,7 @@ namespace VendorWorkerAPI.Controllers
             var service = new Service
             {
                 ServiceName = dto.ServiceName,
-                Category = dto.Category,
+                Category = (ServiceCategory)dto.Category,
                 Price = dto.Price,
                 ServiceDateTime = dto.ServiceDateTime,
 

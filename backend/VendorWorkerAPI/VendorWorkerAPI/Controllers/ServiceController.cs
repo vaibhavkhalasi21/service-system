@@ -84,13 +84,17 @@ public class ServiceController : ControllerBase
     [Authorize(Roles = "Vendor")]
     public async Task<IActionResult> GetVendorServices()
     {
+        // ✅ STEP 1: READ VENDOR ID FROM TOKEN
         var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (vendorIdStr == null) return Unauthorized();
+        if (vendorIdStr == null)
+            return Unauthorized();
 
-        int vendorId = int.Parse(vendorIdStr);
+        int vendorId = int.Parse(vendorIdStr); // 🔥 THIS WAS MISSING
 
+        // ✅ STEP 2: QUERY WITH vendorId
         var services = await _context.Services
             .Where(s => s.VendorId == vendorId)
+            .Include(s => s.Vendor) // 🔥 REQUIRED for VendorName
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new
             {
@@ -104,7 +108,8 @@ public class ServiceController : ControllerBase
                 CreatedAt = s.CreatedAt,
                 UpdatedAt = s.UpdatedAt,
 
-                // ✅ ADD THESE
+                VendorName = s.Vendor != null ? s.Vendor.Name : "You",
+
                 Address = s.Address,
                 Latitude = s.Latitude,
                 Longitude = s.Longitude
@@ -113,6 +118,8 @@ public class ServiceController : ControllerBase
 
         return Ok(services);
     }
+
+
 
 
     // =====================================================
@@ -125,6 +132,12 @@ public class ServiceController : ControllerBase
     {
         var vendorIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (vendorIdStr == null) return Unauthorized();
+
+        if (!Enum.IsDefined(typeof(ServiceCategory), dto.Category))
+        {
+            return BadRequest("Invalid service category");
+        }
+
 
         int vendorId = int.Parse(vendorIdStr);
         string? imagePath = null;
@@ -146,7 +159,7 @@ public class ServiceController : ControllerBase
         var service = new Service
         {
             ServiceName = dto.ServiceName,
-            Category = dto.Category,
+            Category = (ServiceCategory)dto.Category,
             Price = dto.Price,
             ImageUrl = imagePath,
             VendorId = vendorId,
@@ -204,7 +217,8 @@ public class ServiceController : ControllerBase
         }
 
         service.ServiceName = dto.ServiceName;
-        service.Category = dto.Category;
+        service.Category = (ServiceCategory)dto.Category;
+
         service.Price = dto.Price;
         service.ServiceDateTime = dto.ServiceDateTime;
         service.UpdatedAt = DateTime.UtcNow;

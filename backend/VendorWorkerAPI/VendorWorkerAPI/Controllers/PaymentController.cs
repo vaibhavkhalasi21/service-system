@@ -19,32 +19,40 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // DEMO: CREATE ONLINE PAYMENT (NO GATEWAY)
+        // VENDOR: ONLINE PAYMENT (DEMO)
         // =====================================================
         [Authorize(Roles = "Vendor")]
-        [HttpPost("create-demo-payment/{bookingId}")]
-        public async Task<IActionResult> CreateDemoPayment(int bookingId)
+        [HttpPost("create-demo-payment/{applicationId}")]
+        public async Task<IActionResult> CreateDemoPayment(int applicationId)
         {
             var vendorId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
-            var booking = await _context.Bookings
-                .FirstOrDefaultAsync(b =>
-                    b.Id == bookingId &&
-                    b.VendorId == vendorId &&
-                    b.Status == "CONFIRMED");
+            var app = await _context.Applications
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a =>
+                    a.Id == applicationId &&
+                    a.VendorId == vendorId &&
+                    a.Status == "Completed" &&
+                    a.PaymentStatus == "Pending"
+                );
 
-            if (booking == null)
-                return BadRequest("Invalid booking");
+            if (app == null)
+                return BadRequest("Invalid application or already paid");
 
-            // 🔹 Create DEMO payment record
+            var alreadyPaid = await _context.Payments
+                .AnyAsync(p => p.ApplicationId == applicationId);
+
+            if (alreadyPaid)
+                return BadRequest("Payment already exists");
+
             var payment = new Payment
             {
-                BookingId = booking.Id,
-                VendorId = booking.VendorId,
-                WorkerId = booking.WorkerId,
-                Amount = booking.AgreedPrice,
+                ApplicationId = app.Id,
+                VendorId = app.VendorId,
+                WorkerId = app.WorkerId,
+                Amount = app.Service.Price,
                 Status = "SUCCESS",
                 EscrowStatus = "HELD",
                 PaymentMethod = "Online (Demo)",
@@ -53,8 +61,9 @@ namespace VendorWorkerAPI.Controllers
 
             _context.Payments.Add(payment);
 
-            // 🔹 Update booking status
-            booking.Status = "PAID";
+            // ✅ update application
+            app.PaymentStatus = "Paid";
+            app.PaymentMethod = "Online (Demo)";
 
             await _context.SaveChangesAsync();
 
@@ -67,31 +76,59 @@ namespace VendorWorkerAPI.Controllers
         }
 
         // =====================================================
-        // ADMIN: RELEASE ESCROW (DEMO)
+        // VENDOR: CASH PAYMENT (DEMO)
         // =====================================================
-        [Authorize(Roles = "Admin")]
-        [HttpPut("release-escrow/{paymentId}")]
-        public async Task<IActionResult> ReleaseEscrow(int paymentId)
+        [Authorize(Roles = "Vendor")]
+        [HttpPost("create-cash-payment/{applicationId}")]
+        public async Task<IActionResult> CreateCashPayment(int applicationId)
         {
-            var payment = await _context.Payments.FindAsync(paymentId);
-            if (payment == null)
-                return NotFound("Payment not found");
+            var vendorId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
 
-            if (payment.Status != "SUCCESS")
-                return BadRequest("Payment not successful");
+            var app = await _context.Applications
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a =>
+                    a.Id == applicationId &&
+                    a.VendorId == vendorId &&
+                    a.Status == "Completed" &&
+                    a.PaymentStatus == "Pending"
+                );
 
-            if (payment.EscrowStatus == "RELEASED")
-                return BadRequest("Escrow already released");
+            if (app == null)
+                return BadRequest("Invalid application or already paid");
 
-            payment.EscrowStatus = "RELEASED";
-            payment.ReleasedAt = DateTime.UtcNow;
+            var alreadyPaid = await _context.Payments
+                .AnyAsync(p => p.ApplicationId == applicationId);
+
+            if (alreadyPaid)
+                return BadRequest("Payment already exists");
+
+            var payment = new Payment
+            {
+                ApplicationId = app.Id,
+                VendorId = app.VendorId,
+                WorkerId = app.WorkerId,
+                Amount = app.Service.Price,
+                Status = "SUCCESS",
+                EscrowStatus = "RELEASED",
+                PaymentMethod = "Cash",
+                CreatedAt = DateTime.UtcNow,
+                ReleasedAt = DateTime.UtcNow
+            };
+
+            _context.Payments.Add(payment);
+
+            // ✅ update application
+            app.PaymentStatus = "Paid";
+            app.PaymentMethod = "Cash";
 
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                message = "Escrow released to worker (Demo)",
-                escrowStatus = payment.EscrowStatus
+                message = "Cash payment recorded successfully",
+                paymentStatus = payment.Status
             });
         }
 

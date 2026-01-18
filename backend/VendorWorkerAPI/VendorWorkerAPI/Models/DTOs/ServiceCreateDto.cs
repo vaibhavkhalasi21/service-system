@@ -6,7 +6,10 @@ public class ServiceCreateDto
     [Required]
     public string ServiceName { get; set; } = null!;
 
-    public ServiceCategory Category { get; set; }
+    // 🔥 IMPORTANT FIX
+    [Required]
+    [EnumDataType(typeof(ServiceCategory))]
+    public int Category { get; set; }
 
     [Required]
     public decimal Price { get; set; }
@@ -18,8 +21,11 @@ public class ServiceCreateDto
 
     public IFormFile? Image { get; set; }
 
+    [Required]
     public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public string? Address { get; set; }
 
+    [Required]
+    public double Longitude { get; set; }
+
+    public string? Address { get; set; }
 }
