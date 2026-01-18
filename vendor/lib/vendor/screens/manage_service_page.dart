@@ -18,10 +18,7 @@ const Color kGrey = Color(0xFF9E9E9E);
 class ManageServicePage extends StatefulWidget {
   final VendorService service;
 
-  const ManageServicePage({
-    super.key,
-    required this.service,
-  });
+  const ManageServicePage({super.key, required this.service});
 
   @override
   State<ManageServicePage> createState() => _ManageServicePageState();
@@ -30,18 +27,17 @@ class ManageServicePage extends StatefulWidget {
 class _ManageServicePageState extends State<ManageServicePage> {
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController titleController;
-  late TextEditingController priceController;
-  late TextEditingController addressController;
-  late TextEditingController latController;
-  late TextEditingController lngController;
+  late TextEditingController nameCtrl;
+  late TextEditingController priceCtrl;
+  late TextEditingController addressCtrl;
+  late TextEditingController latCtrl;
+  late TextEditingController lngCtrl;
 
-  String? selectedCategory; // 🔹 UI string
-  DateTime? selectedServiceDateTime;
+  String? selectedCategory;
+  DateTime? selectedDateTime;
 
   File? selectedImage;
   bool isLoading = false;
-  bool isDeleting = false;
 
   final ImagePicker picker = ImagePicker();
 
@@ -49,34 +45,31 @@ class _ManageServicePageState extends State<ManageServicePage> {
   void initState() {
     super.initState();
 
-    titleController = TextEditingController(text: widget.service.title);
-    priceController =
-        TextEditingController(text: widget.service.price.toString());
+    nameCtrl = TextEditingController(text: widget.service.title);
+    priceCtrl = TextEditingController(text: widget.service.price.toString());
+    addressCtrl = TextEditingController(text: widget.service.address ?? "");
+    latCtrl = TextEditingController(text: widget.service.latitude.toString());
+    lngCtrl = TextEditingController(text: widget.service.longitude.toString());
 
-    addressController =
-        TextEditingController(text: widget.service.address ?? "");
-    latController =
-        TextEditingController(text: widget.service.latitude.toString());
-    lngController =
-        TextEditingController(text: widget.service.longitude.toString());
+    selectedDateTime = widget.service.serviceDateTime;
 
-    selectedServiceDateTime = widget.service.serviceDateTime;
-
-    // 🔥 ENUM → STRING (IMPORTANT)
-    selectedCategory = mapEnumToCategory(widget.service.category);
+    // 🔥 SAFE CATEGORY INIT (OLD DATA PROTECTED)
+    final mapped = mapEnumToCategory(widget.service.category);
+    selectedCategory =
+    serviceCategories.contains(mapped) ? mapped : null;
   }
 
   @override
   void dispose() {
-    titleController.dispose();
-    priceController.dispose();
-    addressController.dispose();
-    latController.dispose();
-    lngController.dispose();
+    nameCtrl.dispose();
+    priceCtrl.dispose();
+    addressCtrl.dispose();
+    latCtrl.dispose();
+    lngCtrl.dispose();
     super.dispose();
   }
 
-  // ================= IMAGE PICKER =================
+  // ================= IMAGE PICK =================
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
@@ -85,26 +78,26 @@ class _ManageServicePageState extends State<ManageServicePage> {
   }
 
   // ================= DATE & TIME =================
-  Future<void> pickServiceDateTime() async {
-    final DateTime? date = await showDatePicker(
+  Future<void> pickDateTime() async {
+    final date = await showDatePicker(
       context: context,
+      initialDate: selectedDateTime ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDate: selectedServiceDateTime ?? DateTime.now(),
     );
 
     if (date == null) return;
 
-    final TimeOfDay? time = await showTimePicker(
+    final time = await showTimePicker(
       context: context,
       initialTime:
-      TimeOfDay.fromDateTime(selectedServiceDateTime ?? DateTime.now()),
+      TimeOfDay.fromDateTime(selectedDateTime ?? DateTime.now()),
     );
 
     if (time == null) return;
 
     setState(() {
-      selectedServiceDateTime = DateTime(
+      selectedDateTime = DateTime(
         date.year,
         date.month,
         date.day,
@@ -114,108 +107,70 @@ class _ManageServicePageState extends State<ManageServicePage> {
     });
   }
 
-  // ================= UPDATE SERVICE =================
+  // ================= UPDATE =================
   Future<void> updateService() async {
     if (!_formKey.currentState!.validate()) return;
-    if (selectedCategory == null || selectedServiceDateTime == null) return;
 
-    FocusScope.of(context).unfocus();
+    if (selectedCategory == null) {
+      _snack("Please select a valid category");
+      return;
+    }
+
+    if (selectedDateTime == null) {
+      _snack("Please select date & time");
+      return;
+    }
+
     setState(() => isLoading = true);
 
-    final request = VendorCreateServiceRequest(
-      serviceName: titleController.text.trim(),
-
-      // 🔥 STRING → ENUM INT (MAIN FIX)
+    final req = VendorCreateServiceRequest(
+      serviceName: nameCtrl.text.trim(),
       category: mapCategoryToEnum(selectedCategory!),
-
-      price: double.parse(priceController.text),
-      serviceDateTime: selectedServiceDateTime!,
-      address: addressController.text.trim(),
-      latitude: double.parse(latController.text),
-      longitude: double.parse(lngController.text),
+      price: double.parse(priceCtrl.text),
+      serviceDateTime: selectedDateTime!,
+      address: addressCtrl.text.trim(),
+      latitude: double.parse(latCtrl.text),
+      longitude: double.parse(lngCtrl.text),
     );
 
-    final success = await ServiceApi.updateService(
+    final ok = await ServiceApi.updateService(
       widget.service.id,
-      request,
+      req,
       selectedImage,
     );
 
     if (!mounted) return;
-
     setState(() => isLoading = false);
 
+    _snack(ok ? "Service updated successfully" : "Update failed",
+        success: ok);
+
+    if (ok) Navigator.pop(context, true);
+  }
+
+  void _snack(String msg, {bool success = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          success
-              ? "Service updated successfully"
-              : "Failed to update service",
-        ),
+        content: Text(msg),
         backgroundColor: success ? Colors.green : Colors.red,
       ),
     );
-
-    if (success) {
-      await Future.delayed(const Duration(milliseconds: 300));
-      Navigator.pop(context, true);
-    }
-  }
-
-  // ================= DELETE SERVICE =================
-  Future<void> deleteService() async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Delete Service"),
-        content: const Text(
-          "Are you sure you want to delete this service?\n\nThis action cannot be undone.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() => isDeleting = true);
-
-    final success = await ServiceApi.deleteService(widget.service.id);
-
-    if (!mounted) return;
-
-    setState(() => isDeleting = false);
-
-    if (success) Navigator.pop(context, true);
   }
 
   // ================= UI =================
   @override
   Widget build(BuildContext context) {
-    final scheduledText = selectedServiceDateTime == null
-        ? "Select service date & time"
+    final dateText = selectedDateTime == null
+        ? "Select date & time"
         : DateFormat('dd MMM yyyy • hh:mm a')
-        .format(selectedServiceDateTime!);
+        .format(selectedDateTime!);
 
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kBg,
-        elevation: 0,
+        title: const Text("Manage Service"),
         centerTitle: true,
-        title: const Text(
-          "Manage Service",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -223,27 +178,118 @@ class _ManageServicePageState extends State<ManageServicePage> {
           key: _formKey,
           child: Column(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: selectedImage != null
-                    ? Image.file(selectedImage!, height: 180, fit: BoxFit.cover)
-                    : Image.network(
-                  widget.service.imagePath,
-                  height: 180,
-                  fit: BoxFit.cover,
+              // IMAGE
+              GestureDetector(
+                onTap: pickImage,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: selectedImage != null
+                      ? Image.file(
+                    selectedImage!,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  )
+                      : Image.network(
+                    widget.service.imagePath,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
 
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                items: serviceCategories
-                    .map((c) =>
-                    DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => selectedCategory = v),
-                validator: (v) => v == null ? "Select category" : null,
+              const SizedBox(height: 16),
+
+              _field(nameCtrl, "Service Name"),
+              _dropdown(),
+              _field(
+                priceCtrl,
+                "Price (₹)",
+                keyboard: TextInputType.number,
+              ),
+
+              const SizedBox(height: 10),
+
+              OutlinedButton.icon(
+                onPressed: pickDateTime,
+                icon: const Icon(Icons.schedule),
+                label: Text(dateText),
+              ),
+
+              const SizedBox(height: 12),
+
+              _field(addressCtrl, "Address"),
+              _field(latCtrl, "Latitude",
+                  keyboard: TextInputType.number),
+              _field(lngCtrl, "Longitude",
+                  keyboard: TextInputType.number),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: isLoading ? null : updateService,
+                child: isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Update Service"),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ================= HELPERS =================
+  Widget _field(
+      TextEditingController c,
+      String label, {
+        TextInputType keyboard = TextInputType.text,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: c,
+        keyboardType: keyboard,
+        validator: (v) => v == null || v.isEmpty ? "Required" : null,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: kGrey),
+          filled: true,
+          fillColor: kCard,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        value: selectedCategory,
+        items: serviceCategories
+            .map(
+              (c) => DropdownMenuItem(
+            value: c,
+            child: Text(c,
+                style: const TextStyle(color: Colors.white)),
+          ),
+        )
+            .toList(),
+        onChanged: (v) => setState(() => selectedCategory = v),
+        validator: (v) => v == null ? "Select category" : null,
+        dropdownColor: kCard,
+        decoration: InputDecoration(
+          labelText: "Service Category",
+          labelStyle: const TextStyle(color: kGrey),
+          filled: true,
+          fillColor: kCard,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
           ),
         ),
       ),

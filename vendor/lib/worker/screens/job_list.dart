@@ -21,27 +21,36 @@ class JobList extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+
+      // ✅ prevents scroll conflicts
+      shrinkWrap: true,
+      physics: const BouncingScrollPhysics(),
+
       itemCount: jobs.length,
       itemBuilder: (context, index) {
         final job = jobs[index];
 
         return JobCard(
           title: job.title,
-          category: job.category,
-          description: "Date: ${job.date}\nLocation: ${job.location}",
-          imageUrl: (job.imageUrl.isNotEmpty)
-              ? job.imageUrl
-              : "https://via.placeholder.cosm/150",
 
-          // 🔥 required fields (updated JobCard)
-          price: job.price ?? 0.0,
-          vendorName: job.vendorName ?? "Unknown Vendor",
+          // ✅ category already STRING (correct)
+          category: job.category,
+
+          description: job.description,
+
+          imageUrl: job.imageUrl.isNotEmpty
+              ? job.imageUrl
+              : "https://via.placeholder.com/150",
+
+          price: job.price,
+          vendorName: job.vendorName,
           createdAt: job.createdAt,
-          serviceDateTime: job.serviceDateTime ?? DateTime.now(),
+          serviceDateTime: job.serviceDateTime,
+          address: job.address,
 
           onApply: () {
-            // TODO: Navigate to Apply Job Screen
-          }, address: '',
+            // 🔥 you can navigate later
+          },
         );
       },
     );

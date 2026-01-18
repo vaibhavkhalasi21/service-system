@@ -15,8 +15,8 @@ class VendorServiceRequest {
   final String status;
 
   // 🔥 TIMESTAMPS
-  final DateTime createdAt;        // posted time
-  final DateTime serviceDateTime;  // scheduled time
+  final DateTime createdAt;
+  final DateTime serviceDateTime;
 
   // 🔥 LOCATION
   final String? address;
@@ -48,11 +48,8 @@ class VendorServiceRequest {
 
       serviceName: json['serviceName'] ?? "",
 
-      // ✅ MUST BE INT (ENUM)
-      category: json['category'] is int
-          ? json['category']
-          : int.tryParse(json['category'].toString()) ?? 0,
-
+      // ✅ FINAL FIX
+      category: _parseCategory(json['category']),
 
       price: (json['price'] as num).toDouble(),
 
@@ -61,7 +58,6 @@ class VendorServiceRequest {
 
       status: json['status'] ?? "Active",
 
-      // ✅ SAFE TIME PARSING
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
@@ -70,7 +66,6 @@ class VendorServiceRequest {
           ? DateTime.parse(json['serviceDateTime']).toLocal()
           : DateTime.now(),
 
-      // ✅ LOCATION SAFE PARSE
       address: json['address'],
 
       latitude: json['latitude'] != null
@@ -81,10 +76,38 @@ class VendorServiceRequest {
           ? (json['longitude'] as num).toDouble()
           : null,
 
-      // ✅ OPTIONAL RATING
       rating: json['rating'] != null
           ? (json['rating'] as num).toDouble()
           : null,
     );
+  }
+
+  // =====================================================
+  // 🔥 BACKEND ENUM STRING / INT → INT (CORE FIX)
+  // =====================================================
+  static int _parseCategory(dynamic value) {
+    if (value == null) return 0;
+
+    // ✅ backend sent INT
+    if (value is int) return value;
+
+    // ✅ backend sent ENUM STRING
+    final v = value.toString().toLowerCase();
+
+    switch (v) {
+      case "cleaning":
+        return 1;
+      case "plumber":
+        return 2;
+      case "electrician":
+        return 3;
+      case "acrepair":
+      case "ac repair":
+        return 4;
+      case "painter":
+        return 5;
+      default:
+        return 0; // Unknown (Old Data)
+    }
   }
 }

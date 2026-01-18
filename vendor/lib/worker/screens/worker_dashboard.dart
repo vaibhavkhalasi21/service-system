@@ -40,14 +40,14 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
   @override
   void dispose() {
-    _searchController.dispose(); // ✅ FIX
+    _searchController.dispose();
     super.dispose();
   }
 
   // ================= INIT =================
   void _initDashboard() {
-    fetchNearbyJobs();        // do not await → fast UI
-    _updateWorkerLocation();  // background task
+    fetchNearbyJobs();
+    _updateWorkerLocation();
   }
 
   // ================= LOCATION =================
@@ -67,7 +67,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
       WorkerSession.locationSynced = true;
     } catch (_) {
-      // silently fail – never block UI
+      // never block UI
     }
   }
 
@@ -100,16 +100,17 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
     final query = _searchController.text.toLowerCase();
 
     return allJobs.where((job) {
+      final categoryText = job.category.toLowerCase();
+
       final matchesSearch =
           job.title.toLowerCase().contains(query) ||
-              job.category.toLowerCase().contains(query) ||
+              categoryText.contains(query) ||
               job.vendorName.toLowerCase().contains(query) ||
               job.address.toLowerCase().contains(query);
 
       final matchesCategory =
           selectedCategory == "All" ||
-              job.category.toLowerCase() ==
-                  selectedCategory.toLowerCase();
+              categoryText == selectedCategory.toLowerCase();
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -240,8 +241,8 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                 ),
               )
                   : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(
-                    16, 16, 16, 80),
+                padding:
+                const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: filteredJobs.length,
                 itemBuilder: (_, index) {
                   final job = filteredJobs[index];
@@ -262,11 +263,6 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                         MaterialPageRoute(
                           builder: (_) => ApplyJobScreen(
                             serviceId: job.id,
-                            serviceLatitude:
-                            job.serviceLatitude,
-                            serviceLongitude:
-                            job.serviceLongitude,
-                            serviceAddress: job.address,
                           ),
                         ),
                       );

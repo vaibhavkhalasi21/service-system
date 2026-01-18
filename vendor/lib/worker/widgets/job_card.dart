@@ -3,14 +3,14 @@ import 'package:intl/intl.dart';
 
 class JobCard extends StatelessWidget {
   final String title;
-  final String category;
+  final String category; // ✅ STRING (already mapped)
   final String description;
   final String imageUrl;
   final double price;
   final String vendorName;
   final DateTime createdAt;
   final DateTime serviceDateTime;
-  final String address; // 🔥 NEW
+  final String address;
   final VoidCallback onApply;
 
   const JobCard({
@@ -23,7 +23,7 @@ class JobCard extends StatelessWidget {
     required this.vendorName,
     required this.createdAt,
     required this.serviceDateTime,
-    required this.address, // 🔥 REQUIRED
+    required this.address,
     required this.onApply,
   });
 
@@ -31,13 +31,14 @@ class JobCard extends StatelessWidget {
     final diff = DateTime.now().difference(date);
     if (diff.inDays > 0) return "${diff.inDays} days ago";
     if (diff.inHours > 0) return "${diff.inHours} hours ago";
+    if (diff.inMinutes > 0) return "${diff.inMinutes} min ago";
     return "Just now";
   }
 
   @override
   Widget build(BuildContext context) {
     final formattedDate =
-    DateFormat("dd MMM yyyy, hh:mm a").format(serviceDateTime);
+    DateFormat("dd MMM yyyy • hh:mm a").format(serviceDateTime);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -55,12 +56,10 @@ class JobCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          /// 🖼 IMAGE
+          // 🖼 IMAGE
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(18),
-            ),
+            borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(18)),
             child: Image.network(
               imageUrl,
               height: 190,
@@ -83,8 +82,7 @@ class JobCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                /// 🔹 TITLE
+                // 🔹 TITLE
                 Text(
                   title,
                   style: const TextStyle(
@@ -96,12 +94,10 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                /// 🔹 CATEGORY
+                // 🔹 CATEGORY CHIP
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.blue.withOpacity(.15),
                     borderRadius: BorderRadius.circular(12),
@@ -118,7 +114,7 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                /// 🔹 VENDOR
+                // 🏪 VENDOR
                 Row(
                   children: [
                     const Icon(Icons.store,
@@ -139,8 +135,8 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                /// 📍 ADDRESS (🔥 NEW)
-                if (address.isNotEmpty) ...[
+                // 📍 ADDRESS
+                if (address.trim().isNotEmpty) ...[
                   Row(
                     children: [
                       const Icon(Icons.location_on,
@@ -162,7 +158,7 @@ class JobCard extends StatelessWidget {
                   const SizedBox(height: 6),
                 ],
 
-                /// 🔹 POSTED TIME
+                // 🕒 POSTED TIME
                 Row(
                   children: [
                     const Icon(Icons.history,
@@ -180,7 +176,7 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                /// 🔹 SERVICE DATE
+                // 📅 SERVICE DATE
                 Row(
                   children: [
                     const Icon(Icons.schedule,
@@ -198,7 +194,7 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                /// 💰 PRICE
+                // 💰 PRICE
                 Text(
                   "₹ ${price.toStringAsFixed(0)}",
                   style: const TextStyle(
@@ -210,7 +206,7 @@ class JobCard extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                /// 🔘 APPLY BUTTON
+                // 🔘 APPLY BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 46,
@@ -225,7 +221,6 @@ class JobCard extends StatelessWidget {
                     child: const Text(
                       "Apply Job",
                       style: TextStyle(
-                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

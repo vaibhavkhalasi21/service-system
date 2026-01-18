@@ -5,7 +5,7 @@ import '../models/vendor_payment.dart';
 
 class VendorPaymentApi {
   static const String baseUrl =
-      "http://172.20.253.37:5244/api/application";
+      "http://172.20.253.37:5244/api/payments";
 
   // ===============================
   // AUTH HEADER
@@ -25,63 +25,64 @@ class VendorPaymentApi {
   }
 
   // ===============================
-  // VENDOR: GET COMPLETED JOBS
+  // GET PAYMENTS (PAYMENTS TABLE)
   // ===============================
-  static Future<List<VendorPayment>> getPayments() async {
+  static Future<List<VendorPayment>> getMyPayments() async {
     final headers = await _authHeader();
 
     final response = await http.get(
-      Uri.parse("$baseUrl/vendor"),
+      Uri.parse("$baseUrl/my-payments"),
       headers: headers,
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to load vendor payments (${response.statusCode})",
+        "Failed to load payments "
+            "(${response.statusCode}) → ${response.body}",
       );
     }
 
     final List<dynamic> data = jsonDecode(response.body);
 
-    // ✅ Only COMPLETED jobs appear in payment screen
     return data
-        .where((e) => e['status'] == "Completed")
         .map((e) => VendorPayment.fromJson(e))
         .toList();
   }
 
   // ===============================
-  // DEMO ONLINE PAYMENT
+  // CASH PAYMENT (APPLICATION BASED)
   // ===============================
-  static Future<void> markPaidOnline(int applicationId) async {
+  static Future<void> createCashPayment(int applicationId) async {
     final headers = await _authHeader();
 
-    final response = await http.put(
-      Uri.parse("$baseUrl/$applicationId/pay?method=Online"),
+    final response = await http.post(
+      Uri.parse("$baseUrl/create-cash-payment/$applicationId"),
       headers: headers,
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to mark online payment (${response.statusCode})",
+        "Cash payment failed "
+            "(${response.statusCode}) → ${response.body}",
       );
     }
   }
 
   // ===============================
-  // CASH PAYMENT
+  // ONLINE PAYMENT (DEMO)
   // ===============================
-  static Future<void> markPaidCash(int applicationId) async {
+  static Future<void> createDemoOnlinePayment(int applicationId) async {
     final headers = await _authHeader();
 
-    final response = await http.put(
-      Uri.parse("$baseUrl/$applicationId/pay?method=Cash"),
+    final response = await http.post(
+      Uri.parse("$baseUrl/create-demo-payment/$applicationId"),
       headers: headers,
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Failed to mark cash payment (${response.statusCode})",
+        "Online payment failed "
+            "(${response.statusCode}) → ${response.body}",
       );
     }
   }

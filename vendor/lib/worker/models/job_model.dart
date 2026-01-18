@@ -1,7 +1,10 @@
 class MyJob {
   final int id;
   final String title;
-  final String category; // ✅ STRING for UI
+
+  /// ✅ CATEGORY AS STRING (UI READY)
+  final String category;
+
   final String description;
   final String date;
   final String location;
@@ -58,47 +61,47 @@ class MyJob {
   factory MyJob.fromJson(Map<String, dynamic> json) {
     const baseUrl = "http://172.20.253.37:5244";
 
-    // 🔥 backend sends category as int
-    final int rawCategory =
-    json['category'] is int ? json['category'] : 0;
+    // ✅ SAFE CATEGORY PARSE
+    final int rawCategory = json['category'] is int
+        ? json['category']
+        : int.tryParse(json['category']?.toString() ?? '') ?? 0;
+
+    // ✅ ADDRESS RESOLUTION
+    final String resolvedAddress =
+        json['address'] ??
+            json['serviceAddress'] ??
+            "Location not specified";
+
+    // ✅ DATE RESOLUTION
+    final DateTime resolvedServiceDate =
+    json['serviceDateTime'] != null
+        ? DateTime.parse(json['serviceDateTime']).toLocal()
+        : DateTime.now();
 
     return MyJob(
       id: json['id'] ?? 0,
-
-      // 🔹 Backend: serviceName
       title: json['serviceName'] ?? "",
 
-      // ✅ ENUM → STRING
+      /// 🔥 FINAL CATEGORY (STRING)
       category: _categoryFromInt(rawCategory),
 
-      // 🔹 Nearby jobs don’t have description
       description: json['description'] ?? "No description",
 
-      // 🔹 Friendly date (string used elsewhere)
-      date: json['serviceDateTime'] != null
-          ? json['serviceDateTime'].toString()
-          : "",
+      /// 🔥 REQUIRED BY UI
+      date: resolvedServiceDate.toIso8601String(),
+      location: resolvedAddress,
 
-      // 🔹 Address
-      address: json['serviceAddress'] ??
-          json['address'] ??
-          "Location not specified",
+      address: resolvedAddress,
 
-      // 🔹 Location label
-      location: json['serviceAddress'] ?? "Location not specified",
-
-      // 🔹 Image
       imageUrl: (json['imageUrl'] != null &&
           json['imageUrl'].toString().isNotEmpty)
           ? "$baseUrl${json['imageUrl']}"
           : "https://via.placeholder.com/150",
 
-      // 🔹 Price
       price: json['price'] != null
           ? (json['price'] as num).toDouble()
           : 0.0,
 
-      // 🔹 Rating (not returned by nearby API)
       rating: json['rating'] != null
           ? (json['rating'] as num).toDouble()
           : 4.0,
@@ -106,20 +109,18 @@ class MyJob {
       vendorName: json['vendorName'] ?? "Vendor",
 
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
 
-      serviceDateTime: json['serviceDateTime'] != null
-          ? DateTime.parse(json['serviceDateTime'])
-          : DateTime.now(),
+      serviceDateTime: resolvedServiceDate,
 
-      // 📍 COORDINATES
-      serviceLatitude: json['serviceLatitude'] != null
-          ? (json['serviceLatitude'] as num).toDouble()
+      // 🔥🔥🔥 MAIN FIX (BACKEND KEYS)
+      serviceLatitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
           : 0.0,
 
-      serviceLongitude: json['serviceLongitude'] != null
-          ? (json['serviceLongitude'] as num).toDouble()
+      serviceLongitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
           : 0.0,
     );
   }

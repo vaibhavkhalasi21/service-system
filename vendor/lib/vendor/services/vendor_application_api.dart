@@ -12,7 +12,7 @@ class VendorApplicationApi {
   static const String _host = "172.20.253.37:5244";
   static const String _basePath = "/api/application";
 
-  static String? _token; // cached vendor token
+  static String? _token;
 
   // ===============================
   // 🔥 COMMON HEADERS
@@ -23,7 +23,7 @@ class VendorApplicationApi {
   };
 
   // ===============================
-  // 🔥 LOAD TOKEN ONCE
+  // 🔥 LOAD TOKEN
   // ===============================
   static Future<void> _loadToken() async {
     if (_token != null) return;
@@ -31,45 +31,50 @@ class VendorApplicationApi {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("vendor_token");
 
-    if (_token == null) {
-      throw Exception("Vendor token missing");
+    if (_token == null || _token!.isEmpty) {
+      throw Exception("Vendor not logged in");
     }
   }
 
   // =====================================================
-// 🔵 VENDOR APPLICATIONS (INCOMING REQUESTS)
+  // 🔵 PENDING APPLICATION REQUESTS
+  // =====================================================
+  // =====================================================
+// 🔵 PENDING APPLICATIONS (Vendor requests)
 // =====================================================
   static Future<List<VendorApplicationItem>> getApplicationItems() async {
     await _loadToken();
 
-    final uri = Uri.http(
-      _host,
-      "$_basePath/vendor/applications",
+    final response = await http.get(
+      Uri.http(_host, "$_basePath/vendor"),
+      headers: _headers,
     );
 
-    final response = await http.get(uri, headers: _headers);
-
     if (response.statusCode != 200) {
-      throw Exception("Failed to load applications (${response.statusCode})");
+      throw Exception(
+        "Failed to load applications (${response.statusCode})",
+      );
     }
 
     final List data = jsonDecode(response.body);
+
     return data
+        .where((e) => e['status'] == "Pending")
         .map((e) => VendorApplicationItem.fromJson(e))
         .toList();
   }
 
 
-
   // =====================================================
-  // 🟢 VENDOR JOBS (ACCEPTED / COMPLETED / CANCELLED)
+  // 🟢 VENDOR JOBS (Accepted / Completed / Paid)
   // =====================================================
-  static Future<List<VendorBookingRequest>> getApplications() async {
+  static Future<List<VendorBookingRequest>> getVendorJobs() async {
     await _loadToken();
 
-    final uri = Uri.http(_host, "$_basePath/vendor");
-
-    final response = await http.get(uri, headers: _headers);
+    final response = await http.get(
+      Uri.http(_host, "$_basePath/vendor"),
+      headers: _headers,
+    );
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -78,70 +83,58 @@ class VendorApplicationApi {
     }
 
     final List data = jsonDecode(response.body);
+
     return data
+        .where((e) => e['status'] != "Pending")
         .map((e) => VendorBookingRequest.fromJson(e))
         .toList();
   }
 
   // =====================================================
-  // ACCEPT / REJECT APPLICATION
+  // ✅ ACCEPT / ❌ REJECT APPLICATION
   // =====================================================
   static Future<void> updateStatus(int id, String status) async {
     await _loadToken();
 
-    final uri = Uri.http(
-      _host,
-      "$_basePath/$id/status",
-      {"status": status},
+    final response = await http.put(
+      Uri.http(
+        _host,
+        "$_basePath/$id/status",
+        {"status": status},
+      ),
+      headers: _headers,
     );
 
-    final response = await http.put(uri, headers: _headers);
-
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception("Failed to update status");
     }
   }
 
   // =====================================================
-  // MARK PAYMENT AS PAID
+  // 💰 MARK PAYMENT (Cash | Online)
   // =====================================================
-  static Future<void> markPaymentPaid(int applicationId) async {
-    await _loadToken();
-
-    final uri =
-    Uri.http(_host, "$_basePath/$applicationId/pay");
-
-    final response = await http.put(uri, headers: _headers);
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to mark payment as paid");
-    }
-  }
-
-  // =====================================================
-  // MARK PAYMENT WITH METHOD (Cash | Online)
-  // =====================================================
-  static Future<void> markPaymentPaidWithMethod(
+  static Future<void> markPaymentPaid(
       int applicationId,
       String method,
       ) async {
     await _loadToken();
 
-    final uri = Uri.http(
-      _host,
-      "$_basePath/$applicationId/pay",
-      {"method": method},
+    final response = await http.put(
+      Uri.http(
+        _host,
+        "$_basePath/$applicationId/pay",
+        {"method": method},
+      ),
+      headers: _headers,
     );
 
-    final response = await http.put(uri, headers: _headers);
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to mark payment as paid");
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception("Failed to mark payment");
     }
   }
 
   // =====================================================
-  // RATE WORKER
+  // ⭐ RATE WORKER
   // =====================================================
   static Future<void> rateWorker(
       int applicationId,
@@ -149,21 +142,22 @@ class VendorApplicationApi {
       ) async {
     await _loadToken();
 
-    final uri = Uri.http(
-      _host,
-      "$_basePath/$applicationId/rate-worker",
-      {"rating": rating.toString()},
+    final response = await http.post(
+      Uri.http(
+        _host,
+        "$_basePath/$applicationId/rate-worker",
+        {"rating": rating.toString()},
+      ),
+      headers: _headers,
     );
 
-    final response = await http.post(uri, headers: _headers);
-
-    if (response.statusCode != 200) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception("Failed to rate worker");
     }
   }
 
   // =====================================================
-  // LOGOUT / CLEAR SESSION (OPTIONAL)
+  // 🔒 LOGOUT
   // =====================================================
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();

@@ -12,25 +12,31 @@ class WorkerApi {
     required String email,
     required String password,
     required String phone,
-    required int category, // 🔥 ENUM VALUE (1–5)
+
+    /// 🔥 CATEGORY ENUM VALUE (1–5)
+    required int category,
+
     required String address,
   }) async {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/register"),
-        headers: {"Content-Type": "application/json"},
+        headers: const {"Content-Type": "application/json"},
         body: jsonEncode({
           "name": name,
           "email": email,
           "password": password,
           "phone": phone,
-          "category": category, // ✅ enum number
+
+          // ✅ SEND ENUM INT
+          "category": category,
+
           "address": address,
         }),
       );
 
       if (response.statusCode == 200) {
-        return null;
+        return null; // success
       } else {
         final body = jsonDecode(response.body);
         return body["message"] ?? "Registration failed";
@@ -48,7 +54,7 @@ class WorkerApi {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/login"),
-        headers: {"Content-Type": "application/json"},
+        headers: const {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,
           "password": password,
@@ -58,15 +64,13 @@ class WorkerApi {
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
 
-        final worker = {
+        return {
           "id": jsonResponse["workerId"],
           "name": jsonResponse["workerName"],
           "email": email,
           "token": jsonResponse["token"],
           "role": jsonResponse["role"],
         };
-
-        return worker;
       }
       return null;
     } catch (e) {
@@ -114,7 +118,7 @@ class WorkerApi {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return jsonDecode(response.body) as List<dynamic>;
       }
       return [];
     } catch (e) {

@@ -167,13 +167,14 @@ class BookingRequestCard extends StatelessWidget {
 
                     /// 🏷 CATEGORY
                     Text(
-                      mapEnumToCategory(request.category),
+                      request.category,
                       style: const TextStyle(
                         color: kPurple,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+
 
 
                     const SizedBox(height: 6),

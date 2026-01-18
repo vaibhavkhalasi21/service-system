@@ -1,5 +1,3 @@
-import '../constants/service_categories.dart';
-
 class VendorApplicationItem {
   final int id;
 
@@ -9,7 +7,7 @@ class VendorApplicationItem {
 
   // 🛠 SERVICE
   final String serviceName;
-  final int category;
+  final String category; // ✅ STRING
 
   // 📍 WORKER LOCATION
   final double? workerLatitude;
@@ -41,38 +39,34 @@ class VendorApplicationItem {
 
   factory VendorApplicationItem.fromJson(Map<String, dynamic> json) {
     return VendorApplicationItem(
-      id: json['id'],
+      id: json['id'] ?? json['Id'],
 
-      workerName: json['workerName'] ?? "",
-      workerEmail: json['workerEmail'] ?? "",
+      workerName: json['workerName'] ?? json['WorkerName'] ?? "",
+      workerEmail: json['workerEmail'] ?? json['WorkerEmail'] ?? "",
 
-      serviceName: json['serviceName'] ?? "",
+      serviceName: json['serviceName'] ?? json['ServiceName'] ?? "",
 
-      /// 🔥 FIXED CATEGORY (STRING OR INT SAFE)
-      category: json['category'] is int
-          ? json['category']
-          : mapCategoryToEnum(json['category']),
+      // ✅ FIXED
+      category: (json['category'] ?? json['Category'])?.toString() ?? "Unknown",
 
-      status: json['status'] ?? "Pending",
-      createdAt: DateTime.parse(json['createdAt']).toLocal(),
+      status: json['status'] ?? json['Status'] ?? "Pending",
 
-      workerLatitude: json['workerLatitude'] != null
-          ? double.tryParse(json['workerLatitude'].toString())
-          : null,
+      createdAt: DateTime.parse(
+        json['createdAt'] ?? json['CreatedAt'],
+      ).toLocal(),
 
-      workerLongitude: json['workerLongitude'] != null
-          ? double.tryParse(json['workerLongitude'].toString())
-          : null,
+      workerLatitude:
+      (json['workerLatitude'] ?? json['WorkerLatitude'])?.toDouble(),
+      workerLongitude:
+      (json['workerLongitude'] ?? json['WorkerLongitude'])?.toDouble(),
 
-      serviceLatitude: json['serviceLatitude'] != null
-          ? double.tryParse(json['serviceLatitude'].toString())
-          : null,
+      serviceLatitude:
+      (json['serviceLatitude'] ?? json['ServiceLatitude'])?.toDouble(),
+      serviceLongitude:
+      (json['serviceLongitude'] ?? json['ServiceLongitude'])?.toDouble(),
 
-      serviceLongitude: json['serviceLongitude'] != null
-          ? double.tryParse(json['serviceLongitude'].toString())
-          : null,
-
-      serviceAddress: json['serviceAddress'],
+      serviceAddress:
+      json['serviceAddress'] ?? json['ServiceAddress'],
     );
   }
 }

@@ -1,31 +1,25 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart'; // ✅ REQUIRED for debugPrint
 
 import '../models/booking_model.dart';
 import '../models/service_model.dart';
 import '../models/job_model.dart';
 
 class WorkerServiceApi {
-  // ===============================
-  // 🔥 SERVER CONFIG
-  // ===============================
   static const String _host = "172.20.253.37:5244";
   static const String _basePath = "/api";
 
   static String? _token;
 
-  // ===============================
-  // 🔥 COMMON HEADERS
-  // ===============================
+  // ================= HEADERS =================
   static Map<String, String> get _headers => {
     "Authorization": "Bearer $_token",
     "Content-Type": "application/json",
   };
 
-  // ===============================
-  // 🔥 ALWAYS LOAD TOKEN (SAFE)
-  // ===============================
+  // ================= TOKEN =================
   static Future<void> _loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("worker_token");
@@ -35,78 +29,83 @@ class WorkerServiceApi {
     }
   }
 
-  // ===============================
-  // 🔓 PUBLIC SERVICES
-  // ===============================
+  // ================= PUBLIC SERVICES =================
   static Future<List<ServiceModel>> getServices() async {
-    final uri = Uri.http(_host, "$_basePath/service/public");
-    final response = await http.get(uri);
+    final res = await http.get(
+      Uri.http(_host, "$_basePath/service/public"),
+    );
 
-    if (response.statusCode != 200) {
+    if (res.statusCode != 200) {
       throw Exception("Failed to load services");
     }
 
-    final List data = jsonDecode(response.body);
+    final List data = jsonDecode(res.body);
     return data.map((e) => ServiceModel.fromJson(e)).toList();
   }
 
-  // ===============================
-  // 🔥 APPLY FOR SERVICE (NO LOCATION)
-  // ===============================
-  static Future<bool> applyForService(int serviceId) async {
-    await _loadToken();
-
-    final uri =
-    Uri.http(_host, "$_basePath/application/apply/$serviceId");
-
-    final response = await http.post(uri, headers: _headers);
-    return response.statusCode == 200;
-  }
-
-  // ===============================
-  // 🔥 APPLY FOR SERVICE (WITH LOCATION)
-  // ===============================
+  // ================= APPLY FOR SERVICE =================
   static Future<bool> applyForServiceWithLocation({
     required int serviceId,
-    required double serviceLatitude,
-    required double serviceLongitude,
-    required String serviceAddress,
     required double workerLatitude,
     required double workerLongitude,
   }) async {
     await _loadToken();
 
-    final uri =
-    Uri.http(_host, "$_basePath/application/apply/$serviceId");
-
-    final response = await http.post(
-      uri,
+    final res = await http.post(
+      Uri.http(_host, "$_basePath/application/apply/$serviceId"),
       headers: _headers,
       body: jsonEncode({
-        "serviceLatitude": serviceLatitude,
-        "serviceLongitude": serviceLongitude,
-        "serviceAddress": serviceAddress,
         "workerLatitude": workerLatitude,
         "workerLongitude": workerLongitude,
       }),
     );
 
-    return response.statusCode == 200;
+    if (res.statusCode == 409) return false;
+    if (res.statusCode >= 200 && res.statusCode < 300) return true;
+
+    throw Exception("Apply failed (${res.statusCode})");
   }
 
-  // ===============================
-  // 📍 UPDATE WORKER LOCATION
-  // ===============================
+  // ================= WORKER BOOKINGS =================
+  static Future<List<Booking>> getMyBookings() async {
+    await _loadToken();
+
+    final res = await http.get(
+      Uri.http(_host, "$_basePath/application/worker"),
+      headers: _headers,
+    );
+
+    debugPrint("WORKER BOOKINGS RAW: ${res.body}");
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load bookings");
+    }
+
+    final List data = jsonDecode(res.body);
+    return data.map((e) => Booking.fromJson(e)).toList();
+  }
+
+  // ================= MARK JOB COMPLETED =================
+  static Future<bool> markJobCompleted(int applicationId) async {
+    await _loadToken();
+
+    final res = await http.put(
+      Uri.http(_host, "$_basePath/application/$applicationId/complete"),
+      headers: _headers,
+    );
+
+    return res.statusCode >= 200 && res.statusCode < 300;
+  }
+
+  // ================= UPDATE WORKER LOCATION =================
   static Future<void> updateWorkerLocation({
     required double latitude,
     required double longitude,
   }) async {
     await _loadToken();
 
-    final uri = Uri.http(_host, "$_basePath/worker/location");
-
-    final response = await http.put(
-      uri,
+    final res = await http.put(
+      Uri.http(_host, "$_basePath/worker/location"),
       headers: _headers,
       body: jsonEncode({
         "latitude": latitude,
@@ -114,72 +113,29 @@ class WorkerServiceApi {
       }),
     );
 
-    if (response.statusCode != 200) {
+    if (res.statusCode < 200 || res.statusCode >= 300) {
       throw Exception("Failed to update worker location");
     }
   }
 
-  // ===============================
-  // 🔥 NEARBY JOBS (SAFE & FIXED)
-  // ===============================
+  // ================= NEARBY JOBS (DASHBOARD) =================
   static Future<List<MyJob>> getNearbyJobs() async {
     await _loadToken();
 
-    final uri = Uri.http(_host, "$_basePath/worker/nearby-jobs");
-    final response = await http.get(uri, headers: _headers);
+    final res = await http.get(
+      Uri.http(_host, "$_basePath/worker/nearby-jobs"),
+      headers: _headers,
+    );
 
-    if (response.statusCode != 200) {
-      throw Exception("Failed to load nearby jobs");
-    }
-
-    if (response.body.isEmpty) {
+    if (res.statusCode != 200 || res.body.isEmpty) {
       return [];
     }
 
-    final List data = jsonDecode(response.body);
-
-    if (data.isEmpty) {
-      return [];
-    }
-
+    final List data = jsonDecode(res.body);
     return data.map((e) => MyJob.fromJson(e)).toList();
   }
 
-  // ===============================
-  // ✅ MARK JOB COMPLETED
-  // ===============================
-  static Future<bool> markJobCompleted(int applicationId) async {
-    await _loadToken();
-
-    final uri = Uri.http(
-      _host,
-      "$_basePath/application/$applicationId/complete",
-    );
-
-    final response = await http.put(uri, headers: _headers);
-    return response.statusCode == 200;
-  }
-
-  // ===============================
-  // 📦 MY BOOKINGS
-  // ===============================
-  static Future<List<Booking>> getMyBookings() async {
-    await _loadToken();
-
-    final uri = Uri.http(_host, "$_basePath/application/worker");
-    final response = await http.get(uri, headers: _headers);
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to load bookings");
-    }
-
-    final List data = jsonDecode(response.body);
-    return data.map((e) => Booking.fromJson(e)).toList();
-  }
-
-  // ===============================
-  // 🔒 LOGOUT / CLEAR SESSION
-  // ===============================
+  // ================= LOGOUT =================
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("worker_token");

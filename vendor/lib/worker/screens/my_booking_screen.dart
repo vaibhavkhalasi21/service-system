@@ -22,6 +22,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Future<void> loadBookings() async {
+    setState(() => isLoading = true);
+
     try {
       final result = await WorkerServiceApi.getMyBookings();
       if (!mounted) return;
@@ -30,7 +32,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         bookings = result;
         isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => isLoading = false);
     }
@@ -41,10 +43,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     switch (status.toLowerCase()) {
       case "accepted":
         return Colors.greenAccent;
-      case "rejected":
-        return Colors.redAccent;
       case "completed":
         return Colors.blueAccent;
+      case "rejected":
+      case "cancelled":
+        return Colors.redAccent;
       case "pending":
         return Colors.orangeAccent;
       default:
@@ -56,10 +59,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     switch (status.toLowerCase()) {
       case "accepted":
         return Icons.check_circle;
-      case "rejected":
-        return Icons.cancel;
       case "completed":
         return Icons.verified;
+      case "rejected":
+      case "cancelled":
+        return Icons.cancel;
       case "pending":
         return Icons.hourglass_top;
       default:
@@ -81,11 +85,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         backgroundColor: const Color(0xff0F0F0F),
         elevation: 0,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           "My Bookings",
           style: TextStyle(color: Colors.white),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
           ? const Center(
@@ -109,8 +113,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           itemBuilder: (context, index) {
             final b = bookings[index];
 
-            final displayStatus =
-            b.status.isNotEmpty
+            final displayStatus = b.status.isNotEmpty
                 ? b.status[0].toUpperCase() +
                 b.status.substring(1).toLowerCase()
                 : "Pending";
@@ -181,9 +184,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
-                  // ================= PAYMENT =================
+                  // ================= PAYMENT + PRICE =================
                   Row(
                     children: [
                       Icon(
@@ -202,9 +205,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         ),
                       ),
                       const Spacer(),
-
-
-            ],
+                      Text(
+                        "₹${b.price}",
+                        style: const TextStyle(
+                          color: Color(0xff7C3AED),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

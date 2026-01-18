@@ -14,39 +14,41 @@ class ServiceCard extends StatelessWidget {
   final VendorService service;
   final VoidCallback onUpdated;
   final bool showActions;
+  final bool isVendorView;
 
   const ServiceCard({
     super.key,
     required this.service,
     required this.onUpdated,
     this.showActions = false,
+    this.isVendorView = false,
   });
 
   // ===============================
   // RELATIVE TIME
   // ===============================
   String timeAgo(DateTime date) {
-    final now = DateTime.now().toLocal();
-    final diff = now.difference(date.toLocal());
+    final now = DateTime.now();
+    final diff = now.difference(date);
 
-    if (diff.inSeconds < 60) return "Just now";
+    if (diff.inMinutes < 1) return "Just now";
     if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
     if (diff.inHours < 24) return "${diff.inHours} hrs ago";
     return "${diff.inDays} days ago";
   }
 
   // ===============================
-  // STATUS COLOR
+  // STATUS COLOR (SAFE)
   // ===============================
   Color statusColor(String status) {
-    switch (status) {
-      case "Active":
+    switch (status.toLowerCase()) {
+      case "active":
         return Colors.green;
-      case "Completed":
+      case "completed":
         return Colors.blue;
-      case "Expired":
+      case "expired":
         return Colors.orange;
-      case "Disabled":
+      case "disabled":
         return Colors.grey;
       default:
         return Colors.grey;
@@ -55,27 +57,16 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localServiceTime = service.serviceDateTime.toLocal();
-    final date = DateFormat('dd MMM yyyy').format(localServiceTime);
-    final time = DateFormat('hh:mm a').format(localServiceTime);
-
-    final vendorName =
-    service.vendorName.isNotEmpty ? service.vendorName : "Vendor";
-
-    final bool isActive = service.status == "Active";
+    final date =
+    DateFormat('dd MMM yyyy').format(service.serviceDateTime.toLocal());
+    final time =
+    DateFormat('hh:mm a').format(service.serviceDateTime.toLocal());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
         color: kCardBg,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -87,18 +78,24 @@ class ServiceCard extends StatelessWidget {
               SizedBox(
                 height: 170,
                 width: double.infinity,
-                child: service.imagePath.startsWith("http")
+                child: service.imagePath.isNotEmpty
                     ? Image.network(
                   service.imagePath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image,
-                    color: kTextGrey,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: kTextGrey,
+                      size: 40,
+                    ),
                   ),
                 )
-                    : Image.asset(
-                  service.imagePath,
-                  fit: BoxFit.cover,
+                    : const Center(
+                  child: Icon(
+                    Icons.image_not_supported,
+                    color: kTextGrey,
+                    size: 40,
+                  ),
                 ),
               ),
 
@@ -158,9 +155,9 @@ class ServiceCard extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                // ================= CATEGORY (✅ FIXED) =================
+                // ================= CATEGORY (SAFE) =================
                 Text(
-                  mapEnumToCategory(service.category),
+                  safeEnumToCategory(service.category),
                   style: const TextStyle(
                     color: kTextGrey,
                     fontSize: 13,
@@ -189,7 +186,7 @@ class ServiceCard extends StatelessWidget {
 
                 // ================= ADDRESS =================
                 if (service.address != null &&
-                    service.address!.trim().isNotEmpty) ...[
+                    service.address!.trim().isNotEmpty)
                   Row(
                     children: [
                       const Icon(Icons.location_on,
@@ -208,8 +205,8 @@ class ServiceCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                ],
+
+                const SizedBox(height: 8),
 
                 // ================= POSTED INFO =================
                 Row(
@@ -219,7 +216,9 @@ class ServiceCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "Posted by $vendorName • ${timeAgo(service.createdAt)}",
+                        isVendorView
+                            ? "Posted by You • ${timeAgo(service.createdAt)}"
+                            : "Posted by ${service.vendorName} • ${timeAgo(service.createdAt)}",
                         style: const TextStyle(
                           fontSize: 12,
                           color: kTextGrey,
@@ -232,38 +231,28 @@ class ServiceCard extends StatelessWidget {
                 // ================= ACTIONS =================
                 if (showActions) ...[
                   const SizedBox(height: 14),
-                  if (isActive)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kPurple,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPurple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        onPressed: () async {
-                          final updated = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  ManageServicePage(service: service),
-                            ),
-                          );
-                          if (updated == true) onUpdated();
-                        },
-                        child: const Text("Edit Service"),
                       ),
-                    )
-                  else
-                    Text(
-                      "This service is ${service.status.toLowerCase()}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: kTextGrey,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      onPressed: () async {
+                        final updated = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ManageServicePage(service: service),
+                          ),
+                        );
+                        if (updated == true) onUpdated();
+                      },
+                      child: const Text("Edit Service"),
                     ),
+                  ),
                 ],
               ],
             ),

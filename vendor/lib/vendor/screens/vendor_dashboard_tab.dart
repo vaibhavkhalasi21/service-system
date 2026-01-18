@@ -30,9 +30,9 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
   final List<String> categories = [
     "All",
-    "Electrician",
-    "Plumber",
     "Cleaning",
+    "Plumber",
+    "Electrician",
     "AC Repair",
     "Painter",
   ];
@@ -58,21 +58,25 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // FETCH VENDOR SERVICES
+  // FETCH SERVICES
   // ===============================
   Future<void> fetchServices() async {
     setState(() => isLoading = true);
 
     try {
-      final List<VendorServiceRequest> apiServices =
-      await ServiceApi.getVendorServices();
+      final apiServices = await ServiceApi.getVendorServices();
+      final mapped = apiServices.map(_mapApiToUi).toList();
 
-      final List<VendorService> mappedServices =
-      apiServices.map(_mapApiToUi).toList();
+      // 🔍 DEBUG (KEEP THIS)
+      for (final s in mapped) {
+        debugPrint(
+          "CATEGORY DEBUG >>> ${s.title} | ${s.category} | ${safeEnumToCategory(s.category)}",
+        );
+      }
 
       if (!mounted) return;
       setState(() {
-        services = mappedServices;
+        services = mapped;
         isLoading = false;
       });
     } catch (e) {
@@ -83,24 +87,22 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
   }
 
   // ===============================
-  // API → UI MAPPER (UPDATED)
+  // API → UI MAPPER
   // ===============================
   VendorService _mapApiToUi(VendorServiceRequest api) {
     return VendorService(
       id: api.id,
       title: api.serviceName,
-      category: api.category,
+      category: api.category, // 🔥 INT ONLY
       price: api.price.toInt(),
       rating: api.rating ?? 0.0,
       imagePath: api.imageUrl != null && api.imageUrl!.isNotEmpty
           ? "$baseUrl${api.imageUrl}"
           : "$baseUrl/service-images/default.png",
-      vendorName: api.vendorName ?? vendorName,
+      vendorName: api.vendorName,
       status: api.status,
       createdAt: api.createdAt,
       serviceDateTime: api.serviceDateTime,
-
-      // 🔥 LOCATION
       address: api.address,
       latitude: api.latitude ?? 0.0,
       longitude: api.longitude ?? 0.0,
@@ -109,23 +111,20 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    List<VendorService> filteredServices =
-    selectedCategory == "All"
-        ? services
-        : services
-        .where(
-          (s) =>
-          selectedCategory == "All" ||
-              mapCategoryToEnum(selectedCategory) == s.category
+    List<VendorService> filtered = services;
 
-    )
-        .toList();
+    // ✅ FIXED FILTER (ENUM FIRST, STRING LAST)
+    if (selectedCategory != "All") {
+      final selectedEnum = mapCategoryToEnum(selectedCategory);
+      filtered = services
+          .where((s) => s.category == selectedEnum)
+          .toList();
+    }
 
     if (searchQuery.isNotEmpty) {
-      filteredServices = filteredServices
+      filtered = filtered
           .where(
-            (s) =>
-            s.title.toLowerCase().contains(searchQuery.toLowerCase()),
+            (s) => s.title.toLowerCase().contains(searchQuery.toLowerCase()),
       )
           .toList();
     }
@@ -155,7 +154,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
           ),
           const SizedBox(height: 20),
 
-          // ================= SEARCH =================
+          // SEARCH
           Container(
             decoration: BoxDecoration(
               color: kCard,
@@ -176,24 +175,13 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 20),
 
-          // ================= CATEGORIES =================
-          const Text(
-            "Categories",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
+          // CATEGORIES
           SizedBox(
             height: 42,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: categories.map((cat) {
-                final bool selected = selectedCategory == cat;
+                final selected = selectedCategory == cat;
                 return GestureDetector(
                   onTap: () => setState(() => selectedCategory = cat),
                   child: Container(
@@ -222,16 +210,15 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
 
           const SizedBox(height: 20),
 
-          // ================= SERVICES LIST =================
+          // LIST
           Expanded(
             child: isLoading
                 ? const Center(
               child: CircularProgressIndicator(color: kPurple),
             )
                 : RefreshIndicator(
-              color: kPurple,
               onRefresh: fetchServices,
-              child: filteredServices.isEmpty
+              child: filtered.isEmpty
                   ? const Center(
                 child: Text(
                   "No services found",
@@ -239,13 +226,12 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
                 ),
               )
                   : ListView.builder(
-                itemCount: filteredServices.length,
-                itemBuilder: (context, index) {
-                  return ServiceCard(
-                    service: filteredServices[index],
-                    onUpdated: fetchServices,
-                  );
-                },
+                itemCount: filtered.length,
+                itemBuilder: (_, i) => ServiceCard(
+                  service: filtered[i],
+                  onUpdated: fetchServices,
+                  isVendorView: true,
+                ),
               ),
             ),
           ),

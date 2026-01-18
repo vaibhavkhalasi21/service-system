@@ -20,30 +20,34 @@ class VendorPaymentsPage extends StatefulWidget {
 
 class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   bool isLoading = true;
-  List<VendorBookingRequest> payments = [];
+  bool isPaying = false; // ✅ prevent double click
+  List<VendorBookingRequest> bookings = [];
 
   @override
   void initState() {
     super.initState();
-    loadPayments();
+    loadBookings();
   }
 
   // ===============================
-  // LOAD PAYMENTS
+  // LOAD PENDING PAYMENTS
   // ===============================
-  Future<void> loadPayments() async {
+  Future<void> loadBookings() async {
     setState(() => isLoading = true);
 
     try {
-      final all = await VendorApplicationApi.getApplications();
+      final all = await VendorApplicationApi.getVendorJobs();
       if (!mounted) return;
 
       setState(() {
-        payments = all.where((j) => j.status == "Completed").toList();
+        bookings = all.where((b) =>
+        b.status == "Completed" &&
+            b.paymentStatus == "Pending"
+        ).toList();
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("Payments load error: $e");
+      debugPrint("Payment load error: $e");
       if (!mounted) return;
       setState(() => isLoading = false);
     }
@@ -52,26 +56,36 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
   // ===============================
   // CASH PAYMENT
   // ===============================
-  Future<void> markCashPaid(int applicationId) async {
+  Future<void> payCash(int applicationId) async {
+    if (isPaying) return;
+    setState(() => isPaying = true);
+
     try {
-      await VendorPaymentApi.markPaidCash(applicationId);
-      await loadPayments();
-      _showSnack("Cash payment marked successfully");
-    } catch (_) {
-      _showSnack("Failed to mark cash payment");
+      await VendorPaymentApi.createCashPayment(applicationId);
+      await loadBookings();
+      _showSnack("Cash payment recorded");
+    } catch (e) {
+      _showSnack("Cash payment failed");
+    } finally {
+      if (mounted) setState(() => isPaying = false);
     }
   }
 
   // ===============================
   // ONLINE PAYMENT (DEMO)
   // ===============================
-  Future<void> markOnlinePaid(int applicationId) async {
+  Future<void> payOnline(int applicationId) async {
+    if (isPaying) return;
+    setState(() => isPaying = true);
+
     try {
-      await VendorPaymentApi.markPaidOnline(applicationId);
-      await loadPayments();
+      await VendorPaymentApi.createDemoOnlinePayment(applicationId);
+      await loadBookings();
       _showSnack("Online payment successful (Demo)");
-    } catch (_) {
-      _showSnack("Failed to mark online payment");
+    } catch (e) {
+      _showSnack("Online payment failed");
+    } finally {
+      if (mounted) setState(() => isPaying = false);
     }
   }
 
@@ -91,7 +105,7 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
               title: const Text("Cash"),
               onTap: () {
                 Navigator.pop(context);
-                markCashPaid(applicationId);
+                payCash(applicationId);
               },
             ),
             ListTile(
@@ -100,72 +114,12 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
               subtitle: const Text("Demo payment"),
               onTap: () {
                 Navigator.pop(context);
-                markOnlinePaid(applicationId);
+                payOnline(applicationId);
               },
             ),
           ],
         ),
       ),
-    );
-  }
-
-  // ===============================
-  // RATE WORKER
-  // ===============================
-  Future<void> rateWorker(int applicationId, int rating) async {
-    try {
-      await VendorApplicationApi.rateWorker(applicationId, rating);
-      await loadPayments();
-      _showSnack("Rating submitted");
-    } catch (_) {
-      _showSnack("You have already rated this worker");
-    }
-  }
-
-  void showRatingDialog(int applicationId) {
-    int rating = 5;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text("Rate Worker"),
-              content: DropdownButton<int>(
-                value: rating,
-                isExpanded: true,
-                items: [1, 2, 3, 4, 5]
-                    .map(
-                      (e) => DropdownMenuItem(
-                    value: e,
-                    child: Text("$e ⭐"),
-                  ),
-                )
-                    .toList(),
-                onChanged: (v) {
-                  setDialogState(() {
-                    rating = v!;
-                  });
-                },
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await rateWorker(applicationId, rating);
-                  },
-                  child: const Text("Submit"),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 
@@ -191,24 +145,23 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
           ? const Center(
         child: CircularProgressIndicator(color: kPurple),
       )
-          : payments.isEmpty
+          : bookings.isEmpty
           ? const Center(
         child: Text(
-          "No completed jobs yet",
+          "No pending payments",
           style: TextStyle(color: kGrey),
         ),
       )
           : RefreshIndicator(
         color: kPurple,
-        onRefresh: loadPayments,
+        onRefresh: loadBookings,
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: payments.length,
+          itemCount: bookings.length,
           itemBuilder: (context, index) {
-            final p = payments[index];
+            final b = bookings[index];
             final date = DateFormat('dd MMM yyyy')
-                .format(p.serviceDateTime.toLocal());
-            final isPaid = p.paymentStatus == "Paid";
+                .format(b.serviceDateTime.toLocal());
 
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -221,7 +174,7 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    p.serviceName,
+                    b.serviceName,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -230,88 +183,49 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    "Worker: ${p.workerName}",
-                    style:
-                    const TextStyle(color: kGrey),
+                    "Worker: ${b.workerName}",
+                    style: const TextStyle(color: kGrey),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     "Date: $date",
-                    style:
-                    const TextStyle(color: kGrey),
+                    style: const TextStyle(color: kGrey),
                   ),
-                  if (isPaid &&
-                      p.paymentMethod != null)
-                    Padding(
-                      padding:
-                      const EdgeInsets.only(top: 6),
-                      child: Text(
-                        "Paid via ${p.paymentMethod}",
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontWeight:
-                          FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
+                    MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "₹${p.price}",
+                        "₹${b.price}",
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight:
-                          FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                           color: kPurple,
                         ),
                       ),
-                      if (!isPaid)
-                        ElevatedButton(
-                          onPressed: () =>
-                              showPaymentMethodDialog(
-                                  p.id),
-                          style: ElevatedButton
-                              .styleFrom(
-                            backgroundColor:
-                            Colors.green,
-                            shape:
-                            RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius
-                                  .circular(
-                                  12),
-                            ),
+                      ElevatedButton(
+                        onPressed: isPaying
+                            ? null
+                            : () =>
+                            showPaymentMethodDialog(b.id),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child:
-                          const Text("Pay"),
-                        )
-                      else if (!p.vendorRated)
-                        ElevatedButton(
-                          onPressed: () =>
-                              showRatingDialog(
-                                  p.id),
-                          style: ElevatedButton
-                              .styleFrom(
-                            backgroundColor:
-                            kPurple,
-                            shape:
-                            RoundedRectangleBorder(
-                              borderRadius:
-                              BorderRadius
-                                  .circular(
-                                  12),
-                            ),
+                        ),
+                        child: isPaying
+                            ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                          child: const Text(
-                              "Rate Worker"),
                         )
-                      else
-                        _ratingStars(
-                            p.vendorRating ?? 0),
+                            : const Text("Pay"),
+                      ),
                     ],
                   ),
                 ],
@@ -320,19 +234,6 @@ class _VendorPaymentsPageState extends State<VendorPaymentsPage> {
           },
         ),
       ),
-    );
-  }
-
-  Widget _ratingStars(int rating) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (index) {
-        return Icon(
-          index < rating ? Icons.star : Icons.star_border,
-          color: Colors.amber,
-          size: 18,
-        );
-      }),
     );
   }
 }

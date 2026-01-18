@@ -1,17 +1,20 @@
 class ServiceModel {
   final int id;
   final String title;
-  final String category;
+
+  /// 🔥 CATEGORY ENUM (INT ONLY)
+  final int category;
+
   final String description;
   final String imageUrl;
   final double price;
   final String vendorName;
 
-  // 🔥 TIME
+  // ⏰ TIME
   final DateTime createdAt;
   final DateTime serviceDateTime;
 
-  // 🔥 LOCATION (NEW)
+  // 📍 LOCATION
   final String address;
   final double latitude;
   final double longitude;
@@ -32,26 +35,32 @@ class ServiceModel {
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
-    const baseUrl = "http://10.29.111.37:5244";
+    const baseUrl = "http://172.20.253.37:5244";
 
     return ServiceModel(
       id: json['id'] ?? 0,
 
-      title: json['serviceName'] ?? json['title'] ?? "No Title",
-      category: json['category'] ?? "General",
+      title: json['serviceName'] ??
+          json['title'] ??
+          "No Title",
+
+      // 🔥🔥🔥 MAIN FIX (ENUM SAFE)
+      category: _parseCategory(json['category']),
+
       description: json['description'] ?? "",
 
       price: json['price'] != null
-          ? double.tryParse(json['price'].toString()) ?? 0.0
+          ? (json['price'] as num).toDouble()
           : 0.0,
 
-      imageUrl: (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty)
+      imageUrl:
+      (json['imageUrl'] != null &&
+          json['imageUrl'].toString().isNotEmpty)
           ? "$baseUrl${json['imageUrl']}"
-          : "https://via.placeholder.com/150",
+          : "https://via.placeholder.com/300",
 
-      vendorName: json['vendorName'] ?? "Vendor",
+      vendorName: json['vendorName'] ?? "Service Provider",
 
-      // 🔥 TIME (SAFE PARSE)
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
@@ -60,7 +69,6 @@ class ServiceModel {
           ? DateTime.parse(json['serviceDateTime']).toLocal()
           : DateTime.now(),
 
-      // 🔥 LOCATION (VERY IMPORTANT)
       address: json['address'] ??
           json['serviceAddress'] ??
           "Location not specified",
@@ -73,5 +81,33 @@ class ServiceModel {
           ? double.tryParse(json['longitude'].toString()) ?? 0.0
           : 0.0,
     );
+  }
+
+  // =====================================================
+  // 🔥 BACKEND ENUM STRING / INT → INT (CORE FIX)
+  // =====================================================
+  static int _parseCategory(dynamic value) {
+    if (value == null) return 0;
+
+    // ✅ backend already int
+    if (value is int) return value;
+
+    final v = value.toString().toLowerCase();
+
+    switch (v) {
+      case "cleaning":
+        return 1;
+      case "plumber":
+        return 2;
+      case "electrician":
+        return 3;
+      case "acrepair":
+      case "ac repair":
+        return 4;
+      case "painter":
+        return 5;
+      default:
+        return 0; // Unknown (Old Data)
+    }
   }
 }

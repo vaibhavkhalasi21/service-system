@@ -5,8 +5,8 @@ class Worker {
   final String phone;
   final String address;
 
-  /// 🔥 CATEGORY AS INT (ENUM VALUE)
-  final int category;
+  /// ✅ CATEGORY AS STRING (UI READY)
+  final String category;
 
   /// 📍 LOCATION
   final double latitude;
@@ -16,7 +16,7 @@ class Worker {
     required this.id,
     required this.name,
     required this.email,
-    required this.category,
+    required this.category, // ✅ STRING
     this.phone = "",
     this.address = "",
     this.latitude = 0.0,
@@ -32,7 +32,7 @@ class Worker {
     String? email,
     String? phone,
     String? address,
-    int? category,
+    String? category, // ✅ STRING
     double? latitude,
     double? longitude,
   }) {
@@ -49,7 +49,7 @@ class Worker {
   }
 
   // ===============================
-  // 📦 FROM JSON (SAFE)
+  // 📦 FROM JSON (ENUM → STRING)
   // ===============================
   factory Worker.fromJson(Map<String, dynamic> json) {
     return Worker(
@@ -59,12 +59,9 @@ class Worker {
       phone: json['phone'] ?? "",
       address: json['address'] ?? "",
 
-      /// 🔥 CATEGORY MUST BE INT
-      category: json['category'] is int
-          ? json['category']
-          : int.tryParse(json['category'].toString()) ?? 0,
+      /// 🔥 ENUM → STRING (FINAL FIX)
+      category: _categoryFromJson(json['category']),
 
-      /// 📍 LOCATION SAFE PARSE
       latitude: json['latitude'] != null
           ? double.tryParse(json['latitude'].toString()) ?? 0.0
           : 0.0,
@@ -76,6 +73,32 @@ class Worker {
   }
 
   // ===============================
+  // 🔥 ENUM / STRING → STRING
+  // ===============================
+  static String _categoryFromJson(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return value;
+    }
+
+    if (value is int) {
+      switch (value) {
+        case 1:
+          return "Cleaning";
+        case 2:
+          return "Plumber";
+        case 3:
+          return "Electrician";
+        case 4:
+          return "AC Repair";
+        case 5:
+          return "Painter";
+      }
+    }
+
+    return "Unknown";
+  }
+
+  // ===============================
   // 📤 TO JSON
   // ===============================
   Map<String, dynamic> toJson() => {
@@ -84,7 +107,7 @@ class Worker {
     "email": email,
     "phone": phone,
     "address": address,
-    "category": category,
+    "category": category, // ✅ STRING
     "latitude": latitude,
     "longitude": longitude,
   };

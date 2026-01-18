@@ -1,10 +1,10 @@
 class Booking {
   final int id;
-  final String jobTitle;      // serviceName
-  final String category;
+  final String jobTitle;
+  final String category; // ✅ STRING
   final String vendorName;
-  final String status;        // Pending / Accepted / Completed
-  final String paymentStatus; // Paid / Pending
+  final String status;
+  final String paymentStatus;
   final int price;
   final DateTime serviceDateTime;
 
@@ -12,8 +12,6 @@ class Booking {
   final double serviceLongitude;
   final String serviceAddress;
 
-
-  // ⭐ Rating-related (NEW)
   final bool vendorRated;
   final int? vendorRating;
 
@@ -26,30 +24,26 @@ class Booking {
     required this.paymentStatus,
     required this.price,
     required this.serviceDateTime,
+    required this.serviceLatitude,
+    required this.serviceLongitude,
+    required this.serviceAddress,
     required this.vendorRated,
     this.vendorRating,
-    required this.serviceAddress,
-    required this.serviceLatitude,
-    required this.serviceLongitude
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'],
       jobTitle: json['serviceName'],
-      category: json['category'],
+      category: json['category'], // ✅ STRING
       vendorName: json['vendorName'],
       status: json['status'],
       paymentStatus: json['paymentStatus'],
       price: (json['price'] as num).toInt(),
-      serviceDateTime: DateTime.parse(json['serviceDateTime']),
-
+      serviceDateTime: DateTime.parse(json['serviceDateTime']).toLocal(),
       serviceLatitude: (json['serviceLatitude'] as num).toDouble(),
       serviceLongitude: (json['serviceLongitude'] as num).toDouble(),
       serviceAddress: json['serviceAddress'],
-
-
-      // ⭐ NEW
       vendorRated: json['vendorRated'] ?? false,
       vendorRating: json['vendorRating'],
     );

@@ -24,7 +24,7 @@ class _WorkerProfileState extends State<WorkerProfile> {
     _loadWorkerSession();
   }
 
-  void _loadWorkerSession() async {
+  Future<void> _loadWorkerSession() async {
     await WorkerSession.loadWorker();
     setState(() {
       worker = WorkerSession.currentWorker;
@@ -36,26 +36,6 @@ class _WorkerProfileState extends State<WorkerProfile> {
     setState(() {
       worker = WorkerSession.currentWorker;
     });
-  }
-
-  // =============================
-  // 🔐 CATEGORY HELPER
-  // =============================
-  String categoryName(int category) {
-    switch (category) {
-      case 1:
-        return "Cleaning";
-      case 2:
-        return "Plumber";
-      case 3:
-        return "Electrician";
-      case 4:
-        return "AC Repair";
-      case 5:
-        return "Painter";
-      default:
-        return "Unknown";
-    }
   }
 
   // =============================
@@ -162,18 +142,20 @@ class _WorkerProfileState extends State<WorkerProfile> {
 
                   const SizedBox(height: 8),
 
-                  // 🔥 CATEGORY BADGE
+                  // 🔥 CATEGORY BADGE (FINAL FIX)
                   Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xff7C3AED).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
-                      border:
-                      Border.all(color: const Color(0xff7C3AED), width: 1),
+                      border: Border.all(
+                        color: const Color(0xff7C3AED),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
-                      categoryName(worker!.category),
+                      worker!.category, // ✅ DIRECT STRING
                       style: const TextStyle(
                         color: Color(0xff7C3AED),
                         fontSize: 13,

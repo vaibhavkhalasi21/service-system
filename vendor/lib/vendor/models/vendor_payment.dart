@@ -1,33 +1,37 @@
 class VendorPayment {
   final int id;
-  final String serviceName;
-  final String workerName;
-  final int price;
-  final String status;
-  final String paymentStatus;
-
-  // ⭐ NEW
-  final String? paymentMethod;
+  final int amount;
+  final String status;              // SUCCESS
+  final String? paymentMethod;      // Cash / Online (Demo) | null
+  final String? escrowStatus;       // HELD / RELEASED | null
+  final DateTime createdAt;
+  final DateTime? releasedAt;
 
   VendorPayment({
     required this.id,
-    required this.serviceName,
-    required this.workerName,
-    required this.price,
+    required this.amount,
     required this.status,
-    required this.paymentStatus,
-    required this.paymentMethod,
+    this.paymentMethod,
+    this.escrowStatus,
+    required this.createdAt,
+    this.releasedAt,
   });
 
   factory VendorPayment.fromJson(Map<String, dynamic> json) {
     return VendorPayment(
-      id: json['id'],
-      serviceName: json['serviceName'],
-      workerName: json['workerName'],
-      price: (json['price'] as num).toInt(),
-      status: json['status'],
-      paymentStatus: json['paymentStatus'],
-      paymentMethod: json['paymentMethod'], // ⭐ IMPORTANT
+      id: json['id'] as int,
+      amount: (json['amount'] as num).toInt(),
+      status: json['status'] as String,
+
+      // ✅ NULL SAFE
+      paymentMethod: json['paymentMethod'] as String?,
+      escrowStatus: json['escrowStatus'] as String?,
+
+      createdAt: DateTime.parse(json['createdAt'] as String),
+
+      releasedAt: json['releasedAt'] != null
+          ? DateTime.parse(json['releasedAt'] as String)
+          : null,
     );
   }
 }

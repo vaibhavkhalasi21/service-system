@@ -2,7 +2,8 @@
 // SERVICE CATEGORY CONSTANTS
 // ===============================
 
-// UI-friendly list
+// 🔥 UI-friendly list (USED BY DROPDOWNS)
+// Order does NOT matter, values do
 const List<String> serviceCategories = [
   "Cleaning",
   "Plumber",
@@ -12,28 +13,31 @@ const List<String> serviceCategories = [
 ];
 
 // ===============================
-// STRING → ENUM INT (API)
+// STRING → ENUM INT (API → BACKEND)
 // ===============================
+// MUST match backend enum values exactly
 int mapCategoryToEnum(String category) {
-  switch (category) {
-    case "Cleaning":
+  switch (category.trim().toLowerCase()) {
+    case "cleaning":
       return 1;
-    case "Plumber":
+    case "plumber":
       return 2;
-    case "Electrician":
+    case "electrician":
       return 3;
-    case "AC Repair":
+    case "ac repair":
       return 4;
-    case "Painter":
+    case "painter":
       return 5;
     default:
-      throw Exception("Invalid category: $category");
+    // 🔥 FAIL FAST (helps catch bugs early)
+      throw Exception("Invalid category string: $category");
   }
 }
 
 // ===============================
-// ENUM INT → STRING (UI)
+// ENUM INT → STRING (BACKEND → UI)
 // ===============================
+// MUST match backend enum values exactly
 String mapEnumToCategory(int category) {
   switch (category) {
     case 1:
@@ -46,7 +50,28 @@ String mapEnumToCategory(int category) {
       return "AC Repair";
     case 5:
       return "Painter";
+
+  // 🧯 OLD / BAD DATA SAFETY
+    case 0:
+      return "Unknown (Old Data)";
+
     default:
       return "Unknown";
   }
+}
+
+// ===============================
+// SAFETY HELPERS (OPTIONAL BUT RECOMMENDED)
+// ===============================
+
+// ✅ Check if enum value is valid
+bool isValidCategoryEnum(int value) {
+  return value >= 1 && value <= 5;
+}
+
+// ✅ Safe enum → string (never crashes UI)
+String safeEnumToCategory(int value) {
+  return isValidCategoryEnum(value)
+      ? mapEnumToCategory(value)
+      : "Unknown (Old Data)";
 }

@@ -45,7 +45,7 @@ class _VendorJobsTabState extends State<VendorJobsTab>
     setState(() => isLoading = true);
 
     try {
-      final data = await VendorApplicationApi.getApplications();
+      final data = await VendorApplicationApi.getVendorJobs();
       if (!mounted) return;
 
       setState(() {
@@ -58,6 +58,7 @@ class _VendorJobsTabState extends State<VendorJobsTab>
       setState(() => isLoading = false);
     }
   }
+
 
   // ===============================
   // FILTERS

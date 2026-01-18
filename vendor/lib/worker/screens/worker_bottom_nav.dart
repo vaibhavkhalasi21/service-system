@@ -18,6 +18,8 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
   @override
   void initState() {
     super.initState();
+
+    // ✅ CREATE ONCE — KEEP ALIVE
     _screens = [
       const WorkerDashboard(),
       ServicesScreen(vsync: this),
@@ -29,9 +31,13 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff0F0F0F),
-      body: _buildScreen(),
 
-      /// 🔥 DARK BOTTOM NAV
+      // 🔥 KEEP SCREENS ALIVE
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
+
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xff1C1C1C),
@@ -41,18 +47,18 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            if (index == _currentIndex) return;
+            setState(() => _currentIndex = index);
+          },
           backgroundColor: const Color(0xff1C1C1C),
           elevation: 0,
           type: BottomNavigationBarType.fixed,
-
           selectedItemColor: const Color(0xff7C3AED),
           unselectedItemColor: Colors.white54,
-
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
           ),
-
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -70,19 +76,5 @@ class _WorkerBottomNavState extends State<WorkerBottomNav>
         ),
       ),
     );
-  }
-
-  /// 🔄 SCREEN SWITCH (UNCHANGED LOGIC)
-  Widget _buildScreen() {
-    switch (_currentIndex) {
-      case 0:
-        return const WorkerDashboard();
-      case 1:
-        return ServicesScreen(vsync: this);
-      case 2:
-        return const WorkerProfile();
-      default:
-        return const WorkerDashboard();
-    }
   }
 }

@@ -26,15 +26,15 @@ class _PostServicePageState extends State<PostServicePage> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  // 🔥 LOCATION CONTROLLERS
+  // 📍 LOCATION
   final _addressController = TextEditingController();
   final _latController = TextEditingController();
   final _lngController = TextEditingController();
 
   String? selectedCategory;
-  bool isLoading = false;
-
   DateTime? selectedServiceDateTime;
+
+  bool isLoading = false;
 
   File? selectedImage;
   final ImagePicker picker = ImagePicker();
@@ -48,24 +48,25 @@ class _PostServicePageState extends State<PostServicePage> {
   ];
 
   // =======================
-  // CATEGORY → ENUM MAPPER
+  // CATEGORY → ENUM
   // =======================
   int mapCategoryToEnum(String category) {
-    switch (category) {
-      case "Cleaning":
+    switch (category.trim().toLowerCase()) {
+      case "cleaning":
         return 1;
-      case "Plumber":
+      case "plumber":
         return 2;
-      case "Electrician":
+      case "electrician":
         return 3;
-      case "AC Repair":
+      case "ac repair":
         return 4;
-      case "Painter":
+      case "painter":
         return 5;
       default:
-        throw Exception("Invalid category");
+        throw Exception("Invalid category: $category");
     }
   }
+
 
   // =======================
   // IMAGE PICKER
@@ -124,18 +125,21 @@ class _PostServicePageState extends State<PostServicePage> {
       return;
     }
 
+    if (selectedImage == null) {
+      _showSnack("Please select an image");
+      return;
+    }
+
     setState(() => isLoading = true);
 
     final service = VendorCreateServiceRequest(
       serviceName: _titleController.text.trim(),
-      category: mapCategoryToEnum(selectedCategory!), // 🔥 FIX
+      category: mapCategoryToEnum(selectedCategory!),
       price: double.parse(_priceController.text),
       serviceDateTime: selectedServiceDateTime!,
       description: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
-
-      // 🔥 LOCATION
       address: _addressController.text.trim(),
       latitude: double.parse(_latController.text),
       longitude: double.parse(_lngController.text),
@@ -172,82 +176,51 @@ class _PostServicePageState extends State<PostServicePage> {
         backgroundColor: kBg,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          "Post New Service",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: const Text("Post New Service"),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Add Service Details",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              _darkField(
-                controller: _titleController,
-                label: "Service Name",
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                dropdownColor: kCard,
-                decoration: _inputDecoration("Category"),
-                items: categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => selectedCategory = v),
-                validator: (v) => v == null ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
-
-              _darkField(
-                controller: _priceController,
-                label: "Price (₹)",
-                keyboardType: TextInputType.number,
-                validator: (v) => v == null || v.isEmpty ? "Required" : null,
-              ),
-
-              const SizedBox(height: 16),
+              _darkField(_titleController, "Service Name"),
+              _dropdownCategory(),
+              _darkField(_priceController, "Price (₹)",
+                  keyboard: TextInputType.number),
 
               OutlinedButton.icon(
                 onPressed: pickServiceDateTime,
                 icon: const Icon(Icons.schedule),
                 label: Text(scheduledText),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: kPurple,
-                  side: const BorderSide(color: kPurple),
-                ),
               ),
+
+              _darkField(_addressController, "Service Address"),
+              _darkField(_latController, "Latitude",
+                  keyboard: TextInputType.number),
+              _darkField(_lngController, "Longitude",
+                  keyboard: TextInputType.number),
+
+              const SizedBox(height: 12),
+
+              ElevatedButton.icon(
+                onPressed: pickImage,
+                icon: const Icon(Icons.image),
+                label: const Text("Select Image"),
+              ),
+
+              if (selectedImage != null) ...[
+                const SizedBox(height: 12),
+                Image.file(selectedImage!, height: 160, fit: BoxFit.cover),
+              ],
 
               const SizedBox(height: 20),
 
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : publishService,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPurple,
-                  ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Publish Service"),
-                ),
+              ElevatedButton(
+                onPressed: isLoading ? null : publishService,
+                child: isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Publish Service"),
               ),
             ],
           ),
@@ -256,20 +229,33 @@ class _PostServicePageState extends State<PostServicePage> {
     );
   }
 
-  Widget _darkField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(color: Colors.white),
-      validator: validator,
-      decoration: _inputDecoration(label),
+  Widget _dropdownCategory() {
+    return DropdownButtonFormField<String>(
+      value: selectedCategory,
+      dropdownColor: kCard,
+      decoration: _inputDecoration("Category"),
+      items: categories
+          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+          .toList(),
+      onChanged: (v) => setState(() => selectedCategory = v),
+      validator: (v) => v == null ? "Required" : null,
+    );
+  }
+
+  Widget _darkField(
+      TextEditingController controller,
+      String label, {
+        TextInputType keyboard = TextInputType.text,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboard,
+        validator: (v) => v == null || v.isEmpty ? "Required" : null,
+        style: const TextStyle(color: Colors.white),
+        decoration: _inputDecoration(label),
+      ),
     );
   }
 
