@@ -21,7 +21,7 @@ class _EditWorkerProfileState extends State<EditWorkerProfile> {
   Worker? worker;
   bool isSaving = false;
 
-  static const String _host = "172.20.253.37:5244";
+  static const String _host = "10.113.136.37:5244";
   static const String _basePath = "/api";
 
   @override

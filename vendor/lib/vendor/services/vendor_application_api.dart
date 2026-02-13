@@ -9,7 +9,7 @@ class VendorApplicationApi {
   // ===============================
   // 🔥 SERVER CONFIG
   // ===============================
-  static const String _host = "172.20.253.37:5244";
+  static const String _host = "10.113.136.37:5244";
   static const String _basePath = "/api/application";
 
   static String? _token;

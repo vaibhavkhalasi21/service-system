@@ -59,7 +59,7 @@ class MyJob {
   }
 
   factory MyJob.fromJson(Map<String, dynamic> json) {
-    const baseUrl = "http://172.20.253.37:5244";
+    const baseUrl = "http://10.113.136.37:5244";
 
     // ✅ SAFE CATEGORY PARSE
     final int rawCategory = json['category'] is int

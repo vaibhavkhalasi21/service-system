@@ -5,7 +5,7 @@ import '../models/worker_payment.dart';
 
 class WorkerPaymentApi {
   static const String baseUrl =
-      "http://172.20.253.37:5244/api/application";
+      "http://10.113.136.37:5244/api/application";
 
   // ===============================
   // AUTH HEADER

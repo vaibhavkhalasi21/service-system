@@ -37,7 +37,7 @@ class _VendorHomeTabState extends State<VendorHomeTab> {
     "Painter",
   ];
 
-  static const String baseUrl = "http://172.20.253.37:5244";
+  static const String baseUrl = "http://10.113.136.37:5244";
 
   @override
   void initState() {

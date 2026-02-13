@@ -5,7 +5,7 @@ import '../models/vendor_payment.dart';
 
 class VendorPaymentApi {
   static const String baseUrl =
-      "http://172.20.253.37:5244/api/payments";
+      "http://10.113.136.37:5244/api/payments";
 
   // ===============================
   // AUTH HEADER

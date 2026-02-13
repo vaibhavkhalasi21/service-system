@@ -7,7 +7,7 @@ import '../models/vendor_create_service_request.dart';
 import '../models/vendor_service_request.dart';
 
 class ServiceApi {
-  static const String baseUrl = "http://172.20.253.37:5244/api/service";
+  static const String baseUrl = "http://10.113.136.37:5244/api/service";
 
   // =========================================
   // WORKER: GET PUBLIC SERVICES

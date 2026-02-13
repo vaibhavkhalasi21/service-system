@@ -21,7 +21,7 @@ class _MyServicesPageState extends State<MyServicesPage> {
   bool isLoading = true;
   List<VendorService> myServices = [];
 
-  static const String baseUrl = "http://172.20.253.37:5244";
+  static const String baseUrl = "http://10.113.136.37:5244";
 
   @override
   void initState() {

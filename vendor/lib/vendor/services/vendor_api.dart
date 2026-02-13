@@ -5,7 +5,7 @@ class VendorApi {
   // 🔴 IMPORTANT
   // This MUST be the same IP + PORT where Swagger opens
   // on your PHONE browser
-  static const String _baseUrl = "http://172.20.253.37:5244";
+  static const String _baseUrl = "http://10.113.136.37:5244";
 
   static const String vendorBase = "$_baseUrl/api/vendor";
 
